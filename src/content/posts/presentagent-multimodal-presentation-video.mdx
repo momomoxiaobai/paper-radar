@@ -1,0 +1,226 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-10-30T16:00:00+08:00
+title: "PresentAgent 论文解读：从长文档到带旁白的演示视频"
+featured: true
+tags:
+  - multimodal-agent
+  - presentation-generation
+  - vlm
+  - benchmark
+description: "详细拆解 PresentAgent 的文档解析、幻灯片规划、旁白生成、视频合成与 PresentEval 评测框架，并结合主实验表分析其优势与局限。"
+paper:
+  title: "PresentAgent: Multimodal Agent for Presentation Video Generation"
+  venue: "EMNLP 2025 System Demonstrations"
+  paperUrl: "https://aclanthology.org/2025.emnlp-demos.58/"
+  pdfUrl: "https://aclanthology.org/2025.emnlp-demos.58.pdf"
+  codeUrl: "https://github.com/AIGeeksGroup/PresentAgent"
+  datasetUrl: "https://huggingface.co/datasets/AIGeeksGroup/Doc2Present"
+  score: 86
+  scoreNote: "推荐理由：任务定义完整、系统链路清晰、同时给出生成和评测框架；主要扣分来自测试规模较小、评测依赖模型裁判，以及跨模态联合质量尚未被充分验证。"
+---
+
+import { Image } from "astro:assets";
+import figure1 from "@/assets/images/presentagent/figure-1-overview.png";
+import figure2 from "@/assets/images/presentagent/figure-2-evaluation.png";
+import figure3 from "@/assets/images/presentagent/figure-3-framework.png";
+import table1 from "@/assets/images/presentagent/table-1-results.png";
+import figure4 from "@/assets/images/presentagent/figure-4-demo.png";
+
+> [!NOTE]
+> 本文是博客的第一篇论文解读 Demo。图 1-4 与表 1 均截取自论文原文，实验数字以 ACL Anthology PDF 为准。解读中的判断与推荐分属于本文观点，不代表论文作者或会议意见。
+
+## 一句话摘要
+
+**PresentAgent 把“读长文档、做幻灯片、写讲稿、合成语音、剪成视频”串成一条模块化 Agent 流水线；同时提出 PresentEval，用事实问答和 VLM 主观评分同时评估生成视频有没有讲对、讲清楚和讲好看。**
+
+<figure>
+  <Image src={figure1} alt="PresentAgent 从用户文档生成幻灯片、字幕、音频和演示视频的整体概览" />
+  <figcaption>图 1：PresentAgent 的任务概览。输入是长文档，中间产物包括幻灯片、讲稿/字幕和语音，最终组合成演示视频。</figcaption>
+</figure>
+
+## 研究问题：为什么不止是“文档转 PPT”
+
+已有工作通常解决其中一个子问题：长文档摘要、文档转幻灯片、文本转语音，或者文本生成短视频。真正的演示视频却要求这些模块同时成立：
+
+- 内容需要从长文档中正确抽象，不能只截取局部段落；
+- 每页幻灯片需要有适合展示的结构，而不是把摘要堆成大段文字；
+- 旁白需要口语化，且应与当前页面表达同一件事；
+- 页面展示时长要与音频长度精确对齐；
+- 评测不仅要看画面，还要判断观众是否真的理解了内容。
+
+论文因此定义了 **Document-to-Presentation Video Generation**：输入结构化或非结构化长文档，输出由幻灯片和同步语音组成的完整演示视频。它比单纯的 slide generation 多了时间轴、口语表达和跨模态一致性三个约束。
+
+## 方法总览
+
+PresentAgent 的设计可以拆成四个生成阶段和一个评测阶段。
+
+<figure>
+  <Image src={figure3} alt="PresentAgent 生成与评测框架，包括大纲生成、模板选择、幻灯片与讲稿生成、TTS、视频合成以及模型评测" />
+  <figcaption>图 3：论文给出的完整框架。橙色区域是生成流水线，绿色区域是 PresentEval 评测流水线。</figcaption>
+</figure>
+
+### 1. 文档解析与大纲规划
+
+系统先把整篇文档视为全局结构，而不是独立处理若干互不相关的 chunk。轻量级 LLM parser 将输入拆成语义块，并规划成 topic-subtopic 层次：
+
+```text
+Document
+  -> Section / topic discovery
+  -> Semantic content blocks
+  -> Slide outline
+  -> One content block per slide
+```
+
+这一步决定后续视频讲述的顺序。论文强调先做全局 outline，是为了避免局部摘要虽然正确，但整套演示缺乏完整叙事的问题。
+
+### 2. 模板选择与幻灯片组成
+
+每个内容块会被映射到一种页面类型，例如：
+
+- 标题与介绍页；
+- 要点列表页；
+- 图示解释页；
+- 过程或结构页。
+
+系统根据语义和结构线索选择 HTML 风格的布局 schema，并通过 `replace_text`、`insert_image`、`add_list` 等可编辑操作填充内容。幻灯片最终使用 `python-pptx` 或 HTML renderer 渲染成静态视觉帧。
+
+相比让生成模型直接输出一张不可编辑图片，这种“布局约束 + 编辑操作”的设计更容易控制文字位置、页面结构，也更便于检查中间结果。
+
+### 3. 口语讲稿与语音合成
+
+每页幻灯片都会单独生成一段 oral-style narration。提示词要求模型：
+
+- 解释页面的核心信息，而不是逐字念页面；
+- 减少过密的书面表达和不必要的术语；
+- 控制长度，使单页旁白通常落在 30-150 秒的目标范围内。
+
+实现细节中，系统并行支持 GPT-4o、GPT-4o-mini、Qwen-VL-Max、Gemini-2.5-Flash、Gemini-2.5-Pro 和 Claude-3.7-Sonnet，并根据输入长度、任务复杂度和延迟预算动态选择或集成模型。生成的讲稿再交给 MegaTTS3 合成为 24 kHz、16-bit 音频。
+
+### 4. 视频组装与时间对齐
+
+对每一页，系统拥有一对中间结果：
+
+```text
+(slide image, narration audio)
+```
+
+页面展示时长由对应音频决定，随后使用 FFmpeg 将所有页面、音轨、可选转场和字幕合成为 1080p 视频。这种按页对齐的策略虽然简单，但保证了旁白与页面切换的一致性，也让问题更容易定位到具体页面。
+
+## PresentEval：如何评价生成的视频
+
+多模态生成系统最难的不只是“生成”，而是“怎么判断生成得好不好”。PresentEval 把评测拆成客观理解和主观质量两条路径。
+
+<figure>
+  <Image src={figure2} alt="PresentEval 使用客观视频问答和主观视觉音频质量评分评估 PresentAgent" />
+  <figcaption>图 2：PresentEval 包含 Objective Quiz Evaluation 与 Subjective Scoring 两条互补路径。</figcaption>
+</figure>
+
+### Objective Quiz Evaluation
+
+研究者为每个文档人工设计 5 道四选一问题，关注：
+
+- 主题识别；
+- 结构理解；
+- 核心论点提取。
+
+Qwen-VL-2.5-3B 只能依据生成视频的画面和音频转录回答问题，最终正确题数转化为 Quiz Accuracy。它测试的不是页面“看起来像不像 PPT”，而是视频是否真的传达了源文档中的关键信息。
+
+### Subjective Scoring
+
+第二条路径从观众角度对内容、视觉、音频和理解难度打 1-5 分，主要维度包括：
+
+- Narration Coherence：讲述是否连贯；
+- Visual / Audio Appeal：页面和声音是否清晰、自然；
+- Comprehension Difficulty：内容是否容易理解。
+
+由于缺少能够稳定联合评估两分钟以上视频和音频的单一模型，论文采用拆分评测：完整视频的事实问答由 Qwen-VL-2.5-3B 完成；较短的视频/音频片段由 Qwen-Omni-7B 分别评分。
+
+## 数据与实验设置
+
+Doc2Present Benchmark 收集了 30 组长文档与人工制作的演示视频，来源包括学术论文、网页、技术博客和已有幻灯片。论文报告的典型规模是：
+
+| 项目 | 规模 |
+|---|---:|
+| 数据对数量 | 30 |
+| 文档长度 | 3,000-8,000 words |
+| 视频长度 | 1-2 分钟 |
+| 每个视频页数 | 5-10 页 |
+| 每个文档的理解题 | 5 道 |
+
+需要注意，受商业 LLM/VLM API 成本限制，主实验只在 5 篇学术论文上完成。这意味着表 1 更适合被理解成系统演示和初步验证，而不是一个大规模、低方差的 Benchmark 结论。
+
+## 主实验结果
+
+<figure>
+  <Image src={table1} alt="PresentAgent 不同模型与人工演示在 Quiz Accuracy、Video Score 和 Audio Score 上的主实验结果" />
+  <figcaption>表 1：5 文档测试集上的主结果。Quiz Accuracy 衡量事实理解；视频和音频各包含内容、视觉或听觉、理解度评分及平均分。</figcaption>
+</figure>
+
+### 1. 事实理解并没有明显落后于人工视频
+
+人工视频的 Quiz Accuracy 为 **0.56**。Claude-3.7-Sonnet 和 GPT-4o-mini 驱动的 PresentAgent 都达到 **0.64**，GPT-4o 与人工持平，Qwen-VL-Max 和两种 Gemini 版本为 0.52。
+
+这说明自动生成视频至少能够保留相当一部分关键事实。不过测试集只有 5 个文档，每个文档 5 道题，单题就可能明显改变平均值，因此 0.64 对 0.56 不能直接解释为“超过人类”。更合理的结论是：在该小规模设置下，自动视频没有出现明显的事实理解崩溃。
+
+### 2. 最强视频评分与最强音频评分来自不同配置
+
+- GPT-4o-mini 的视频平均分最高，为 **4.67**，高于人工视频的 4.47；
+- Gemini-2.5-Flash 的视觉得分最高，为 **5.0**，但视频理解度只有 3.8；
+- Qwen-VL-Max 的视频平均分为 4.47，与人工视频相同，音频平均分为 4.60；
+- 人工视频仍取得最高音频平均分 **4.80**；
+- Claude-3.7-Sonnet 的音频平均分为 4.53，在自动方法中表现稳定。
+
+视觉得分高不代表信息一定更容易理解。Gemini-2.5-Flash 的 5.0 视觉分与 3.8 理解分正好展示了这种 trade-off：页面可以更漂亮，但讲述结构或信息密度仍可能影响观众理解。
+
+### 3. 模块化设计带来了可诊断性
+
+不同模型在内容、视觉、音频和理解维度上的强弱并不一致。模块化系统的价值在这里体现出来：可以单独更换 outline planner、slide generator、narration model 或 TTS，而不用重新设计整套端到端系统。
+
+<figure>
+  <Image src={figure4} alt="PresentAgent 将一篇技术博客转换成幻灯片、字幕和视频的完整示例" />
+  <figcaption>图 4：技术博客经过 PresentAgent 后生成幻灯片、讲稿和视频的示例。它展示了系统如何把段落结构转成按页讲述结构。</figcaption>
+</figure>
+
+## 论文的主要贡献
+
+我认为这项工作的贡献主要不在某个单独模型，而在任务和系统层面的组合：
+
+1. **定义完整任务**：从长文档直接生成可观看、可分享的带旁白演示视频；
+2. **提供可控流水线**：解析、页面规划、讲稿、TTS、视频组装都有明确中间产物；
+3. **把理解加入评测**：不只评估页面美观，还用视频问答测试信息是否真正传达；
+4. **提供真实世界数据**：Doc2Present 覆盖多种长文档和人工演示视频；
+5. **开放代码和数据**：便于后续工作替换单个模块或扩展评测。
+
+## 局限与值得继续追问的问题
+
+### 测试规模有限
+
+主实验只有 5 篇学术论文，难以覆盖不同文档长度、领域、图表密度和叙事难度。论文虽然收集了 30 个样本，但由于 API 成本没有在全部数据上完成主实验。
+
+### 评测依赖模型裁判
+
+PresentEval 的可扩展性来自 VLM-as-a-judge，但这也带来模型偏好、视觉风格偏差和自洽性问题。特别是生成模型和评价模型共享相近能力或偏好时，评分可能偏向某种模板、信息密度或叙述风格。
+
+### 音画联合质量仍未真正解决
+
+当前方案把视频和音频拆开评分，缺少一个能判断“某句话是否在正确时间解释正确画面”的强联合指标。论文也把 fusion-aware multimodal reasoning 视为后续重点。
+
+### 页面仍以静态幻灯片为主
+
+当前视频主要由静态页面和旁白组成，没有复杂动画、指针、局部高亮或逐步构建过程。对于公式推导、代码执行或复杂图表讲解，静态帧可能不足以模拟真正优秀的现场演示。
+
+## 结论
+
+PresentAgent 证明了一个重要方向：文档到演示视频不必被视为单次生成任务，更适合作为一条带中间状态、可替换模块和独立评测的 Agent 工作流。
+
+现有结果表明，它已经能在小规模测试中生成内容完整、视觉清晰且易于理解的演示视频，并在若干模型配置下接近人工参考。但“接近人工质量”的结论仍受测试集规模和模型裁判限制，跨模态时间一致性也还有很大的研究空间。
+
+从工程角度看，这篇论文最有价值的部分是：**把一个看似端到端的多模态生成问题，拆成可以分别观测、替换和优化的生产流水线。**
+
+## 参考链接
+
+- [ACL Anthology 论文页面](https://aclanthology.org/2025.emnlp-demos.58/)
+- [论文 PDF](https://aclanthology.org/2025.emnlp-demos.58.pdf)
+- [PresentAgent 代码](https://github.com/AIGeeksGroup/PresentAgent)
+- [Doc2Present 数据集](https://huggingface.co/datasets/AIGeeksGroup/Doc2Present)

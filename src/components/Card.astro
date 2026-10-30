@@ -10,7 +10,7 @@ type Props = {
 
 const { variant: Heading = "h2", id, data, filePath } = Astro.props;
 
-const { title, description, ...props } = data;
+const { title, description, paper, ...props } = data;
 ---
 
 <li class="my-6">
@@ -27,5 +27,12 @@ const { title, description, ...props } = data;
     </Heading>
   </a>
   <Datetime {...props} />
+  {
+    paper?.score !== undefined && (
+      <span class="border-accent text-accent mt-2 inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold">
+        推荐分 {paper.score}
+      </span>
+    )
+  }
   <p>{description}</p>
 </li>

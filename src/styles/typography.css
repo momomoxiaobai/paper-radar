@@ -44,7 +44,7 @@
     }
 
     img {
-      @apply border-border mx-auto border;
+      @apply border-border mx-auto rounded-lg border bg-white shadow-sm;
     }
 
     img[role="button"] {
@@ -56,7 +56,15 @@
     }
 
     figcaption {
-      @apply opacity-75;
+      @apply mt-3 text-center text-sm leading-relaxed opacity-75;
+    }
+
+    figure {
+      @apply border-border bg-muted/20 my-8 rounded-xl border p-3 sm:p-4;
+
+      img {
+        @apply m-0 w-full;
+      }
     }
 
     table {

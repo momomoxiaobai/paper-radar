@@ -1,37 +1,31 @@
 ---
-title: "About"
-description: "A bit about me and this blog."
+title: "关于"
+description: "关于 Yanjie's Paper Radar 与自动论文解读流程。"
 ---
 
-AstroPaper is a minimal, accessible and SEO-friendly blog theme built with [Astro](https://astro.build/) and [Tailwind CSS](https://tailwindcss.com/).
+我是 **Yanjie Liang（梁延杰）**，目前从事大语言模型算法工作，关注 LLM 后训练、强化学习、模型评测、Benchmark 构建与 AI 数据安全。
 
-![Astro Paper](@/assets/images/astropaper-og.jpg)
+Paper Radar 用来持续记录我认为值得细读的论文。文章不止转述摘要，而是尽量回答四个问题：
 
-AstroPaper provides a solid foundation for blogs, or even portfolios\_ with full markdown support, built-in dark mode, and a clean layout that works out-of-the-box.
+- 这篇论文真正想解决什么问题？
+- 方法由哪些关键模块组成？
+- 实验是否支持作者的核心判断？
+- 对研究和工程实践有什么价值与局限？
 
-The blog posts in this theme also serve as guides, docs or example articles\_ making AstroPaper a flexible starting point for your next content-driven site.
+## 自动化计划
 
-## Features
+博客将逐步加入一条可审核的自动流水线：
 
-AstroPaper comes with a set of useful features that make content publishing easy and effective:
+1. 每日从 arXiv 等来源读取候选论文；
+2. 根据研究兴趣、创新性、实验质量与工程价值评分；
+3. 获取摘要、PDF、代码仓库与相关资料；
+4. 解析方法、实验、结论、图表与局限；
+5. 生成 Markdown 草稿并通过 GitHub Pull Request 审核；
+6. 合并后由 GitHub Pages 自动发布。
 
-- SEO-friendly
-- Fast performance
-- Light & dark mode
-- Highly customizable
-- Organizable blog posts
-- Responsive & accessible
-- Static search with [PageFind](https://pagefind.app/)
-- Automatic social image generation
+自动生成内容会尽量保留来源、页码、图表编号和可复现的小实验。现阶段先以人工审核为发布门槛，后续再持续优化论文解读 Skill。
 
-and so much more.
+## 联系方式
 
-## Show your support
-
-If you like [AstroPaper](https://github.com/satnaing/astro-paper), consider giving it a star ⭐️.
-
-Found a bug 🐛 or have an improvement ✨ in mind? Feel free to open an [issue](https://github.com/satnaing/astro-paper/issues), submit a [pull request](https://github.com/satnaing/astro-paper/pulls) or start a [discussion](https://github.com/satnaing/astro-paper/discussions).
-
-If you find this theme helpful, you can also [sponsor me on GitHub](https://github.com/sponsors/satnaing) or [buy me a coffee](https://buymeacoffee.com/satnaing) to show your support — every penny counts.
-
-Kyay zuu! 🙏🏼
+- GitHub：[@momomoxiaobai](https://github.com/momomoxiaobai)
+- Email：[yanjieliang88@gmail.com](mailto:yanjieliang88@gmail.com)
