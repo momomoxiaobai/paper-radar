@@ -39,7 +39,7 @@ const t = useTranslations(locale);
   <Breadcrumb />
 
   <Main
-    pageTitle={`${t.pages.categoryTitle}: ${category.label}`}
+    pageTitle={`${category.label} ${t.pages.categoryTitle}`}
     pageDesc={category.description}
   >
     <div class="border-border mb-8 flex flex-wrap gap-2 border-b pb-6">

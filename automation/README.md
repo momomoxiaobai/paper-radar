@@ -4,7 +4,7 @@ The first working stage is intentionally conservative:
 
 1. `discover.py` reads recent arXiv entries across language, AI, ML, software engineering, distributed systems and algorithms.
 2. It assigns one primary category: `RL`, `Agent`, `LLM`, `Infra`, `Harness`, `Skill`, `经典算法`, or `基座模型`.
-3. It builds three weekday queues—`一线资讯`, `Harness`, and `经典算法`—plus a separate `基座收藏夹` that is not treated as a fourth daily lane.
+3. It builds three weekday queues—`前沿雷达`, `Agent 工程`, and `算法重访`—plus a separate long-term `模型档案`.
 4. It writes the balanced queues and their category metadata to `data/candidates.json`.
 5. The scheduled GitHub Action refreshes this queue every weekday and stays quiet when the queue has not materially changed.
 

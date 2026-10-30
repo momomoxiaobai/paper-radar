@@ -160,26 +160,26 @@ CATEGORY_RULES = {
 TRACKS = [
     {
         "slug": "frontier",
-        "label": "一线资讯",
-        "cadence": "工作日日更",
+        "label": "前沿雷达",
+        "cadence": "周一至周五",
         "limit": 8,
     },
     {
         "slug": "harness",
-        "label": "Harness",
-        "cadence": "工作日日更",
+        "label": "Agent 工程",
+        "cadence": "周一至周五",
         "limit": 6,
     },
     {
         "slug": "classic-algorithms",
-        "label": "经典算法",
-        "cadence": "工作日日更",
+        "label": "算法重访",
+        "cadence": "周一至周五",
         "limit": 6,
     },
     {
         "slug": "foundation-models",
-        "label": "基座收藏夹",
-        "cadence": "持续收录，不计入日更第四路",
+        "label": "模型档案",
+        "cadence": "按价值收录",
         "limit": 6,
     },
 ]

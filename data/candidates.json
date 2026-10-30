@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-10-30T09:50:07.509975+00:00",
+  "generated_at": "2026-10-30T09:56:12.645118+00:00",
   "note": "Heuristic queues by editorial track. PDF research and article publication require a later verified generation stage.",
   "lanes": [
     {
       "slug": "frontier",
-      "label": "一线资讯",
-      "cadence": "工作日日更",
+      "label": "前沿雷达",
+      "cadence": "周一至周五",
       "candidates": [
         {
           "arxiv_id": "2610.40191",
@@ -841,8 +841,8 @@
     },
     {
       "slug": "harness",
-      "label": "Harness",
-      "cadence": "工作日日更",
+      "label": "Agent 工程",
+      "cadence": "周一至周五",
       "candidates": [
         {
           "arxiv_id": "2610.39230",
@@ -1001,8 +1001,8 @@
     },
     {
       "slug": "classic-algorithms",
-      "label": "经典算法",
-      "cadence": "工作日日更",
+      "label": "算法重访",
+      "cadence": "周一至周五",
       "candidates": [
         {
           "arxiv_id": "2610.32278",
@@ -1169,8 +1169,8 @@
     },
     {
       "slug": "foundation-models",
-      "label": "基座收藏夹",
-      "cadence": "持续收录，不计入日更第四路",
+      "label": "模型档案",
+      "cadence": "按价值收录",
       "candidates": [
         {
           "arxiv_id": "2610.38593",

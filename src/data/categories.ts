@@ -1,30 +1,32 @@
 export const CATEGORY_GROUPS = [
   {
     id: "frontier",
-    label: "一线资讯",
-    cadence: "工作日日更",
-    description: "追踪训练、推理与应用一线进展。",
+    label: "前沿雷达",
+    cadence: "周一至周五",
+    description: "捕捉训练、推理、智能体与系统工程里值得继续跟进的新信号。",
     categories: ["rl", "agent", "llm", "infra"],
   },
   {
     id: "harness",
-    label: "Harness",
-    cadence: "工作日日更",
-    description: "关注 Agent 工程骨架、工具调用、Skill 与运行时。",
+    label: "Agent 工程",
+    cadence: "周一至周五",
+    description:
+      "拆解上下文、工具、运行时和技能复用如何把 Agent 变成可靠系统。",
     categories: ["harness", "skill"],
   },
   {
     id: "classic-algorithms",
-    label: "经典算法",
-    cadence: "工作日日更",
-    description: "重读长期有效的搜索、优化、采样与学习算法。",
+    label: "算法重访",
+    cadence: "周一至周五",
+    description: "借新研究与工程实践，重新理解那些经得起时间的基础方法。",
     categories: ["classic-algorithms"],
   },
   {
     id: "foundation-models",
-    label: "基座收藏夹",
-    cadence: "持续收录 · 非日更第四路",
-    description: "收录混元 HY、Qwen、DeepSeek、Llama 等基座模型专文。",
+    label: "模型档案",
+    cadence: "按价值收录",
+    description:
+      "为具有长期参考价值的基础模型保留完整技术档案，不参与固定更新配额。",
     categories: ["foundation-models"],
   },
 ] as const;
@@ -68,7 +70,7 @@ export const CATEGORIES = [
   {
     slug: "foundation-models",
     label: "基座模型",
-    description: "混元 HY 等重要基座模型的架构、训练和技术报告。",
+    description: "重要基础模型的架构、训练数据、能力边界与技术报告。",
   },
 ] as const;
 
