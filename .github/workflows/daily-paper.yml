@@ -30,8 +30,8 @@ jobs:
             echo "No candidate changes."
             exit 0
           fi
-          git config user.name "paper-radar-bot"
-          git config user.email "paper-radar-bot@users.noreply.github.com"
+          git config user.name "momomoxiaobai"
+          git config user.email "47300579+momomoxiaobai@users.noreply.github.com"
           git add data/candidates.json data/state.json
           git commit -m "chore: refresh daily paper candidates"
           git push

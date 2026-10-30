@@ -1,0 +1,58 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Main from "@/components/Main.astro";
+import Footer from "@/components/Footer.astro";
+import CategoryBadge from "@/components/CategoryBadge.astro";
+import { CATEGORIES, CATEGORY_GROUPS } from "@/data/categories";
+import { getSortedPosts } from "@/utils/getSortedPosts";
+import { useTranslations } from "@/i18n";
+import config from "@/config";
+
+const posts = getSortedPosts(await getCollection("posts"));
+const counts = Object.fromEntries(
+  CATEGORIES.map(category => [
+    category.slug,
+    posts.filter(post => post.data.category === category.slug).length,
+  ])
+);
+
+const locale = Astro.currentLocale ?? config.site.lang;
+const t = useTranslations(locale);
+---
+
+<Layout title={`${t.pages.categoriesTitle} | ${config.site.title}`}>
+  <Header />
+  <Breadcrumb />
+
+  <Main pageTitle={t.pages.categoriesTitle} pageDesc={t.pages.categoriesDesc}>
+    <div class="space-y-8">
+      {
+        CATEGORY_GROUPS.map(group => (
+          <section class="border-border rounded-xl border p-5 sm:p-6">
+            <div class="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h2 class="text-xl font-semibold">{group.label}</h2>
+              <span class="text-accent text-sm font-medium">
+                {group.cadence}
+              </span>
+            </div>
+            <p class="text-muted-foreground mt-0 mb-5">{group.description}</p>
+            <div class="flex flex-wrap gap-3">
+              {group.categories.map(category => (
+                <CategoryBadge
+                  category={category}
+                  count={counts[category] ?? 0}
+                  size="lg"
+                />
+              ))}
+            </div>
+          </section>
+        ))
+      }
+    </div>
+  </Main>
+
+  <Footer />
+</Layout>

@@ -15,6 +15,8 @@ import BackButton from "./_components/BackButton.astro";
 import BackToTopButton from "./_components/BackToTopButton.astro";
 import AdjacentPostNav from "./_components/AdjacentPostNav.astro";
 import PaperMeta from "@/components/PaperMeta.astro";
+import CategoryBadge from "@/components/CategoryBadge.astro";
+import { getCategory } from "@/data/categories";
 import config from "@/config";
 
 export async function getStaticPaths() {
@@ -73,7 +75,10 @@ const {
   tags,
   hideEditPost,
   paper,
+  category,
 } = post.data;
+
+const categoryData = getCategory(category);
 
 const { Content } = await render(post);
 
@@ -105,6 +110,7 @@ const ogImage = ogImageUrl
   canonicalURL={canonicalURL}
   pubDatetime={pubDatetime}
   modDatetime={modDatetime}
+  category={categoryData?.label}
 >
   <Header />
 
@@ -134,6 +140,10 @@ const ogImage = ogImageUrl
         |
       </span>
       <EditPost {hideEditPost} {post} class="max-sm:hidden" />
+    </div>
+
+    <div class="my-3">
+      <CategoryBadge {category} />
     </div>
 
     {paper && <PaperMeta {paper} />}

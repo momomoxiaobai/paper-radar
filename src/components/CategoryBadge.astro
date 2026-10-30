@@ -1,0 +1,44 @@
+---
+import { getRelativeLocaleUrl } from "astro:i18n";
+import { getCategory, type CategorySlug } from "@/data/categories";
+import config from "@/config";
+
+type Props = {
+  category: CategorySlug;
+  active?: boolean;
+  count?: number;
+  size?: "sm" | "lg";
+};
+
+const {
+  category: categorySlug,
+  active = false,
+  count,
+  size = "sm",
+} = Astro.props;
+const category = getCategory(categorySlug);
+const locale = Astro.currentLocale ?? config.site.lang;
+---
+
+{
+  category && (
+    <a
+      href={getRelativeLocaleUrl(locale, `categories/${category.slug}/`)}
+      aria-current={active ? "page" : undefined}
+      class:list={[
+        "inline-flex items-center rounded-full border font-semibold no-underline transition-colors",
+        "focus-outline hover:border-accent hover:text-accent",
+        { "px-2.5 py-0.5 text-xs": size === "sm" },
+        { "px-5 py-2 text-base": size === "lg" },
+        {
+          "border-accent bg-accent text-background hover:text-background":
+            active,
+        },
+        { "border-border bg-background": !active },
+      ]}
+    >
+      {category.label}
+      {count !== undefined && <span class="ms-1.5 opacity-70">{count}</span>}
+    </a>
+  )
+}

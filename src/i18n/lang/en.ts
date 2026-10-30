@@ -4,6 +4,7 @@ export default {
   nav: {
     home: "Home",
     posts: "Posts",
+    categories: "Categories",
     tags: "Tags",
     about: "About",
     archives: "Archives",
@@ -16,6 +17,7 @@ export default {
     sharePostOn: "Share this post on {{platform}}",
     sharePostViaEmail: "Share this post via email",
     tagLabel: "Tags",
+    categoryLabel: "Category",
     backToTop: "Back to top",
     goBack: "Go back",
     editPage: "Edit page",
@@ -43,6 +45,13 @@ export default {
 
     tagsTitle: "Tags",
     tagsDesc: "All the tags used in posts.",
+
+    categoryTitle: "Category",
+    categoryDesc: "All posts in this category.",
+
+    categoriesTitle: "Categories",
+    categoriesDesc:
+      "Browse the daily research lanes and foundation-model collection.",
 
     postsTitle: "Posts",
     postsDesc: "All the articles I've posted.",

@@ -4,6 +4,7 @@ export default {
   nav: {
     home: "首页",
     posts: "文章",
+    categories: "分类",
     tags: "标签",
     about: "关于",
     archives: "归档",
@@ -16,6 +17,7 @@ export default {
     sharePostOn: "分享到 {{platform}}",
     sharePostViaEmail: "通过邮件分享",
     tagLabel: "标签",
+    categoryLabel: "分类",
     backToTop: "返回顶部",
     goBack: "返回",
     editPage: "编辑本文",
@@ -35,6 +37,11 @@ export default {
     tagDesc: "该标签下的全部文章",
     tagsTitle: "标签",
     tagsDesc: "按研究方向浏览论文解读。",
+    categoryTitle: "分类",
+    categoryDesc: "该分类下的全部文章",
+    categoriesTitle: "分类",
+    categoriesDesc:
+      "工作日日更三路：一线资讯、Harness、经典算法；基座模型作为收藏夹持续收录。",
     postsTitle: "论文解读",
     postsDesc: "从摘要、方法、实验到结论，记录值得关注的研究工作。",
     archivesTitle: "归档",

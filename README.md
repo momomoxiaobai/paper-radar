@@ -7,6 +7,7 @@ Planned site: <https://momomoxiaobai.github.io/paper-radar/>
 ## What is included
 
 - Clean AstroPaper-based blog with light/dark mode, search, RSS, tags and archives.
+- First-class article categories for RL, Agent, LLM, Infra, Harness, Skill, classic algorithms and foundation models.
 - A detailed PresentAgent paper review with source figures and the main result table.
 - GitHub Pages deployment workflow.
 - A weekday arXiv discovery workflow and deterministic candidate scoring script.
@@ -35,7 +36,7 @@ Run the deterministic first stage manually:
 python automation/discover.py
 ```
 
-It fetches recent arXiv entries from `cs.CL`, `cs.AI`, and `cs.LG`, scores them against the configured interests, and writes the top candidates to `data/candidates.json`.
+It fetches recent arXiv entries from language, AI, machine-learning, software-engineering, distributed-systems and algorithms feeds. Candidates are classified into three weekday editorial lanes—frontier news, Harness, and classic algorithms—plus a separate foundation-model collection, then written to `data/candidates.json`.
 
 The discovery script deliberately does not publish an article from the abstract alone. Full paper parsing, figure/table extraction, evidence verification, LLM generation and Pull Request review will be added as a separate quality-gated stage.
 
