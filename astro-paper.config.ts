@@ -3,7 +3,7 @@ import { defineAstroPaperConfig } from "./src/types/config";
 export default defineAstroPaperConfig({
   site: {
     url: "https://momomoxiaobai.github.io/paper-radar/",
-    title: "Yanjie's Paper Radar",
+    title: "Yanjie Liang",
     description: "每天筛选、阅读并解读值得关注的 LLM、Agent 与强化学习论文。",
     author: "Yanjie Liang",
     profile: "https://github.com/momomoxiaobai",
