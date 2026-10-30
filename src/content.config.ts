@@ -6,7 +6,10 @@ import config from "@/config";
 export const BLOG_PATH = "src/content/posts";
 
 const posts = defineCollection({
-  loader: glob({ pattern: "**/[^_]*.{md,mdx}", base: `./${BLOG_PATH}` }),
+  // Articles are kept at the collection root. The template's nested example and
+  // release-note directories remain available as references, but are never
+  // published as part of Paper Radar.
+  loader: glob({ pattern: "[^_]*.{md,mdx}", base: `./${BLOG_PATH}` }),
   schema: ({ image }) =>
     z.object({
       author: z.string().default(config.site.author),
@@ -21,6 +24,18 @@ const posts = defineCollection({
       canonicalURL: z.string().optional(),
       hideEditPost: z.boolean().optional(),
       timezone: z.string().optional(),
+      paper: z
+        .object({
+          title: z.string(),
+          venue: z.string().optional(),
+          paperUrl: z.url(),
+          pdfUrl: z.url(),
+          codeUrl: z.url().optional(),
+          datasetUrl: z.url().optional(),
+          score: z.number().min(0).max(100).optional(),
+          scoreNote: z.string().optional(),
+        })
+        .optional(),
     }),
 });
 

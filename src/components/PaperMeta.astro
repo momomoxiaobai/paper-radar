@@ -1,0 +1,80 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+type Paper = NonNullable<CollectionEntry<"posts">["data"]["paper"]>;
+
+type Props = {
+  paper: Paper;
+};
+
+const { paper } = Astro.props;
+---
+
+<aside class="border-border bg-muted/35 my-6 rounded-xl border p-4 sm:p-5">
+  <div
+    class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+  >
+    <div>
+      <p
+        class="text-muted-foreground m-0 text-xs font-semibold tracking-wider uppercase"
+      >
+        论文速览
+      </p>
+      <p class="mt-1 mb-2 text-base font-semibold">{paper.title}</p>
+      {
+        paper.venue && (
+          <p class="text-muted-foreground m-0 text-sm">{paper.venue}</p>
+        )
+      }
+    </div>
+    {
+      paper.score !== undefined && (
+        <div class="border-accent text-accent min-w-24 rounded-lg border px-3 py-2 text-center">
+          <div class="text-2xl font-bold">{paper.score}</div>
+          <div class="text-muted-foreground text-xs">综合推荐分 / 100</div>
+        </div>
+      )
+    }
+  </div>
+
+  {paper.scoreNote && <p class="mt-4 mb-0 text-sm">{paper.scoreNote}</p>}
+
+  <div class="mt-4 flex flex-wrap gap-2 text-sm">
+    <a
+      class="border-border hover:border-accent rounded-md border px-3 py-1.5 no-underline"
+      href={paper.paperUrl}
+      target="_blank"
+      rel="noopener noreferrer">论文页面</a
+    >
+    <a
+      class="border-border hover:border-accent rounded-md border px-3 py-1.5 no-underline"
+      href={paper.pdfUrl}
+      target="_blank"
+      rel="noopener noreferrer">PDF</a
+    >
+    {
+      paper.codeUrl && (
+        <a
+          class="border-border hover:border-accent rounded-md border px-3 py-1.5 no-underline"
+          href={paper.codeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          代码
+        </a>
+      )
+    }
+    {
+      paper.datasetUrl && (
+        <a
+          class="border-border hover:border-accent rounded-md border px-3 py-1.5 no-underline"
+          href={paper.datasetUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          数据集
+        </a>
+      )
+    }
+  </div>
+</aside>
