@@ -109,6 +109,22 @@
       @apply text-foreground inline-block cursor-pointer select-none [&_p]:hidden [&_ul]:my-0!;
     }
 
+    details.thought-question {
+      @apply border-border bg-muted/20 my-4 block w-full cursor-default rounded-xl border px-4 py-3 select-text;
+
+      summary {
+        @apply cursor-pointer leading-relaxed font-semibold select-none;
+      }
+
+      .thought-answer {
+        @apply border-border mt-3 border-t pt-3 leading-relaxed;
+
+        p {
+          @apply block;
+        }
+      }
+    }
+
     summary {
       @apply focus-visible:outline-accent focus-visible:no-underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-dashed;
     }
