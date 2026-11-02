@@ -1,0 +1,392 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1600"
+  height="900"
+  viewBox="0 0 1600 900"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">LARC 两阶段连续隐空间推理框架</title>
+  <desc id="desc">
+    文本片段与连续隐状态交错，先经过课程式监督微调，再以信息增益和多样性奖励进行
+    GRPO 强化学习。
+  </desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#081321" />
+      <stop offset="1" stop-color="#13243b" />
+    </linearGradient>
+    <linearGradient id="latent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22d3ee" />
+      <stop offset="1" stop-color="#6366f1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow
+        dx="0"
+        dy="12"
+        stdDeviation="14"
+        flood-color="#020617"
+        flood-opacity="0.5"
+      />
+    </filter>
+    <marker
+      id="arrow"
+      viewBox="0 0 10 10"
+      refX="9"
+      refY="5"
+      markerWidth="8"
+      markerHeight="8"
+      orient="auto-start-reverse"
+    >
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+    </marker>
+  </defs>
+  <rect width="1600" height="900" rx="36" fill="url(#bg)" />
+  <text
+    x="88"
+    y="92"
+    fill="#f8fafc"
+    font-family="Inter, PingFang SC, sans-serif"
+    font-size="42"
+    font-weight="700"
+  >
+    LARC：让推理与图像生成共享连续表示
+  </text>
+  <text
+    x="88"
+    y="140"
+    fill="#94a3b8"
+    font-family="Inter, PingFang SC, sans-serif"
+    font-size="22"
+  >
+    根据论文 Figure 2 与 Equations (1)-(4) 重绘
+  </text>
+
+  <g filter="url(#shadow)">
+    <rect
+      x="82"
+      y="205"
+      width="1436"
+      height="230"
+      rx="28"
+      fill="#0f1d30"
+      stroke="#334155"
+      stroke-width="2"
+    />
+    <text
+      x="120"
+      y="255"
+      fill="#fbbf24"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="26"
+      font-weight="700"
+    >
+      推理轨迹
+    </text>
+    <text
+      x="120"
+      y="292"
+      fill="#cbd5e1"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="20"
+    >
+      文本提供随机分叉；连续隐状态保存空间与属性信息
+    </text>
+
+    <rect
+      x="128"
+      y="330"
+      width="190"
+      height="62"
+      rx="16"
+      fill="#1e293b"
+      stroke="#64748b"
+    />
+    <text
+      x="223"
+      y="370"
+      text-anchor="middle"
+      fill="#f8fafc"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="24"
+    >
+      文本 s₁
+    </text>
+    <line
+      x1="318"
+      y1="361"
+      x2="378"
+      y2="361"
+      stroke="#94a3b8"
+      stroke-width="3"
+      marker-end="url(#arrow)"
+    />
+    <rect x="390" y="319" width="210" height="84" rx="42" fill="url(#latent)" />
+    <text
+      x="495"
+      y="354"
+      text-anchor="middle"
+      fill="#ffffff"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="22"
+      font-weight="700"
+    >
+      连续隐状态 l₁
+    </text>
+    <text
+      x="495"
+      y="382"
+      text-anchor="middle"
+      fill="#e0f2fe"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="16"
+    >
+      hₜ 作为下一输入
+    </text>
+    <line
+      x1="600"
+      y1="361"
+      x2="660"
+      y2="361"
+      stroke="#94a3b8"
+      stroke-width="3"
+      marker-end="url(#arrow)"
+    />
+    <rect
+      x="672"
+      y="330"
+      width="190"
+      height="62"
+      rx="16"
+      fill="#1e293b"
+      stroke="#64748b"
+    />
+    <text
+      x="767"
+      y="370"
+      text-anchor="middle"
+      fill="#f8fafc"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="24"
+    >
+      文本 s₂
+    </text>
+    <line
+      x1="862"
+      y1="361"
+      x2="922"
+      y2="361"
+      stroke="#94a3b8"
+      stroke-width="3"
+      marker-end="url(#arrow)"
+    />
+    <rect x="934" y="319" width="210" height="84" rx="42" fill="url(#latent)" />
+    <text
+      x="1039"
+      y="354"
+      text-anchor="middle"
+      fill="#ffffff"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="22"
+      font-weight="700"
+    >
+      连续隐状态 l₂
+    </text>
+    <text
+      x="1039"
+      y="382"
+      text-anchor="middle"
+      fill="#e0f2fe"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="16"
+    >
+      避免词表量化
+    </text>
+    <line
+      x1="1144"
+      y1="361"
+      x2="1204"
+      y2="361"
+      stroke="#94a3b8"
+      stroke-width="3"
+      marker-end="url(#arrow)"
+    />
+    <rect
+      x="1216"
+      y="320"
+      width="246"
+      height="82"
+      rx="20"
+      fill="#312e81"
+      stroke="#818cf8"
+      stroke-width="2"
+    />
+    <text
+      x="1339"
+      y="354"
+      text-anchor="middle"
+      fill="#ffffff"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="22"
+      font-weight="700"
+    >
+      图像生成模块
+    </text>
+    <text
+      x="1339"
+      y="382"
+      text-anchor="middle"
+      fill="#c7d2fe"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="16"
+    >
+      读取完整 h(τ)
+    </text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect
+      x="82"
+      y="480"
+      width="690"
+      height="330"
+      rx="28"
+      fill="#102235"
+      stroke="#0ea5e9"
+      stroke-width="2"
+    />
+    <circle cx="132" cy="535" r="26" fill="#0ea5e9" />
+    <text
+      x="132"
+      y="544"
+      text-anchor="middle"
+      fill="#fff"
+      font-family="Inter, sans-serif"
+      font-size="24"
+      font-weight="700"
+    >
+      1
+    </text>
+    <text
+      x="178"
+      y="544"
+      fill="#f8fafc"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="30"
+      font-weight="700"
+    >
+      课程式 SFT
+    </text>
+    <text
+      x="126"
+      y="598"
+      fill="#cbd5e1"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="21"
+    >
+      阶段 0：全部文本推理
+    </text>
+    <rect x="126" y="622" width="560" height="18" rx="9" fill="#1e293b" />
+    <rect x="126" y="622" width="130" height="18" rx="9" fill="#38bdf8" />
+    <text
+      x="126"
+      y="684"
+      fill="#cbd5e1"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="21"
+    >
+      阶段 k：逐步激活前 k 个 latent step
+    </text>
+    <rect x="126" y="708" width="560" height="18" rx="9" fill="#1e293b" />
+    <rect x="126" y="708" width="420" height="18" rx="9" fill="url(#latent)" />
+    <text
+      x="126"
+      y="772"
+      fill="#7dd3fc"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="19"
+    >
+      目标：先学会格式，再逐步移除离散监督
+    </text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect
+      x="828"
+      y="480"
+      width="690"
+      height="330"
+      rx="28"
+      fill="#1a1b37"
+      stroke="#8b5cf6"
+      stroke-width="2"
+    />
+    <circle cx="878" cy="535" r="26" fill="#8b5cf6" />
+    <text
+      x="878"
+      y="544"
+      text-anchor="middle"
+      fill="#fff"
+      font-family="Inter, sans-serif"
+      font-size="24"
+      font-weight="700"
+    >
+      2
+    </text>
+    <text
+      x="924"
+      y="544"
+      fill="#f8fafc"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="30"
+      font-weight="700"
+    >
+      Self-evolving RL
+    </text>
+    <text
+      x="872"
+      y="604"
+      fill="#ddd6fe"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="22"
+    >
+      rIG = Lflow(x,c) − Lflow(x,c,h(τ))
+    </text>
+    <text
+      x="872"
+      y="650"
+      fill="#cbd5e1"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="20"
+    >
+      轨迹让目标图像更容易预测 → 正奖励
+    </text>
+    <text
+      x="872"
+      y="704"
+      fill="#ddd6fe"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="22"
+    >
+      R = rIG + λdiv · rdiv
+    </text>
+    <text
+      x="872"
+      y="750"
+      fill="#cbd5e1"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="20"
+    >
+      多样性项阻止 latent steps 坍缩成同一向量
+    </text>
+    <text
+      x="872"
+      y="790"
+      fill="#c4b5fd"
+      font-family="Inter, PingFang SC, sans-serif"
+      font-size="19"
+    >
+      GRPO：组内比较多条轨迹，不额外训练 value model
+    </text>
+  </g>
+</svg>

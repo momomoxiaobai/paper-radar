@@ -1,0 +1,253 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1800"
+  height="980"
+  viewBox="0 0 1800 980"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">实例相关序贯下界的信息账本证明链</title>
+  <desc id="desc">
+    从精确散度分解出发，经过
+    process、test、binary、markov、uniform、boundary、allocation 和 asymptotic
+    八类放松得到经典下界。
+  </desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#11111b" />
+      <stop offset="1" stop-color="#271b35" />
+    </linearGradient>
+    <marker
+      id="arrow"
+      viewBox="0 0 10 10"
+      refX="9"
+      refY="5"
+      markerWidth="8"
+      markerHeight="8"
+      orient="auto"
+    >
+      <path d="M0 0L10 5L0 10z" fill="#a78bfa" />
+    </marker>
+    <filter id="shadow">
+      <feDropShadow
+        dx="0"
+        dy="10"
+        stdDeviation="12"
+        flood-color="#020617"
+        flood-opacity="0.5"
+      />
+    </filter>
+  </defs>
+  <rect width="1800" height="980" rx="36" fill="url(#bg)" />
+  <text
+    x="86"
+    y="92"
+    fill="#f8fafc"
+    font-family="Inter, PingFang SC, sans-serif"
+    font-size="44"
+    font-weight="700"
+  >
+    经典下界不是一步得到，而是一条有损证明链
+  </text>
+  <text
+    x="86"
+    y="142"
+    fill="#a1a1aa"
+    font-family="Inter, PingFang SC, sans-serif"
+    font-size="21"
+  >
+    根据论文 Sections 3-11 与 Table 1 重绘
+  </text>
+
+  <g filter="url(#shadow)" font-family="Inter, PingFang SC, sans-serif">
+    <rect
+      x="90"
+      y="220"
+      width="500"
+      height="210"
+      rx="28"
+      fill="#13263a"
+      stroke="#38bdf8"
+      stroke-width="3"
+    />
+    <text x="135" y="278" fill="#7dd3fc" font-size="25" font-weight="700">
+      精确起点：完整历史 KL
+    </text>
+    <text x="135" y="335" fill="#f8fafc" font-size="24">
+      Dτ = Σₐ Eν[Nₐ(τ)] KL(νₐ‖λₐ)
+    </text>
+    <text x="135" y="382" fill="#cbd5e1" font-size="19">
+      自适应分配、停止时间下仍是恒等式
+    </text>
+    <text x="135" y="412" fill="#67e8f9" font-size="18">
+      账本中唯一原本就完全精确的一步
+    </text>
+
+    <line
+      x1="590"
+      y1="325"
+      x2="705"
+      y2="325"
+      stroke="#a78bfa"
+      stroke-width="4"
+      marker-end="url(#arrow)"
+    />
+    <rect
+      x="720"
+      y="220"
+      width="430"
+      height="210"
+      rx="28"
+      fill="#251c35"
+      stroke="#a78bfa"
+      stroke-width="2"
+    />
+    <text x="760" y="276" fill="#c4b5fd" font-size="25" font-weight="700">
+      压缩到统计量 Y
+    </text>
+    <text x="760" y="330" fill="#f8fafc" font-size="22">Dτ = KL(Pνʸ‖Pλʸ)</text>
+    <text x="760" y="366" fill="#f8fafc" font-size="22">
+      + Eν KL(Pν(·|Y)‖Pλ(·|Y))
+    </text>
+    <text x="760" y="408" fill="#ddd6fe" font-size="18">
+      第二项就是 process defect
+    </text>
+
+    <line
+      x1="1150"
+      y1="325"
+      x2="1265"
+      y2="325"
+      stroke="#a78bfa"
+      stroke-width="4"
+      marker-end="url(#arrow)"
+    />
+    <rect
+      x="1280"
+      y="220"
+      width="430"
+      height="210"
+      rx="28"
+      fill="#311c31"
+      stroke="#f472b6"
+      stroke-width="2"
+    />
+    <text x="1320" y="276" fill="#f9a8d4" font-size="25" font-weight="700">
+      测试与类保证
+    </text>
+    <text x="1320" y="325" fill="#f8fafc" font-size="21">
+      二点错误和 / Bernoulli KL
+    </text>
+    <text x="1320" y="365" fill="#f8fafc" font-size="21">
+      → δ-correct / consistency
+    </text>
+    <text x="1320" y="408" fill="#fbcfe8" font-size="18">
+      test · binary · markov · uniform
+    </text>
+  </g>
+
+  <path
+    d="M1495 430 C1495 515 330 500 330 585"
+    fill="none"
+    stroke="#a78bfa"
+    stroke-width="4"
+    marker-end="url(#arrow)"
+  />
+
+  <g font-family="Inter, PingFang SC, sans-serif">
+    <rect
+      x="90"
+      y="610"
+      width="1620"
+      height="240"
+      rx="30"
+      fill="#171525"
+      stroke="#4c1d95"
+      stroke-width="2"
+    />
+    <text x="135" y="666" fill="#ddd6fe" font-size="25" font-weight="700">
+      后半程：把实例上的真实量替换成理论最优量
+    </text>
+
+    <rect x="135" y="710" width="330" height="92" rx="20" fill="#26203a" />
+    <text
+      x="300"
+      y="744"
+      text-anchor="middle"
+      fill="#f8fafc"
+      font-size="21"
+      font-weight="700"
+    >
+      boundary
+    </text>
+    <text x="300" y="778" text-anchor="middle" fill="#c4b5fd" font-size="17">
+      备择逼近改变答案的边界
+    </text>
+
+    <text x="495" y="766" fill="#a78bfa" font-size="32">→</text>
+    <rect x="545" y="710" width="330" height="92" rx="20" fill="#26203a" />
+    <text
+      x="710"
+      y="744"
+      text-anchor="middle"
+      fill="#f8fafc"
+      font-size="21"
+      font-weight="700"
+    >
+      allocation
+    </text>
+    <text x="710" y="778" text-anchor="middle" fill="#c4b5fd" font-size="17">
+      实际分配换成 max-min 最优分配
+    </text>
+
+    <text x="905" y="766" fill="#a78bfa" font-size="32">→</text>
+    <rect x="955" y="710" width="330" height="92" rx="20" fill="#26203a" />
+    <text
+      x="1120"
+      y="744"
+      text-anchor="middle"
+      fill="#f8fafc"
+      font-size="21"
+      font-weight="700"
+    >
+      asymptotic
+    </text>
+    <text x="1120" y="778" text-anchor="middle" fill="#c4b5fd" font-size="17">
+      T → ∞ 或 δ → 0
+    </text>
+
+    <text x="1315" y="766" fill="#a78bfa" font-size="32">→</text>
+    <rect
+      x="1365"
+      y="700"
+      width="300"
+      height="112"
+      rx="22"
+      fill="#42233e"
+      stroke="#f472b6"
+    />
+    <text
+      x="1515"
+      y="741"
+      text-anchor="middle"
+      fill="#ffffff"
+      font-size="22"
+      font-weight="700"
+    >
+      经典实例相关极限
+    </text>
+    <text x="1515" y="778" text-anchor="middle" fill="#fbcfe8" font-size="17">
+      Lai-Robbins · Wald · T*(ν)
+    </text>
+  </g>
+
+  <text
+    x="90"
+    y="920"
+    fill="#a1a1aa"
+    font-family="Inter, PingFang SC, sans-serif"
+    font-size="19"
+  >
+    账本的目标：不是证明下界“错了”，而是计算每一个不等式究竟丢掉了多少信息。
+  </text>
+</svg>

@@ -28,6 +28,17 @@ paper:
 
 **Bandit regret、序贯检验、最优臂识别和 MDP 探索的许多经典实例相关下界，其实共享一条证明流水线；论文把流水线从“若干不等式”改写成可逐项结算的账本，发现现实算法与渐近下界之间的差距，常常不主要来自采样分配，而来自把算法真实行为替换成全类保证的 uniform 步骤，以及过早进入渐近极限。**
 
+<figure>
+  <img
+    src="/paper-radar/images/information-ledger/proof-chain.svg"
+    alt="从完整交互历史散度到经典序贯下界的信息账本证明链"
+    width="1800"
+    height="980"
+    loading="eager"
+  />
+  <figcaption>图 1：根据论文 Sections 2-5 与 Figure 1 重绘。散度分解是恒等式；process、test、uniform、boundary、allocation 与 asymptotic 等步骤才逐次引入可核算的松弛。</figcaption>
+</figure>
+
 ## 经典下界回答了什么，又隐藏了什么
 
 多臂 Bandit 中，次优臂大约需要被拉取
@@ -65,9 +76,11 @@ Wald 序贯检验和 MDP 探索也有相似的“所需信息 / 每次采样信�
 设算法在实例 `ν` 与备择实例 `λ` 上运行到停止时间 `τ`，第 `a` 个臂被拉取 `N_a(τ)` 次。完整交互历史分布之间的相对熵严格等于：
 
 ```text
-KL(Pν(history) || Pλ(history))
-= Σa Eν[N_a(τ)] · KL(νa || λa)
+Dτ = KL(Pν|Fτ || Pλ|Fτ)
+   = Σa Eν[Na(τ)] KL(νa || λa)
 ```
+
+符号逐项解释如下：`Fτ` 是直到停止时间 `τ` 为止的完整交互历史 σ-代数；`Pν|Fτ` 与 `Pλ|Fτ` 是同一个自适应算法分别在真实实例 `ν` 和备择实例 `λ` 下诱导的历史分布；`N_a(τ)` 是臂 `a` 被选择的次数；`KL(ν_a || λ_a)` 是选择一次该臂所获得的平均对数似然比。左边 `D_τ` 是整条路径的可辨识信息，右边把它精确结算到每个动作。
 
 这个式子对自适应算法成立，不要求固定采样、不要求独立分配，也不要求算法一致。因为选择动作的概率只依赖已经观察到的历史，在两个环境的似然比中会抵消。
 
@@ -89,15 +102,15 @@ Bandit regret 下界常被理解为“每个次优臂必须拉够次数”，更
 - 归一化拉取次数 `N_b(T)/T`；
 - 是否拒绝原假设。
 
-数据处理不等式告诉我们，压缩后 KL 不会增加。论文用 KL 链式法则把它写成精确分解：
+若把完整历史压缩为统计量 `Y = φ(Fτ)`，数据处理不等式告诉我们，压缩后 KL 不会增加。论文先用 KL 链式法则把它写成精确分解：
 
 ```text
-完整历史 KL
-= 统计量分布的 KL
-+ 给定统计量后的条件历史 KL
+Dτ
+= KL(PνY || PλY)
+  + Eν[KL(Pν(· | Y) || Pλ(· | Y))]
 ```
 
-最后一项就是 **process defect**：统计量没有保留的全部区分信息。
+第一项是只观察 `Y` 时还能保留的信息；第二项是在知道 `Y` 后，完整轨迹仍能区分两个实例的条件 KL，也就是 **process defect**。到这里依然是恒等式；只有把第二项直接丢掉、写成数据处理不等式时，证明才发生第一笔真正的信息损失。
 
 若每个臂来自单参数自然指数族，那么“每臂拉取次数 + 每臂奖励和”是充分统计量，条件 KL 为零。也就是说，不是所有压缩都必然丢信息；丢失来自选择了比充分统计量更粗的对象。
 
@@ -105,13 +118,13 @@ Bandit regret 下界常被理解为“每个次优臂必须拉够次数”，更
 
 ## Coincidence ledger：从 KL 端点扩展到整条倾斜路径
 
-论文定义实例 `ν` 与 `λ` 在倾斜参数 `s` 下的 coincidence divergence，并证明：
+设 `L_t = log(dPν|Ft / dPλ|Ft)` 为截至时间 `t` 的路径对数似然比，`c_a(s)` 是臂 `a` 在倾斜参数 `s ∈ [0,1]` 下的单步 coincidence 修正项。论文证明：
 
 ```text
-exp(s × 路径对数似然比 + Σa N_a(t) × c_a(s))
+Mt(s) = exp(sLt + Σa Na(t) ca(s))
 ```
 
-在 `λ` 下是均值为 1 的鞅。
+在 `λ` 下是均值为 1 的鞅。`s=0` 与 `s=1` 对应两端实例，`s=1/2` 对应 Hellinger/Bhattacharyya 中点；因此它不是只在 KL 端点记账，而是把整条指数倾斜路径都纳入同一对象。
 
 当 `s` 走到端点，求导会回到前面的 KL 散度分解；当 `s = 1/2`，得到 Bhattacharyya 点，对应两种历史分布几何平均的重合程度。
 
@@ -121,13 +134,21 @@ exp(s × 路径对数似然比 + Σa N_a(t) × c_a(s))
 
 对任意事件 `E`，论文在 Bhattacharyya 点得到有限时间错误和下界。它不要求算法一致，也不要求 `T -> ∞`。与常用 Bretagnolle-Huber 界相比，新形式把指数里的路径 KL 换成两倍路径 Bhattacharyya divergence。
 
-二者差值严格等于一个非负 KL：
+记累计中点 coincidence divergence 为 `C_T(1/2)`，有限时间错误和满足：
 
 ```text
-路径 KL - 2 × 路径 Bhattacharyya divergence >= 0
+Pν(Eᶜ) + Pλ(E)
+≥ 1 − √(1 − exp(−2CT(1/2)))
 ```
 
-对于固定分配、两个均值很接近的 Bernoulli 或等方差 Gaussian 臂，单次 KL 与两倍 Bhattacharyya divergence 的比值接近 **2**。因此新界的指数可能有接近两倍的改进。
+这里 `Pν(Eᶜ)` 是真实实例下犯错，`Pλ(E)` 是备择实例下仍作出原决策；两者之和衡量两个世界在有限 `T` 内有多难区分。它与路径 KL 的关系不是近似，而有精确恒等式：
+
+```text
+DT − 2CT(1/2)
+= 2 KL(Pν || P^(1/2)) ≥ 0
+```
+
+`P^(1/2)` 是由 `Pν` 与 `Pλ` 的几何平均归一化得到的中点倾斜路径分布。因此 `2C_T(1/2) ≤ D_T`，用中点重合度得到的错误界不会比直接代入 KL 更弱。对于固定分配、两个均值很接近的 Bernoulli 或等方差 Gaussian 臂，单次 KL 与两倍 Bhattacharyya divergence 的比值接近 **2**，新界的指数可能有接近两倍的改进。
 
 但这个“2”不能不加条件地搬到自适应算法上。标准 Bandit 算法会在证据足够时停止探索某个次优臂，使路径似然比更集中，实际路径比值会随时间下降到接近 1。
 
@@ -173,14 +194,24 @@ MovieLens 一臂扰动实验验证了这一点：固定分配的 per-pull factor
 论文还定义每臂 transported fraction：
 
 ```text
-E[N_b(T)] × d(μ_b, μ*) / log T
+Ib(T) / log T
+= Eν[Nb(T)] d(μb, μ*) / log T
 ```
 
-它比总 regret ratio 更细，因为总比率会把所有次优臂平均。MovieLens 上，IMED 各臂的 transported fraction 从 0.42 到 0.77，而总 regret ratio 是 0.56；同一个总数背后，不同臂到达渐近要求的程度不同。
+`I_b(T)` 是臂 `b` 到时间 `T` 实际运输的信息量，`μ*` 是最优臂均值，`d(μ_b, μ*)` 是相应指数族的单次 KL。Lai-Robbins 渐近要求相当于该比例最终至少接近 1。它比总 regret ratio 更细，因为总比率会把所有次优臂平均。MovieLens 上，IMED 各臂的 transported fraction 从 0.42 到 0.77，而总 regret ratio 是 0.56；同一个总数背后，不同臂到达渐近要求的程度不同。
 
 ## 真实实例二：识别算法的主要成本常常不是分配
 
 论文用 34 个 CIFAR-10 分类器、11 个 MMLU 语言模型和 22 个燕麦品种构造 best-arm identification。
+
+这类固定置信度问题的经典复杂度由 characteristic time 给出：
+
+```text
+T*(ν)⁻¹
+= supw infλ∈Alt(ν) Σa wa KL(νa || λa)
+```
+
+`w` 是采样比例向量，`Alt(ν)` 是答案与真实实例 `ν` 不同的全部备择集合。内层寻找当前分配下最难区分的备择，外层选择最大化最坏信息率的分配；所以 `T*(ν)` 是理想算法每积累一单位判别证据所需的实例相关时间尺度。把算法的实际访问比例替换为这个 max-min 解，就是账本中的 **allocation relaxation**；再把真实错误替换为对所有实例都成立的 `δ`，则进入 **uniform relaxation**。
 
 Track-and-Stop、T3C 等算法使用 `δ`-correct 停止阈值时，最大差额通常是 **uniform 项**：算法在最难备择上的真实错误概率往往远低于名义 `δ`，因此停止规则收集了比经典下界要求更多的信息。
 
@@ -190,6 +221,17 @@ Track-and-Stop、T3C 等算法使用 `δ`-correct 停止阈值时，最大差额
 - Kaufmann-Koolen 阈值下为 **36 到 42 nats**；
 - `δ = 0.1` 时，Track-and-Stop 与 T3C 可达到极限的 **9 到 15 倍**；
 - allocation 项对自适应算法最多约 10.6 nats，而 round-robin 可达 75 到 215 nats。
+
+<figure>
+  <img
+    src="/paper-radar/images/information-ledger/empirical-findings.svg"
+    alt="信息账本在 MovieLens、CIFAR-10、MMLU 与序贯检验上的主要实证发现"
+    width="1600"
+    height="900"
+    loading="lazy"
+  />
+  <figcaption>图 2：根据论文 Figures 5-11 与 Tables 2-4 重绘。有限时间差额往往由 uniform/asymptotic 或 process 项主导，而不是一概由 allocation 不佳造成。</figcaption>
+</figure>
 
 这改变了一个常见直觉：高级识别算法已经较接近最优分配，继续优化采样权重未必是最大收益来源；阈值校准与“名义风险远小于实际需要”可能更重要。
 

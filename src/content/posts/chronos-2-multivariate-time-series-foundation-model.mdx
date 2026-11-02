@@ -47,6 +47,27 @@ Chronos-2 基于 T5 风格的 120M encoder-only Transformer。每个 block 交�
 1. **Time Attention**：同一条序列内部，跨时间 patch 聚合信息；
 2. **Group Attention**：同一个时间 patch 上，同组序列之间交换信息。
 
+<figure>
+  <img
+    src="/paper-radar/images/chronos-2/architecture.svg"
+    alt="Chronos-2 从逐序列归一化、patch embedding、时间注意力到组注意力和分位数输出的架构"
+    width="1700"
+    height="920"
+    loading="eager"
+  />
+  <figcaption>图 1：根据论文 Figures 1-2 与模型描述重绘。时间注意力沿每条序列建模动态，组注意力只在相同 patch 位置交换跨变量信息。</figcaption>
+</figure>
+
+如果把所有序列的 patch 表示记为张量 `H ∈ R^(G×P×d)`，其中 `G` 是组内序列数、`P` 是时间 patch 数、`d` 是隐藏维度，那么两种注意力可以抽象为：
+
+```text
+Htime = Attntime(H)
+
+Hgroup[:, t, :] = Attngroup(H[:, t, :])
+```
+
+第一式固定序列索引，在 `P` 个时间 patch 上做 self-attention；第二式固定时间位置 `t`，让 `G` 条目标或协变量相互读取。实际网络把两者交替堆叠，因此某条协变量在早期时间点出现的信号，可以先沿时间传播，再通过 group attention 影响另一个目标序列，而不是只做同一时刻的线性相关。
+
 这里的 group 是一个灵活接口，不是固定数据格式。一个组可以是：
 
 - 单条序列；
@@ -67,9 +88,27 @@ Chronos-2 基于 T5 风格的 120M encoder-only Transformer。每个 block 交�
 - 未知未来目标用零填充并通过 mask 标记；
 - 通过 quantile head 一次输出多个分位数。
 
+对第 `i` 条序列，论文先用历史窗口内的位置与尺度统计量做逐序列归一化，可概括为：
+
+```text
+zi,t = (xi,t − μi) / si
+```
+
+`x_{i,t}` 是原始观测，`μ_i` 与 `s_i` 只由该序列可见历史计算，`z_{i,t}` 才进入 patch embedding。逐序列缩放让同一个 120M 模型能同时处理流量、价格、温度与百分比；输出分位数最后再乘回 `s_i`、加回 `μ_i`。这一步不会消除组内关系，因为 attention 仍能观察标准化后的共同形状与 lead-lag，但绝对量纲关系需要通过历史上下文间接恢复。
+
 模型最多接受 **8192** 个历史时间步，并一次预测最多 **1024** 个未来时间步。它不做逐点 autoregressive decoding，因此长预测范围不会按 horizon 重复完整前向计算。
 
 输出是从 0.01 到 0.99 的边际分位数，而不是假设高斯分布的均值/方差。这使模型可以表达偏斜或多峰边际不确定性，并覆盖稀有事件区间。
+
+每个分位数 `q` 使用 pinball loss。令残差 `u = y − ŷ_q`：
+
+```text
+ρq(u) = u (q − 1[u < 0])
+
+L = Σq ρq(y − ŷq)
+```
+
+当真实值高于预测时，损失斜率为 `q`；低于预测时，斜率为 `q-1`。因此 `q=0.9` 会更重地惩罚低估，训练出的 `ŷ_0.9` 对应条件分布的第 90 百分位。需要特别注意：这些输出分别约束每个变量、每个时间点的**边际分布**，并没有定义一条跨时间、跨变量的联合随机轨迹；这正是论文在概率情景生成上的能力边界。
 
 ## 数据：真实多变量数据少，就合成“关系语法”
 
@@ -116,6 +155,17 @@ Chronos-2 基于 T5 风格的 120M encoder-only Transformer。每个 block 交�
 - SQL skill score提高 **4.7 个百分点**；
 - MASE win rate 提高 **9.0 个百分点**；
 - SQL win rate 提高 **7.2 个百分点**。
+
+<figure>
+  <img
+    src="/paper-radar/images/chronos-2/results.svg"
+    alt="Chronos-2 在通用预测基准、协变量任务和层级一致性案例中的关键结果"
+    width="1600"
+    height="920"
+    loading="lazy"
+  />
+  <figcaption>图 2：根据论文 Figures 3-10 与 Tables 1-5 重绘。图中同时展示通用基准优势、气象协变量带来的水文增益，以及 group attention 对层级一致性的改善。</figcaption>
+</figure>
 
 启用 group attention 相比独立预测，win rate 提高 **10.7 个百分点**，skill score 提高 **4.1 个百分点**。这说明优势不只是更强的单变量预训练，跨序列 ICL 是实质贡献。
 
@@ -173,6 +223,14 @@ Chronos-2 在一张 A10G 上处理 100 条序列平均少于 1 秒，论文给�
 
 - Tourism-Q：3.8% 降至 **2.0%**；
 - Tourism-M：15.2% 降至 **4.4%**。
+
+论文对第 `i` 条层级序列、第 `t` 个预测点使用的相对 coherence error 为：
+
+```text
+|(S ŷb)i,t − ŷi,t| / |ŷi,t|
+```
+
+`ŷ_b` 是所有 bottom-level 序列的预测，`S` 是已知的层级求和矩阵，`Sŷ_b` 是按照层级定义重建出的聚合预测，`ŷ_i` 是模型直接给出的第 `i` 个层级预测。误差为 0 才表示上下层严格相加一致。Chronos-2 推理时并未拿到 `S`，所以误差下降说明 group attention 从历史共同变化中学到了一部分聚合结构；但 2.0% 和 4.4% 仍不是严格一致，真正用于预算或库存约束时仍需要 reconciliation。
 
 再做简单 bottom-up reconciliation 后，Chronos-2 ICL 的 median SQL 分别为 **0.56** 和 **0.60**，优于专门训练的 HierE2E、ETS 与 ARIMA。group attention 因此不仅学习相关性，也隐式捕捉了部分聚合关系。
 

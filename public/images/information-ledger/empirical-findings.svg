@@ -1,0 +1,139 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1600"
+  height="900"
+  viewBox="0 0 1600 900"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">信息账本在现实实例上的主要诊断结果</title>
+  <desc id="desc">
+    展示 MovieLens regret、best-arm identification、Wald SPRT 和 Bhattacharyya
+    path factor 的关键数字。
+  </desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#10101a" />
+      <stop offset="1" stop-color="#2a1732" />
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" rx="36" fill="url(#bg)" />
+  <text
+    x="86"
+    y="92"
+    fill="#f8fafc"
+    font-family="Inter, PingFang SC, sans-serif"
+    font-size="42"
+    font-weight="700"
+  >
+    账本揭示：离极限远，不一定是 allocation 做得差
+  </text>
+  <text
+    x="86"
+    y="140"
+    fill="#a1a1aa"
+    font-family="Inter, PingFang SC, sans-serif"
+    font-size="21"
+  >
+    根据论文 Figures 1-6 与 Section 12 重绘
+  </text>
+  <g font-family="Inter, PingFang SC, sans-serif">
+    <rect
+      x="90"
+      y="205"
+      width="690"
+      height="255"
+      rx="28"
+      fill="#17172a"
+      stroke="#6366f1"
+    />
+    <text x="135" y="260" fill="#a5b4fc" font-size="24" font-weight="700">
+      MovieLens regret，T = 20,000
+    </text>
+    <text x="135" y="335" fill="#ffffff" font-size="54" font-weight="700">
+      53%-81%
+    </text>
+    <text x="135" y="382" fill="#cbd5e1" font-size="20">
+      渐近最优算法 / Lai-Robbins 极限
+    </text>
+    <text x="135" y="425" fill="#c4b5fd" font-size="18">
+      uniform + asymptotic 项解释了“低于极限”
+    </text>
+
+    <rect
+      x="820"
+      y="205"
+      width="690"
+      height="255"
+      rx="28"
+      fill="#25172b"
+      stroke="#ec4899"
+    />
+    <text x="865" y="260" fill="#f9a8d4" font-size="24" font-weight="700">
+      Best-arm identification
+    </text>
+    <text x="865" y="335" fill="#ffffff" font-size="54" font-weight="700">
+      13-17 nats
+    </text>
+    <text x="865" y="382" fill="#cbd5e1" font-size="20">
+      GK 阈值下常见的 uniform 额外信息
+    </text>
+    <text x="865" y="425" fill="#fbcfe8" font-size="18">
+      通常大于自适应算法的 allocation gap
+    </text>
+
+    <rect
+      x="90"
+      y="505"
+      width="690"
+      height="255"
+      rx="28"
+      fill="#19241f"
+      stroke="#10b981"
+    />
+    <text x="135" y="560" fill="#6ee7b7" font-size="24" font-weight="700">
+      Wald SPRT
+    </text>
+    <text x="135" y="635" fill="#ffffff" font-size="54" font-weight="700">
+      0.1%-0.8%
+    </text>
+    <text x="135" y="682" fill="#cbd5e1" font-size="20">
+      相对“算法真实错误率”信息界的超额样本
+    </text>
+    <text x="135" y="725" fill="#a7f3d0" font-size="18">
+      过程本身近乎高效，名义阈值保守才是主因
+    </text>
+
+    <rect
+      x="820"
+      y="505"
+      width="690"
+      height="255"
+      rx="28"
+      fill="#241d31"
+      stroke="#8b5cf6"
+    />
+    <text x="865" y="560" fill="#c4b5fd" font-size="24" font-weight="700">
+      Bhattacharyya path factor
+    </text>
+    <text x="865" y="635" fill="#ffffff" font-size="54" font-weight="700">
+      2.12-2.26 → 1.03-1.40
+    </text>
+    <text x="865" y="682" fill="#cbd5e1" font-size="20">
+      固定分配 per-pull → 自适应 T = 3,000
+    </text>
+    <text x="865" y="725" fill="#ddd6fe" font-size="18">
+      “近两倍”收益不会原封不动保留到长时自适应路径
+    </text>
+  </g>
+  <text
+    x="90"
+    y="840"
+    fill="#a1a1aa"
+    font-family="Inter, PingFang SC, sans-serif"
+    font-size="19"
+  >
+    核心诊断：先校准 uniform / asymptotic /
+    process，再决定是否继续优化采样分配。
+  </text>
+</svg>

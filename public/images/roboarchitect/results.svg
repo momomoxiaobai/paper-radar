@@ -1,0 +1,210 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1600"
+  height="900"
+  viewBox="0 0 1600 900"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">RoboArchitect 主要实验结果</title>
+  <desc id="desc">
+    比较裸策略、一次性 Harness 与迭代 Harness 在未见场景、未见任务和统一 Harness
+    held-out 上的平均成绩。
+  </desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#07151a" />
+      <stop offset="1" stop-color="#0f2f2c" />
+    </linearGradient>
+    <linearGradient id="good" x1="0" y1="1" x2="0" y2="0">
+      <stop stop-color="#059669" />
+      <stop offset="1" stop-color="#5eead4" />
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" rx="36" fill="url(#bg)" />
+  <text
+    x="88"
+    y="90"
+    fill="#f8fafc"
+    font-family="Inter, PingFang SC, sans-serif"
+    font-size="42"
+    font-weight="700"
+  >
+    不更新权重，平均 held-out 成绩仍大幅提升
+  </text>
+  <text
+    x="88"
+    y="138"
+    fill="#94a3b8"
+    font-family="Inter, PingFang SC, sans-serif"
+    font-size="21"
+  >
+    根据论文 Tables 1-3 重绘；VLABench 使用官方 progress score，其余为成功率
+  </text>
+
+  <g font-family="Inter, PingFang SC, sans-serif">
+    <line
+      x1="150"
+      y1="720"
+      x2="1480"
+      y2="720"
+      stroke="#64748b"
+      stroke-width="2"
+    />
+    <line
+      x1="150"
+      y1="260"
+      x2="150"
+      y2="720"
+      stroke="#64748b"
+      stroke-width="2"
+    />
+    <text x="95" y="726" text-anchor="end" fill="#94a3b8" font-size="18">
+      0
+    </text>
+    <text x="95" y="614" text-anchor="end" fill="#94a3b8" font-size="18">
+      10
+    </text>
+    <text x="95" y="502" text-anchor="end" fill="#94a3b8" font-size="18">
+      20
+    </text>
+    <text x="95" y="390" text-anchor="end" fill="#94a3b8" font-size="18">
+      30
+    </text>
+    <text x="95" y="278" text-anchor="end" fill="#94a3b8" font-size="18">
+      40%
+    </text>
+    <g stroke="#263746" stroke-width="1">
+      <line x1="150" y1="608" x2="1480" y2="608" />
+      <line x1="150" y1="496" x2="1480" y2="496" />
+      <line x1="150" y1="384" x2="1480" y2="384" />
+      <line x1="150" y1="272" x2="1480" y2="272" />
+    </g>
+
+    <text
+      x="370"
+      y="790"
+      text-anchor="middle"
+      fill="#e2e8f0"
+      font-size="22"
+      font-weight="700"
+    >
+      未见场景平均
+    </text>
+    <rect x="225" y="611" width="90" height="109" rx="12" fill="#475569" />
+    <text x="270" y="596" text-anchor="middle" fill="#cbd5e1" font-size="20">
+      9.7
+    </text>
+    <rect x="330" y="480" width="90" height="240" rx="12" fill="#0e7490" />
+    <text x="375" y="465" text-anchor="middle" fill="#67e8f9" font-size="20">
+      21.4
+    </text>
+    <rect x="435" y="235" width="90" height="485" rx="12" fill="url(#good)" />
+    <text
+      x="480"
+      y="220"
+      text-anchor="middle"
+      fill="#99f6e4"
+      font-size="22"
+      font-weight="700"
+    >
+      43.3
+    </text>
+    <text x="270" y="750" text-anchor="middle" fill="#94a3b8" font-size="15">
+      Bare
+    </text>
+    <text x="375" y="750" text-anchor="middle" fill="#67e8f9" font-size="15">
+      One-shot
+    </text>
+    <text x="480" y="750" text-anchor="middle" fill="#99f6e4" font-size="15">
+      Iterative
+    </text>
+
+    <text
+      x="820"
+      y="790"
+      text-anchor="middle"
+      fill="#e2e8f0"
+      font-size="22"
+      font-weight="700"
+    >
+      未见任务平均
+    </text>
+    <rect x="705" y="578" width="105" height="142" rx="12" fill="#475569" />
+    <text x="757" y="562" text-anchor="middle" fill="#cbd5e1" font-size="20">
+      12.7
+    </text>
+    <rect x="835" y="270" width="105" height="450" rx="12" fill="url(#good)" />
+    <text
+      x="887"
+      y="254"
+      text-anchor="middle"
+      fill="#99f6e4"
+      font-size="22"
+      font-weight="700"
+    >
+      40.2
+    </text>
+    <text x="757" y="750" text-anchor="middle" fill="#94a3b8" font-size="15">
+      Bare
+    </text>
+    <text x="887" y="750" text-anchor="middle" fill="#99f6e4" font-size="15">
+      Iterative
+    </text>
+
+    <text
+      x="1240"
+      y="790"
+      text-anchor="middle"
+      fill="#e2e8f0"
+      font-size="22"
+      font-weight="700"
+    >
+      统一 Harness held-out
+    </text>
+    <rect x="1125" y="699" width="105" height="21" rx="10" fill="#475569" />
+    <text x="1177" y="682" text-anchor="middle" fill="#cbd5e1" font-size="20">
+      1.9
+    </text>
+    <rect x="1255" y="397" width="105" height="323" rx="12" fill="url(#good)" />
+    <text
+      x="1307"
+      y="381"
+      text-anchor="middle"
+      fill="#99f6e4"
+      font-size="22"
+      font-weight="700"
+    >
+      28.8
+    </text>
+    <text x="1177" y="750" text-anchor="middle" fill="#94a3b8" font-size="15">
+      General X-VLA
+    </text>
+    <text x="1307" y="750" text-anchor="middle" fill="#99f6e4" font-size="15">
+      + Harness
+    </text>
+
+    <rect
+      x="1090"
+      y="190"
+      width="390"
+      height="80"
+      rx="20"
+      fill="#12352e"
+      stroke="#10b981"
+    />
+    <text x="1285" y="222" text-anchor="middle" fill="#a7f3d0" font-size="18">
+      持久记忆读取中
+    </text>
+    <text
+      x="1285"
+      y="252"
+      text-anchor="middle"
+      fill="#ffffff"
+      font-size="25"
+      font-weight="700"
+    >
+      92%-99% 能找到可执行记录
+    </text>
+  </g>
+</svg>
