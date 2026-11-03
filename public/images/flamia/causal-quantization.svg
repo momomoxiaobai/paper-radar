@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#07111f"/>
+  <style>.t{fill:#e5eefc;font:600 34px system-ui}.s{fill:#9fb2cc;font:22px system-ui}.h{fill:#67e8f9;font:700 25px system-ui}.b{fill:#10233c;stroke:#28547d;stroke-width:3}.g{fill:#0f766e}.r{fill:#be123c}.y{fill:#f59e0b}.m{fill:#334155}.n{fill:#f8fafc;font:700 22px system-ui}</style>
+  <text x="70" y="70" class="t">因果 mask 挡不住“共享量化尺度”泄漏</text>
+  <text x="70" y="108" class="s">根据 FLAMIA Figure 1 与 Section 3.2 重绘</text>
+  <rect x="70" y="160" width="670" height="620" rx="24" class="b"/>
+  <text x="105" y="210" class="h">A. 普通分组尺度：未来 token 改写过去表示</text>
+  <g transform="translate(125 275)">
+    <rect x="0" y="0" width="510" height="300" rx="16" fill="#0b1729" stroke="#31577c" stroke-width="2"/>
+    <path d="M0 0 L510 300 L510 0 Z" fill="#26384e" opacity=".75"/>
+    <path d="M0 0 L510 300" stroke="#f59e0b" stroke-width="6"/>
+    <text x="25" y="275" class="s">可见区域</text><text x="360" y="55" class="s">masked</text>
+    <rect x="110" y="120" width="300" height="54" rx="10" fill="#0f766e" opacity=".8"/>
+    <circle cx="365" cy="147" r="25" class="r"/><text x="353" y="155" class="n">F</text>
+    <text x="70" y="216" class="s">同一 scale group 横跨因果边界</text>
+  </g>
+  <text x="105" y="640" class="s">s = max |Vⱼ| / qmax</text>
+  <text x="105" y="682" class="s">未来值 F 变大 → s 变大 → 过去 V 的 code 重新舍入</text>
+  <text x="105" y="724" class="s">因此 Oᵢ 会依赖被 mask 的未来输入。</text>
+  <rect x="805" y="160" width="725" height="620" rx="24" class="b"/>
+  <text x="840" y="210" class="h">B. FLAMIA：只在危险位置使用局部尺度</text>
+  <g transform="translate(865 280)">
+    <rect x="0" y="0" width="600" height="210" rx="16" fill="#0b1729" stroke="#31577c" stroke-width="2"/>
+    <rect x="35" y="65" width="120" height="72" rx="12" class="g"/><rect x="165" y="65" width="120" height="72" rx="12" class="g"/>
+    <rect x="295" y="65" width="120" height="72" rx="12" fill="#0891b2"/><rect x="425" y="65" width="120" height="72" rx="12" class="r"/>
+    <text x="70" y="110" class="n">K₁</text><text x="200" y="110" class="n">K₂</text><text x="330" y="110" class="n">K₃</text><text x="460" y="110" class="n">K₄</text>
+    <path d="M285 25 V180" stroke="#f59e0b" stroke-width="5" stroke-dasharray="10 8"/>
+    <text x="178" y="195" class="s">query i 的可见边界</text>
+  </g>
+  <text x="840" y="555" class="s">• 对角 tile：V/K 按 key 给独立 2 的幂尺度</text>
+  <text x="840" y="600" class="s">• 非对角 tile：保留便宜的 token-block scale</text>
+  <text x="840" y="645" class="s">• dQ：每个 query 只由它能看到的 key 定标</text>
+  <text x="840" y="690" class="s">• forward / backward 复用同一量化表示与数值约定</text>
+  <rect x="70" y="820" width="1460" height="4" fill="#22d3ee" opacity=".65"/>
+  <text x="70" y="862" class="s">关键点：因果性不仅是 attention mask 的属性，也是 quantizer、scale 统计范围和 backward 实现的属性。</text>
+</svg>

@@ -1,0 +1,174 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-03T16:22:00+08:00
+title: "算法重访：POMDP 只有 B bit 记忆时，究竟丢掉了多少控制能力？"
+featured: true
+category: classic-algorithms
+tags:
+  - pomdp
+  - finite-state-controller
+  - information-theory
+  - belief-compression
+  - control
+description: "解读有限记忆 POMDP 的信息论下界与 RECAP 控制器：decision witness 如何把记忆不足变成价值损失，为什么应压缩 predictive prior，以及覆盖、闭包与 action regret 怎样共同设计有限状态机。"
+paper:
+  title: "Finite-Memory Control of POMDPs: Fundamental Limits and Efficient Design"
+  venue: "arXiv preprint, 2026"
+  paperUrl: "https://arxiv.org/abs/2611.03414"
+  pdfUrl: "https://arxiv.org/pdf/2611.03414"
+  codeUrl: "https://github.com/RECAP-research/RECAP"
+  score: 91
+  scoreNote: "推荐理由：论文把 B-bit 记忆限制写成 decision witness/Fano 型价值下界，再让 RECAP 的 predictive-prior codebook 对应上界中的误差项，理论与算法互相解释；主要扣分来自实验仍是小型有限 POMDP、依赖已知模型与 pilot belief cloud、下界质量依赖 witness 设计，尚未扩展到神经或连续状态。"
+---
+
+> [!NOTE]
+> 论文于 **2026 年 11 月 2 日**首次公开。本文把它归入“算法重访”，因为它重新回答了 POMDP 的经典问题：历史是充分的，belief 是 Markov 的，但真实控制器只有有限内存时，应该保留哪一部分信息？
+
+## 一句话结论
+
+**有限记忆不是“用短一点的 RNN”这么简单，而是把整段交互历史有损压缩成至多 `2^B` 个状态。论文用 decision witness 证明：只要不同 belief 区域要求不同最优动作，B bit 记忆无法区分它们就必然产生价值损失；随后提出 RECAP，不量化 observation 后的 posterior，而量化下一次 observation 前的 predictive prior，并围绕覆盖、递归闭包和 action regret 设计 codebook，在 11 个有限 POMDP 中拿到 9 个第一或并列第一。**
+
+<figure><img src="/paper-radar/images/finite-memory-pomdp/witness-bound.svg" alt="Decision witness 如何将 B bit 记忆的信息瓶颈转化为价值损失" width="1600" height="900" loading="eager"/><figcaption>图 1：根据 Theorem 1 与 tracking example 重绘。有限状态控制器必须压缩 history，而观测仍有歧义时，残余分类错误会变成 action gap。</figcaption></figure>
+
+## 问题定义：一个控制器能记住多少历史
+
+POMDP 写作：
+
+```text
+e = (P_e, O_e, r_e, ξ_e, γ)
+```
+
+`P_e` 是状态转移，`O_e` 是观测模型，`r_e` 是奖励，`ξ_e` 是初始分布，`γ∈(0,1)` 是折扣。完全 history-dependent 策略可以利用从起点到现在的一切；B-bit finite-state controller 的内部状态 `Z_t` 至多有：
+
+```text
+|Z| ≤ 2^B
+```
+
+记无限记忆最优价值为 `V_e*`，受 B-bit 约束的最优价值为 `V_e*(B)`，论文关心：
+
+```text
+D_e(B) = V_e* − V_e*(B)
+```
+
+它不是某个算法的 regret，而是环境在给定记忆预算下无法消除的最佳差距。有限状态机相当于编码器：
+
+```text
+history H_t → memory Z_t → action A_t
+```
+
+如果两个历史被压到同一 `Z_t`，控制器只能结合当前 observation 区分它们。若 observation 仍然 alias，而两个 posterior belief 要求不同动作，损失就不可避免。
+
+## Decision witness：把“记不住”变成可计算的行动损失
+
+论文构造 decision witness `(ψ, Y, a*, η)`。映射 `ψ` 把 belief/history 分成标签 `Y`；每个标签有一个应采取的动作 `a*(Y)`；margin `η` 保证跨标签采取错误动作时，Q-value 至少下降 `η`。
+
+Theorem 1 的结构可以概括为：
+
+```text
+memory gap at time t
+≥ γ^t · η · P(E_t) · residual-classification-error(Y_t | Z_t, observation)
+```
+
+`γ^tη` 是此时选错动作对初始价值的折扣影响，`P(E_t)` 是 witness 条件出现频率，最后一项是知道当前 observation 和 B-bit memory 后仍无法判断 label 的概率。论文用 Fano 型信息界把它写成 label entropy 与 mutual information 的函数；因为 `Z_t` 只有 B bit，它能携带的信息受限。
+
+这比“belief quantization error 大，所以性能差”更锋利：只有与动作选择有关的 belief 区分才应收费。两个 belief 的 TV distance 很远，但若最优动作相同，有限控制器没有必要把它们分开；反过来，距离很近但位于决策边界两侧，也可能值得用一个 memory state 专门区分。
+
+## Tracking 特例：下界量级可以达到
+
+在含 K 个隐藏类别的 tracking POMDP 中，B-bit memory 最多编码 `2^B` 个类别。论文给出与下式成比例的损失：
+
+```text
+1 − 2^B / K
+```
+
+当 observation noise 参数 `p=0` 且 `2^B` 整除 `K` 时，下界可达到。直觉是控制器只能完整保留 `2^B` 个类别，其余类别必须碰撞。这个特例说明 Fano 项不只是证明技术造成的松弛，记忆容量与隐藏类别数量的比率确实可以直接决定最优价值。
+
+## 为什么 RECAP 存 predictive prior，而不是 posterior belief
+
+经典 belief-state controller 在观察 `Y_t` 后得到 posterior `b_t`，执行动作后经转移得到下一时刻 observation 前的 predictive prior `ν_{t+1}`。RECAP 把 codebook 定义在 predictive prior 空间：
+
+```text
+representative prior ν^z
+→ observe y, Bayes correction
+→ plan / choose action a
+→ transition prediction ν'
+→ nearest representative enc_C(ν')
+```
+
+这样 memory `Z_t=z` 与当前 observation `Y_t` 维持清晰分工：memory 保存跨时间传递的 prior，实时 observation 完成 correction。这个拆分也与下界一致——Theorem 1 正是在“有限 memory + 当前 observation”条件下计算残余歧义。
+
+最近邻量化使用 total variation：
+
+```text
+enc_C(ν) = argmin_z TV(ν, ν^z)
+TV(p,q) = 1/2 Σ_s |p(s)−q(s)|
+```
+
+选择 TV 是因为 bounded reward 下，它能控制 belief 变化导致的期望价值变化；但 codebook 不只最小化几何覆盖，还要关心量化后的 prior 经观测、动作、转移后是否仍靠近 codebook。
+
+<figure><img src="/paper-radar/images/finite-memory-pomdp/recap-cycle.svg" alt="RECAP predictive prior correction planning prediction and recompression cycle" width="1600" height="900" loading="lazy"/><figcaption>图 2：根据论文 Figure 1、Theorem 2 与 Table 1 重绘。RECAP 把有限状态机设计成对 predictive prior 的递归量化器。</figcaption></figure>
+
+## Theorem 2：上界把性能差距拆成五笔账
+
+RECAP 对 representative prior 调用有限 horizon planner，并可加入 regularization。Theorem 2 把价值差距分为：
+
+1. **finite-horizon planner error**：截断规划没看到足够远；
+2. **regularization bias**：为稳定/平滑动作加入正则造成偏差；
+3. **correction sensitivity**：prior 小误差经 Bayes correction 被稀有 observation 放大；
+4. **initial compression error**：初始分布到 codebook 的距离；
+5. **recursive reprojection error**：每次 prediction 后重新压回 codebook 的累计误差。
+
+这五项直接导出 codebook 目标。论文使用：
+
+- predictive coverage：pilot prior cloud 到代表点的距离；
+- recursive closure：代表点经 correction/action/prediction 后仍能回到 codebook 邻域；
+- action regret：合并两个 prior 是否会改变应选动作；
+- incompatibility penalty：阻止决策上冲突的点被同一 medoid 吸收。
+
+局部 medoid-style search 从 pilot cloud 选代表点，只接受严格降低目标的 swap，因此单次优化单调，但不保证全局最优。与 k-center 或 belief k-medoids 相比，它的特别之处是把“下一步还能不能被同一个有限状态机表示”和“动作是否兼容”写进设计目标。
+
+## 实验：为什么有限窗口经常不是好记忆
+
+实验包含 11 个经典有限 POMDP，3 个设计 seeds，每个 controller 评测 1000 episodes、最长 128 steps，并给各环境分配 B-bit memory budget。RECAP 在 9/11 个环境第一或并列第一，其余两个第二。
+
+典型结果包括：
+
+| 环境 | B | RECAP | 强对照现象 |
+|---|---:|---:|---|
+| shuttle | 3 | 32.94±4.81 | 与最优 memory controller 持平，窗口法明显更低 |
+| mini_hall2 | 4 | 2.72±0.57 | 与最佳并列，局部观测有确定性歧义 |
+| 4x4 | 4 | 3.71±0.48 | 接近最优 3.73，agent 几乎只能靠记忆定位 |
+
+`shuttle、4x4、4x5x2` 的观测几乎不给位置或严重 alias，固定长度 observation window 会忘掉很久以前但仍与控制相关的证据；predictive prior 则能把旧证据压成当前状态分布。另一方面，纯 coverage 方法可能把常见但决策无关的 observation 分得很细，却合并稀有的 action-separating beliefs。
+
+## 工程启示：Agent memory 也可以这样审计
+
+虽然实验是小型 POMDP，思想可以迁移到 Agent memory：
+
+- 不以“文本相似”决定是否合并记忆，而以未来行动是否不同；
+- memory state 要对下一步更新闭合，否则每轮都会漂出表示空间；
+- 当前 observation/tool result 与跨轮 memory 应分工，避免把瞬时信息永久写入；
+- 评估有限记忆要构造 action witness：哪些历史差异在未来确实会改变工具、权限或恢复动作；
+- 预算应按 bit/state 数明确比较，而不是一个方法存 100 条摘要、另一个只存 10 条。
+
+## 局限与风险
+
+Theorem 1 的数值质量依赖 witness 设计；找不到好的 action-separating partition，不代表环境没有记忆下界。RECAP 假设有限 POMDP 模型可计算，并依赖 pilot belief cloud 覆盖实际轨迹；分布外 prior 可能完全没有代表点。planner 随 horizon 与 observation 空间指数增长。实验仅是 CPU 上的小状态、离散动作环境，还不是连续控制、神经 belief encoder 或 Web Agent 的可扩展方案。最后，TV 最近邻对稀有但关键状态仍可能不敏感，需要 risk-aware 或 task-weighted distance。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么压缩 belief 的几何误差小，不代表控制损失小？</summary><div class="thought-answer">价值函数在决策边界附近可能不平滑。两个 belief 的 TV 很近，却分别让不同动作最优，合并会产生至少 η 的 action gap；两个很远的 belief 若最优动作和后续演化相同，分开反而浪费 memory。控制压缩必须把 action regret 纳入距离。</div></details>
+
+<details class="thought-question"><summary>2. 为什么 predictive prior 比 posterior 更适合做有限状态？</summary><div class="thought-answer">posterior 已混入当前 observation；下一步又会收到新 observation。若把每种 posterior 都当 memory，状态数会随 observation 分裂。predictive prior 把跨时间状态与即时观测分开，同一个 memory state 可在不同 observation 下做 correction，更接近 finite-state controller 的结构。</div></details>
+
+<details class="thought-question"><summary>3. 固定最近 k 步窗口什么时候会特别差？</summary><div class="thought-answer">当很久以前的一次观测确定了隐藏模式，而之后观测长期 alias 时，窗口迟早删除唯一有区分力的证据。belief/predictive prior 会把那次证据递归汇总进当前分布，不必保留原文本。shuttle 与网格定位正是这类结构。</div></details>
+
+<details class="thought-question"><summary>4. Theorem 1 与 Theorem 2 为什么必须一起看？</summary><div class="thought-answer">下界告诉我们哪些 action-separating 信息不能被 B-bit memory 表示，上界告诉我们某个 codebook 因规划、修正与重投影实际损失多少。只有下界无法设计控制器，只有上界也不知道误差是否接近不可避免；二者共同把容量限制与算法缺陷分开。</div></details>
+
+<details class="thought-question"><summary>5. 怎样把 RECAP 思想扩展到 LLM Agent memory？</summary><div class="thought-answer">可以让 memory code 表示“下一轮工具结果到来前的任务状态”，用真实轨迹学习代表状态；更新目标同时包含任务覆盖、执行后的闭包和动作分歧。难点是状态与动作空间巨大、环境模型未知，因此需用 learned world model/critic 估 action regret，并用回放验证闭包，而不能直接套 TV 距离。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2611.03414)
+- [PDF](https://arxiv.org/pdf/2611.03414)
+- [官方代码](https://github.com/RECAP-research/RECAP)

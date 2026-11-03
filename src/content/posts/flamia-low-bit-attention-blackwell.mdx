@@ -1,0 +1,165 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-03T16:20:00+08:00
+title: "FLAMIA 论文解读：低比特 FlashAttention 提速之外，量化尺度也必须满足因果性"
+featured: true
+category: infra
+tags:
+  - flash-attention
+  - low-precision-training
+  - blackwell
+  - quantization
+  - causal-attention
+description: "详细拆解 FLAMIA 如何在 NVIDIA B200/B300 上实现 MXFP8 与混合 NVFP4/FP8 attention，并修复共享量化尺度造成的未来信息泄漏、前后向数值不一致和 packed-document 内存浪费。"
+paper:
+  title: "FLAMIA: FLAsh MIcroscaling Attention for Fast and Causally Safe Training on Blackwell"
+  venue: "arXiv preprint, 2026"
+  paperUrl: "https://arxiv.org/abs/2611.03344"
+  pdfUrl: "https://arxiv.org/pdf/2611.03344"
+  codeUrl: "https://github.com/yandex-research/flamia-blackwell-attention"
+  score: 92
+  scoreNote: "推荐理由：论文不只报告低比特 kernel 速度，而是把因果泄漏、前后向重计算一致性、scale layout、softmax 瓶颈和 packed sequence 统一到可训练实现中，并给出 1B/100B-token 验证；主要扣分来自模型规模仍小、端到端收益依赖 shape/硬件、严格因果选项有额外成本，且 all-4-bit 尚未成为默认优解。"
+---
+
+> [!NOTE]
+> 论文于 **2026 年 11 月 2 日**首次公开。本文依据 31 页 arXiv v1 全文撰写。所有速度区间都依赖 GPU、序列 shape 与是否包含量化开销，不把 kernel 峰值偷换成完整训练吞吐。
+
+## 一句话结论
+
+**Blackwell 上的低比特 Attention 并不是把 BF16 换成 FP8/FP4 就结束了：量化尺度本身可能穿透 causal mask 泄漏未来信息，backward 的重计算若与 forward 略有不同也会累积成训练不稳定。FLAMIA 用可转置复用的 token-block scaling、对角 tile 的 per-key scale、因果 dQ 定标和前后向一致数值约定，在 B200/B300 上取得约 1.06–1.42× 的完整 attention 调用提速，同时把 1B 模型的训练损失维持在接近 BF16 的范围。**
+
+<figure>
+  <img src="/paper-radar/images/flamia/causal-quantization.svg" alt="共享量化尺度如何绕过 causal mask 泄漏未来信息，以及 FLAMIA 的修复" width="1600" height="900" loading="eager" />
+  <figcaption>图 1：根据论文 Figure 1 与 Section 3.2 重绘。因果性不仅由 mask 决定，还取决于 scale 的统计范围。</figcaption>
+</figure>
+
+## 从标准 Attention 看低比特路径的真正难点
+
+单头 Attention 设 `Q,K,V ∈ R^(L×d)`：
+
+```text
+S = QKᵀ / √d
+P = softmax(S)
+O = PV
+```
+
+`L` 是序列长度，`d` 是 head dimension，`S` 是 score，`P` 是归一化概率，`O` 是输出。反向传播会重算 `P`，并形成：
+
+```text
+dV = Pᵀ dO
+dP = dO Vᵀ
+Dᵢ = Σⱼ Pᵢⱼ dPᵢⱼ
+dS = P ∘ (dP − D)
+dQ = dS K
+dK = dSᵀ Q
+```
+
+这里的困难不是矩阵乘法数量，而是同一个张量会沿不同轴参加两次乘法。例如 `Q` 在 `QKᵀ` 中沿 head dimension 收缩，在 `dK=dSᵀQ` 中沿 query 维收缩；`P` 在 `PV` 中沿 key 维收缩，在 `PᵀdO` 中沿 query 维收缩。
+
+微缩浮点格式给一小组数共享 scale：MXFP8 通常 32 个元素共享 UE8M0 scale；NVFP4 是 16 个 E2M1 code 共享 E4M3 scale，并有 tensor-level FP32 scale。硬件 MMA 要求 scale group 对齐 contraction axis，因此朴素方案要为不同乘法方向保存多个量化副本。结果可能出现一个反直觉局面：Tensor Core 更快了，但量化读取、转置副本和 scale 写回反而占据主要时间。
+
+## Token-block scaling：一份 payload 服务两个方向
+
+FLAMIA 对大部分 E4M3 张量采用 token-block scale：连续 32 个 token、完整 head dimension 共用一个 2 的幂指数。`dS` 则以 `32×32` 方块定标。方形 scale region 的关键价值是转置后仍然有效，因此同一份 E4M3 payload 可以同时服务 `dQ` 和 `dK` 的不同收缩方向。
+
+若存储 code 为 `q_Q,q_K`，token block 指数为 `e_Q(i),e_K(j)`，重建 score 可写为：
+
+```text
+S̃ᵢⱼ = 2^(e_Q(i)+e_K(j)) · Σₖ q_Q,ik q_K,jk / √d
+```
+
+行因子可以并入 softmax scale，列因子单独施加，不必先把整块张量反量化回 BF16。混合 NVFP4/FP8 路径只让 score 计算的 `Q/K` 使用 per-token NVFP4；`V、dO、gradient products 的 Q/K、dS、P` 大多保留 E4M3。论文也实现了 all-4-bit，但没有把它设为默认：4-bit MMA 缺少可直接复用的转置布局，六份量化副本让 backward preprocessing 过重，最终更慢且 loss 略差。
+
+## 最重要的发现：causal mask 并不能保证量化后的因果性
+
+假设若干 key 的 `V` 共用：
+
+```text
+s = maxⱼ |Vⱼ| / qmax
+V̂ⱼ = round(Vⱼ / s) · s
+```
+
+对 query `i`，未来 key `j>i` 在 attention score 中会被 mask；但如果未来 `Vⱼ` 抬高了组内最大值，`s` 就会改变。过去可见 key 的 code 会重新舍入，于是 `V̂₁…V̂ᵢ` 发生变化，最终 `Oᵢ` 仍然依赖未来输入。mask 挡住的是矩阵元素，不是量化器的统计量。
+
+FLAMIA 的修复分四层：
+
+1. 不让任何 operand scale 跨越超过 32 个连续位置，并向上取整指数，避免最大值被 clamp 后因未来值改变而解封；
+2. 对 causal diagonal tile 中的 4-bit `V` 使用 per-key power-of-two scale，再把该 scale 折入量化后的 `P`；
+3. backward 中 `V` 参与 `dP`、`K` 参与 `dQ` 时同样做 per-key fold；
+4. `dQ` 的 FP16 accumulator 定标只观察该 query 能看见的 keys，而不使用全序列最大值。
+
+默认快速选项会把极小残差限制在 32-token block 内；论文同时给出 exact 选项，配合 causal dQ scale 可在探针实验中消除测得的过去输出变化。严格选项并非免费，因此工程上要明确“近似因果”与“逐比特因果”的需求边界。
+
+## 前后向一致性：单步梯度相似不等于可训练
+
+FlashAttention 不保存完整 `P`，backward 会从 `Q/K` 和行统计量重算。低精度下，如果 backward 使用了不同量化副本、不同 tile、不同指数近似或不同 diagonal 处理，重算出的 `P` 就不是 forward 中的 `P`。
+
+更隐蔽的是：即便输出和梯度对 FP32 参考的 cosine similarity 很高，结构化误差仍可能跨训练步累积。FLAMIA 因此强制：
+
+- score recomputation 复用 forward 的量化 `Q/K`；
+- forward/backward 复现相同 tiling、指数计算、row-max scaling 和对角决定；
+- `D=dO·O` 使用与 `dP` 一致的量化 `dO` 与相应输出表示；
+- `dS` 每个 `32×32` tile 单独选 scale，减少小梯度被统一舍入为 0。
+
+论文的消融显示，`dS` 中小值归零比例比普通 norm error 更能预测最终训练退化。它提醒我们：低精度训练的稳定性指标不能只有单步最大误差或 cosine similarity，还要观察误差结构与长期累积。
+
+## Kernel 层面：FP8/FP4 并没有消灭 softmax 瓶颈
+
+一个 `128×128` tile 有 16384 次指数计算。B200 的 MUFU 吞吐下，仅这些指数就约需 1024 cycles；所以 Tensor Core 的低比特吞吐翻倍，不代表 attention 端到端翻倍。
+
+FLAMIA 采用三类优化：一部分指数用 clamp polynomial 放到 FMA pipeline；NVFP4 概率在 log domain 先求每 32-key 组最大值，减少逐元素除法与额外 scale pass；B300 上利用更高 MUFU 吞吐和 TMEM reduction 指令，并关闭在 B300 上反成负担的部分 polynomial emulation。backward 使用 2-CTA cluster，共享 MMA operands，并让 correction/quantization 与矩阵乘法交叠。
+
+对 packed documents，kernel 直接读取 document boundaries，不把不同文档互相 attention。131072 tokens 的实验中，packed 输入占 **2.7 GB**，相对 padding 方案的 **16.8 GB** 显著减少内存，但调度和边界处理也更复杂。
+
+<figure>
+  <img src="/paper-radar/images/flamia/results.svg" alt="FLAMIA 速度、训练损失和 packed input 内存结果" width="1600" height="900" loading="lazy" />
+  <figcaption>图 2：根据论文 Tables 1–6 与 Section 4 重绘。速度是不同 shape 的区间，不代表所有训练负载都能达到同一倍数。</figcaption>
+</figure>
+
+## 实验结果如何读
+
+含量化的 forward + backward 完整调用中，MXFP8 相对 BF16 FlashAttention-4：
+
+- B200 上约 **1.10–1.40×**；
+- B300 上约 **1.06–1.42×**；
+- 单看 NVFP4 backward kernel，部分 shape 接近 **2×**，但完整调用会被 quantization、softmax 与 I/O 稀释。
+
+训练验证使用 Llama 风格 1B 模型、100B FineWeb-Edu tokens、8 张 B300：
+
+| Attention | 最后 1000 steps 平均 loss | 下游均值 |
+|---|---:|---:|
+| BF16 FA4 | 2.392 | 0.5832 |
+| MXFP8 | 2.397 | 0.5737 |
+| mixed NVFP4/FP8 | 2.406 | 0.5814 |
+
+结果支持“低精度路径可训练”，但不应解读成 4-bit 已无质量代价：模型只有 1B，训练 100B tokens，下游均值的差异也并非单调。更大的 MoE、超长上下文和 RL 阶段是否同样稳定，仍需验证。
+
+## 工程启示
+
+- 把 quantizer 纳入因果图审计：所有 max、amax、scale、normalization statistics 都要检查是否读取未来位置。
+- forward/backward 的低精度实现应共享语义规范，不要让两个团队各自“近似同一个 softmax”。
+- benchmark 必须同时给 kernel-only 和 quantization-included 结果；前者用于定位硬件上限，后者才接近训练成本。
+- all-4-bit 不是天然优于 mixed precision。应按 operand 的转置复用、动态范围与 tensor-core bound 程度分配精度。
+- 泄漏验证要用反事实探针：固定过去 token，只放大未来 token，检查过去输出和梯度是否改变。
+
+## 局限与风险
+
+第一，严格因果修复会增加 diagonal tile 与 dQ 的额外工作；不同场景要选择默认近似或 exact 模式。第二，速度收益高度依赖 head dimension、序列形状、B200/B300 差异和软件版本。第三，1B/100B-token 训练不足以证明前沿大模型的长期稳定性。第四，低精度误差可能与 optimizer、RoPE、MoE routing、长上下文外推产生新的耦合。第五，代码依赖 Blackwell 专用能力，不能直接外推到 Hopper 或其他加速器。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么 causal mask 正确，模型仍可能看到未来？</summary><div class="thought-answer">mask 只禁止 score 读取未来 key，但共享 scale 是 score 之外的数据依赖。若 scale 的最大值跨过因果边界，未来 token 会改变过去 token 的量化重建值。因果审计必须覆盖 preprocessing、quantization statistics 和 accumulator scaling，而不只是 attention matrix。</div></details>
+
+<details class="thought-question"><summary>2. 为什么同一份量化 payload 能否转置复用，会决定实际速度？</summary><div class="thought-answer">Attention 的同一 operand 会沿不同轴参与两次乘法。如果 scale region 转置后失效，就要再次读取源张量、重新量化并保存副本。量化通常受内存带宽限制，这些副本可能吃掉低比特 MMA 的全部收益。方形 dS block 与 token-block E4M3 正是为跨方向复用设计。</div></details>
+
+<details class="thought-question"><summary>3. 单步梯度 cosine 很高，为什么训练仍会崩？</summary><div class="thought-answer">cosine 把高维误差压成一个角度，无法识别与位置、tile 或符号相关的系统偏差。forward/backward softmax 的结构性错配会在每一步沿相似方向重复，长期累积；大量小 dS 被归零也可能几乎不影响 norm，却持续抹掉特定学习信号。需要训练曲线、反事实泄漏与误差分布联合验证。</div></details>
+
+<details class="thought-question"><summary>4. 为什么 B300 的低比特理论峰值更高，某些优化反而应该关闭？</summary><div class="thought-answer">瓶颈会迁移。B300 的 MUFU exponential throughput 高于 B200，原本用 FMA polynomial 分担指数运算的技巧可能增加调度和指令开销，却不再缓解主瓶颈。硬件感知优化不能按“新 GPU 全部沿用旧技巧”设计，而要重新做 roofline 与消融。</div></details>
+
+<details class="thought-question"><summary>5. 如果要把 FLAMIA 用在 1M context MoE，最先补什么实验？</summary><div class="thought-answer">应先做长时间训练与 checkpoint-resume 一致性，再覆盖不同 document-length distribution、RoPE 区间、MoE routing 和 gradient accumulation。尤其要检查 scale group 是否跨 document boundary、专家路由的小梯度是否因 dS 量化被系统丢弃，以及 exact causal 模式的吞吐/显存成本。只有 1B dense 模型结果不能回答这些问题。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2611.03344)
+- [PDF](https://arxiv.org/pdf/2611.03344)
+- [官方代码](https://github.com/yandex-research/flamia-blackwell-attention)

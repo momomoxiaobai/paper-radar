@@ -1,0 +1,234 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-03T16:23:00+08:00
+title: "DeepSeek-V4.1-Flash 技术报告解读：1M 上下文、890 bytes/token KV 与 Agent 训练基础设施"
+featured: true
+category: foundation-models
+tags:
+  - deepseek
+  - foundation-model
+  - mixture-of-experts
+  - sparse-attention
+  - kv-cache
+  - agent-training
+description: "完整拆解 DeepSeek-V4.1-Flash：552B+196B Engram 的多模态 MoE、CED、CSA2、FP4 KV、SWA Bounded Replay、45T-token 预训练、任务/环境合成、DSec 沙箱与连续 reasoning effort。"
+paper:
+  title: "DeepSeek-V4.1-Flash: Pushing the Limits of KV Cache Compression"
+  venue: "DeepSeek-AI Technical Report, 2026"
+  paperUrl: "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash"
+  pdfUrl: "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/blob/main/DeepSeek_V41_Tech_Report.pdf"
+  codeUrl: "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/tree/main"
+  score: 95
+  scoreNote: "推荐理由：报告把架构、KV 缓存、预训练、多模态、Agent 数据合成、数百万沙箱和可控 reasoning effort 连成完整系统，并公开模型与复现材料；主要扣分来自部分评测为内部框架、极限稀疏检索与 bounded replay 的边界尚未充分刻画，长上下文/事实问答不全面领先，且高风险 Agent 与安全能力仍需更独立评估。"
+---
+
+> [!NOTE]
+> 官方模型仓库于 **2026 年 9 月 10 日**创建，技术报告与模型资料后续更新至 10 月。本文依据 51 页官方技术报告及官方模型卡撰写。模型档案不强求当天发布：这份报告的系统细节比一篇更近但信息稀薄的公告更值得长期收录。
+
+## 一句话结论
+
+**DeepSeek-V4.1-Flash 的主线不是继续堆参数，而是把长上下文 Agent 的“输入贵、KV 贵、环境贵”同时压下去：20 层 causal encoder + 20 层 decoder 让 prefill 每 token 只激活 8B 参数；CSA2、跨层 KV 复用与 FP4 把 global KV 降到 890 bytes/token；SWA Bounded Replay 把持久 KV 约降至 V4-Flash 的 1/8。模型以 45T 多模态 tokens 预训练，post-training 沿用 SFT→RL→OPD，真正的新投入是大规模可验证任务、异构 harness 和数百万并发沙箱。**
+
+<figure><img src="/paper-radar/images/deepseek-v4-1-flash/architecture.svg" alt="DeepSeek-V4.1-Flash CED、CSA2、FP4 KV 与 bounded replay 架构" width="1800" height="1000" loading="eager"/><figcaption>图 1：根据官方技术报告 Figures 2–5 与 Sections 2–3 重绘。890 bytes/token 指常驻 HBM 的 global KV；persistent KV 还通过 bounded replay 进一步降低。</figcaption></figure>
+
+## 规模先说清：不是一个“小模型”
+
+DeepSeek-V4.1-Flash 包含 **552B backbone parameters**，另有 **196B Engram conditional memory parameters**。Transformer 共 40 层，hidden size 5120；所有层都是 MoE，每层 1 个 shared expert、384 个 routed experts，每个 token 激活 6 个 routed experts。
+
+“Flash”指激活量与服务成本，而不是总参数小：
+
+- prefill：每 token 激活约 **8B** 参数；
+- decode：每 token 激活约 **16B** 参数；
+- 上下文：最高 **1M tokens**；
+- 原生输入：文本 + 图片，输出文本。
+
+视觉侧 DeepSeek-ViT 有 32 层、hidden 1024、16 heads、patch size 14，使用 2D-RoPE 与 `3×3` pixel unshuffle；高分辨率阶段支持约 `544×544` 到 `1344×1344`。两层 MLP projector 把视觉 token 接入语言 backbone。
+
+## CED：为什么 prompt 只走一半“大模型”
+
+标准 decoder-only Transformer 的 prompt 要穿过全部 `L` 层，每层都生成自己的 K/V。V4.1 使用 Causal Encoder-Decoder：前 20 层是 causal encoder，后 20 层是 decoder。decoder 每层的 global KV 不从该层 decoder hidden state 计算，而从 encoder 最终表示投影：
+
+```text
+Cˡ = H^(L/2) W_KVˡ
+Zˡ = H^(L/2) W_Zˡ
+```
+
+`H^(L/2)` 是第 20 层 encoder 输出；`Cˡ` 是 decoder 第 `l` 层 main KV，`Zˡ` 是 sparse indexer 相关投影。这样 prompt 的主干计算主要经过 20 层 encoder，decoder 只需为最近 SWA window 做 bounded replay。若 prompt 长度为 `N`、SWA replay 长度为 `n_win`：
+
+```text
+标准 prefill：O(NL)
+CED prefill：O(NL/2 + n_win·L/2) ≈ O(NL/2)
+```
+
+当 `N ≫ n_win=128`，后项很小。它尤其适合 Agent：system prompt、仓库、工具说明很长，真正新生成的 token 相对少。
+
+## CSA2：跨层复用，而不只是每层做 sparse top-k
+
+Compressed Sparse Attention 2 给每层固定三种模式：
+
+- **Full**：计算新的 main KV、indexer K，并扫描全上下文产生 indices；
+- **Reindex**：复用 main KV/indexer K，但重新选 top-k；
+- **Reuse**：main KV、indexer K 和上一层 indices 都复用。
+
+Encoder 的 18 个 CSA2 层按 3 组、每组 6 层排列：1 个 Full + 5 个 Reuse，compression rate `m=2`。Decoder 20 层按 5 组、每组 4 层：第一组是 Full + 3 Reuse，其余组是 Reindex + 3 Reuse，`m=1`。
+
+第一层 Full indexer 先从全上下文选最多：
+
+```text
+2048 blocks × 8 positions = 16384 candidate positions
+```
+
+之后 Reindex 层只在 candidate pool 中搜索，最终每层 sparse attention top-k 为 **512**。因此深层 indexer 的候选规模不再随 1M context 线性增长。代价是：如果第一层没把关键 token 放进候选池，后续层无法找回；报告把极端稀疏检索列为未来重点 stress-test。
+
+## FP4 global KV：890 bytes/token 是怎样来的
+
+CSA2 跨层复用 main KV，减少“每层一份 KV”；global KV 进一步压成 FP4：E2M1 value，每 16 channels 一个 E4M3 scale。最终常驻 HBM 的 global KV 为 **890 bytes/token**，约为 DeepSeek-V4-Flash 的 1/4、V1 的 1/437。
+
+需要区分三种成本：
+
+1. global KV：长尾复用，常驻 HBM/持久缓存；
+2. SWA KV：只对最近 128 tokens 有用，生命周期短；
+3. prefix cache：跨请求保留，通常在 SSD/host memory 维持 72 小时以上。
+
+仅把 global KV 压小还不够；如果每层 SWA KV 都永久保存，短轮次多会话仍会制造巨大存储浪费。
+
+## SWA Bounded Replay：接受近似，换取持久缓存缩小 8 倍
+
+V4 的 Zero SWA Caching 若要精确恢复所有层 SWA，需要重放约 `L×n_win` tokens。V4.1 不再把 SWA KV 放进长期 persistent cache，而放入约占每台机器 host DRAM 10% 的短 TTL 分布式池。命中 global KV、但 SWA 已过期时，只重放最近 `n_win=128` tokens。
+
+对从位置 `s` 开始的 replay，位置 `i` 只能看到：
+
+```text
+[ max(s, i−W+1), i ]
+```
+
+它截断了 replay 起点之前的 SWA 依赖，所以不是数学上精确的原状态。Encoder replay 复用已缓存 global KV，只再生缺失 SWA；Decoder replay 让最近 128 个 prompt tokens 通过 decoder，以得到首批 decode 所需的 decoder SWA KV。
+
+报告称质量影响可忽略，并在 post-training 中模拟同样 replay 做 train-aware adaptation。persistent KV footprint 因此约降到 V4-Flash 的 **1/8**。风险是近似状态依赖 cache-hit position；极端边界输入仍可能出现未被现有测试覆盖的退化。
+
+## 其余架构：Single-Pass mHC、Engram 与 DSpark
+
+Single-Pass mHC 用更紧凑的 kernel 完成 residual-stream mixing，减少旧 multipass 方案的 activation memory traffic。Engram 是 196B 的条件记忆，通过 token-based lookup 稀疏访问，把一部分静态/组合知识从计算密集 backbone 中分离。DSpark 负责 speculative decoding：draft 以半自回归方式提出候选，再按置信度调度 verification。
+
+这些组件共同说明 V4.1 不是一项单点算法，而是一套 serving co-design：降低 prefill 激活、降低 HBM KV、降低 persistent cache、降低 decode latency。任何单独指标都不能代表完整成本。
+
+## 预训练：45T 多模态 tokens 与 1M context 延伸
+
+训练语料共 **45T multimodal tokens**，text-only : multimodal token ratio 为 **7:1**。文本侧强调更新代码仓库、commit、library 与 emerging frameworks，并过滤信息增益有限的低质量模型生成/机器翻译内容。多模态侧从网页、PDF、image-text pairs、interleaved documents、OCR、图表、grounding 与 computer-use trajectories 构建。
+
+训练配置的关键数字：
+
+- batch：100.6M tokens；
+- 从头以 64K sparse attention 训练；
+- 到 34T tokens 时延伸到 1M context；
+- 线性层用 Muon，RMSNorm 与非矩阵参数用 AdamW，embedding/head 用 Sinkhorn-balanced update；
+- learning rate warmup 2000 steps，28T 后 cosine decay，40T–45T 保持低 LR；
+- best-fit packing 的 padding rate 不超过 `10^-4`。
+
+视觉 encoder 先在约 **47B image-text pairs** 上做 SigLIP 式 contrastive pretraining，再接 4B MoE LLM，在 **236B tokens** 上做 autoregressive visual fine-tuning，随后丢弃临时 LLM，把 ViT 接入最终 backbone。
+
+## Base 结果：效率更高，不等于全面超过 V4-Pro
+
+<figure><img src="/paper-radar/images/deepseek-v4-1-flash/results.svg" alt="DeepSeek-V4.1-Flash base model、agent benchmark 和 reasoning effort 结果" width="1800" height="1000" loading="lazy"/><figcaption>图 2：根据技术报告 Tables 1、3、4 与 Figure 9 重绘。报告中的模型结果来自内部统一评测；Agent benchmark 还依赖具体 harness。</figcaption></figure>
+
+Base 模型对 V4-Pro 的优势集中在代码和部分通识：MMLU-Pro **74.1 vs 73.5**，HumanEval **79.4 vs 76.8**，BigCodeBench **60.6 vs 59.2**。但 LongBench-V2 是 **45.2 vs 51.5**，SimpleQA Verified 是 **42.3 vs 55.2**，MGSM 也较低。
+
+所以正确结论是：V4.1-Flash 在显著更低激活与 KV 成本下接近 V4-Pro，并在部分代码/推理基准超过它；不能说它在长上下文理解和事实知识上全面替代 V4-Pro。支持 1M context 与在 LongBench 上更强是两回事：前者是容量，后者是有效利用。
+
+## Post-training：没有新 RL 算法，重点是数据与环境
+
+报告明确说采用标准：
+
+```text
+SFT → reinforcement learning → on-policy distillation (OPD)
+```
+
+没有算法修改。主要增益来自：自动合成可验证任务、reference solution、reward signal；程序化构建交互环境；去重、难度校准与全生命周期质量复审。
+
+每个 Agent task 被形式化为 `(problem, environment, verification system)`，质量同时看 difficulty 与 correctness。通用 Agent 环境从真实工作流接口和失败反馈重建 mocked tools；Coding Agent 环境从复杂内部 session 与达到 star threshold 的公开 GitHub 仓库构造。多个专职 Agent 分别做可构建性判断、起点/任务设计、容器搭建、测试、解题和独立质检，失败后再由 repair agent 修复。
+
+这揭示一个重要趋势：post-training 的竞争壁垒越来越像软件测试与数据工程，而不是只比较 policy-gradient 公式。
+
+## DSec：数百万并发沙箱为什么不用强一致调度
+
+DeepSeek Elastic Compute 为 RL 和评测运行数百万 concurrent sandboxes。它把 Agent scaffold 与 tools 放在 sandbox，把统一 rollout 控制放在 worker container；训练 GPU 被抢占时，rollout 状态可挂起、卸载和恢复。
+
+调度采用 sharding + relaxed consistency。多个 placement replicas 独立估计资源并作出“足够好”的选择，不要求全局同步；每个 node 在本地用硬 admission threshold 拒绝过载。因为 sandbox placement 只要最终一致，而节点本地安全约束必须强一致。这避免中央调度器成为百万容器瓶颈。
+
+单机用 sub-NUMA partitioning 与 VM 绑定，把同类 workload 限定在本地 NUMA 资源；可从约 1000 提升到 **2500+ live containers / physical node**，才出现明显端到端退化。安全上用 per-sandbox AppArmor 与 eBPF network policies，防止 Agent 删除系统文件、利用 driver/AppArmor 漏洞或从 package mirror 泄漏答案；环境 crash 被记为失败轨迹和 repercussion signal。
+
+## 连续 reasoning effort：怎样训练 1–100 的成本旋钮
+
+系统 prompt 加入整数 effort `b∈{1,…,100}`。对 prompt `x`，每个 effort 采样：
+
+```text
+z^(b,j) ~ πθ(· | x,b),   j=1,…,M_b
+```
+
+同一 `(x,b)` 内做 group-relative advantage，不跨 effort 直接比较 reward。控制长度的核心是 effort-dependent penalty：
+
+```text
+r_len^(b,j) = −min(C_max, k(b) · ℓ_(b,j) / L_norm)
+
+k(b) = k₀ exp(−(b−b_min)/τ),   τ = λΔb
+```
+
+`ℓ` 是 reasoning tokens，`L_norm` 是参考长度，`C_max` 是最大扣分；effort 越高，`k(b)` 指数下降，模型受到的短输出压力越小。增加 `τ` 个 effort 单位，penalty coefficient 乘 `e^-1`。
+
+从 effort 25 到 100，8 个 reasoning benchmarks 平均 Pass@1 从 **67.1%→76.3%**，DeepSWE **66.0%→74.2%**，Terminal-Bench 2.1 **82.4%→90.6%**，代价约 2.5× output tokens。收益前置：60–80 拿到大部分精度；最后到 100 的 Agent trajectory 增长 1.6–1.8×，精度只小幅提高。生产 API 的 low/high/max 映射到 50/75/100。
+
+## Agent 结果：强，但 harness 与 benchmark 仍要拆开看
+
+最大 effort 下，V4.1-Flash 在 Terminal-Bench 2.1 为 **90.6**、DeepSWE v1.1 为 **74.2**、HLE with tools 为 **63.9**、Automation-Bench 为 **54.8**。它显著超过 V4-Flash，并在部分任务超过报告中的闭源对照。
+
+但 Terminal-Bench 4.0 只有 **31.2**，HLE 全集 **36.8**，ProgramBench **20.3**，视觉 Agent 也落后最佳闭源模型。报告自己强调，benchmark 差距窄不代表极难边界能力等价。
+
+相同 checkpoint 换 harness，DeepSWE 从 **65.5–74.2**，Terminal-Bench 2.1 从 **84.1–90.6**。因此“模型分数”至少是：
+
+```text
+model × scaffold × tools × context policy × sampling × verifier
+```
+
+任何对外比较都应报告 harness 版本，而不是只写模型名。
+
+## Multi-agent：初步结果与真正成本
+
+Agent Team mode 允许 lead 异步创建持久 teammate，共享 checkout，通过 mailbox 通信。训练 reward 同时含任务表现、协作 bonus 与 derived-latency penalty。derived latency 把执行事件和依赖表示为 DAG，按 token prefill/decode 与 tool time 赋权，取 critical path，鼓励真正并行而不是无意义多 Agent。
+
+在 ProgramBench golden subset，多 Agent 从 1 小时的 13.59% 提升到 8 小时的 **30.04%**，单 Agent 同条件峰值 **20.39%**；FrontierSWE v2 no-GPU 在 20 小时为 **32.90% vs 28.20%**。这是 preliminary result，且用每 rollout 最长 20 小时换取提升，不能只看最终分数不看墙钟、token 与协调复杂度。
+
+## 局限、风险与我会重点追踪的三件事
+
+1. **Sparse retrieval 边界**：第一层 candidate pool 漏掉关键位置后，后层无法恢复；1M capacity 不自动等于 1M 有效检索。
+2. **Bounded replay 近似**：cache-resume 边界会改变 SWA 状态，极端 prompt、短 suffix 和频繁多轮切换需要长期线上监控。
+3. **评测与安全**：部分 base 评测是内部框架；代码 Agent 已主动寻找 benchmark/execution 漏洞。能力提高也增加 reward hacking、供应链和 sandbox escape 风险。
+
+此外，45T tokens、百万 sandbox 和专有数据流水线很难被外部完整复现；公开权重不等于训练证据可独立审计。Engram、DSpark 和某些 kernel 细节的消融也不如 KV 主线完整。
+
+## 工程启示
+
+- 对长 prompt Agent，优先优化 prefill activated parameters 与 KV bytes/token，而不只看 decode tokens/s。
+- persistent cache 应按重用时间尺度分层：长尾 global KV 与分钟级 SWA 不该用同一保留策略。
+- sparse attention 要监控 retrieval recall，而不只监控 perplexity；应构造针刺、冲突证据和跨 cache-boundary 测试。
+- RL 任务必须把 problem、environment、verifier 一起质检，否则 verifier 漏洞会被强 Agent 系统性放大。
+- reasoning effort 应做连续成本曲线和任务路由；日常默认 60–80，最高档留给真正困难且高价值的任务更合理。
+
+## 思考题
+
+<details class="thought-question"><summary>1. CED 为什么能把 prefill 激活降到 8B，但 decode 又回到 16B？</summary><div class="thought-answer">长 prompt 主要通过 20 层 encoder；decoder global KV 直接从 encoder 最终 hidden 投影，不必让所有 prompt token 穿过 20 层 decoder。生成新 token 时仍需执行 encoder/decoder 相关路径和完整 decode 计算，因此激活量回到约 16B。优化针对输入重、输出相对短的 Agent 工作负载。</div></details>
+
+<details class="thought-question"><summary>2. 890 bytes/token 为什么不能直接推导“1M context 只需 890 MB”？</summary><div class="thought-answer">890 bytes/token 是 global KV footprint，实际服务还包括 SWA KV、scale/index、hidden/temporary buffers、batch metadata、模型权重、并发请求碎片与 replay workspace。它可估 HBM 主项，但不是完整进程显存。还需区分 HBM resident 与 SSD/host persistent cache。</div></details>
+
+<details class="thought-question"><summary>3. Bounded Replay 的近似为什么可能在普通 benchmark 中看不出来？</summary><div class="thought-answer">大多数任务对最近 128 tokens 的局部状态足够，或者 global sparse attention 能补回远处信息。真正风险集中在 cache-hit 边界：答案依赖更早 SWA 链式传播、短 suffix、精确位置状态时。随机平均 benchmark 会稀释这些尾部案例，因此需要定向 stress tests。</div></details>
+
+<details class="thought-question"><summary>4. 报告说 post-training 没有新算法，这是否意味着 RL 不重要？</summary><div class="thought-answer">不是。RL 仍是把任务表现写入 policy 的优化机制；“没有新算法”表示边际提升主要来自任务/环境/verifier 的规模与质量，而非更新方程创新。没有可验证环境，标准 RL 也学不到可靠 Agent 行为；反过来，再复杂的 RL 也救不了可被 hack 的 verifier。</div></details>
+
+<details class="thought-question"><summary>5. reasoning effort 的指数 penalty 为什么比线性 penalty 更自然？</summary><div class="thought-answer">若额外 token 的边际效用随长度递减，低 effort 应对每个 token 收更高成本，高 effort 再逐渐放松。指数系数始终为正、比例变化平滑，增加固定 effort 间隔带来固定倍数的 penalty 下降，便于跨 1–100 插值。线性下降可能在高 effort 变负或在低端分离不足。</div></details>
+
+<details class="thought-question"><summary>6. 如何公平验证“1M context”不是营销数字？</summary><div class="thought-answer">至少同时测：不同深度的 needle retrieval、多个相互冲突证据、需要组合远距片段的任务、cache hit/miss 与 bounded replay 边界、长输入下的答案质量和延迟/显存。还应对比 full attention 或更高成本配置，分开报告能接收、能检索、能推理和能经济部署四个层次。</div></details>
+
+## 原始资料
+
+- [官方模型与报告主页](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash)
+- [官方技术报告 PDF](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/blob/main/DeepSeek_V41_Tech_Report.pdf)
+- [官方文件、Prompt Encoding 与评测说明](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/tree/main)

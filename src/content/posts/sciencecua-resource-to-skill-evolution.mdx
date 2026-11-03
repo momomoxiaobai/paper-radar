@@ -1,0 +1,153 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-03T16:21:00+08:00
+title: "ScienceCUA 论文解读：把软件文档拆成 Skill 与 Reference，再用执行失败安全演化"
+featured: true
+category: skill
+tags:
+  - computer-use-agent
+  - agent-skill
+  - skill-evolution
+  - scientific-software
+  - tool-use
+description: "深入解读 ScienceCUA 的 Resource-to-Skill 构建与执行引导演化：如何把官方文档变成程序性 Skill 和共享 Reference，隔离演化集与测试集，并用 fresh-session 验证阻止错误知识进入长期库。"
+paper:
+  title: "ScienceCUA: Resource-to-Skill Construction and Execution-Guided Skill Evolution for Scientific Computer Use Agents"
+  venue: "arXiv preprint, 2026"
+  paperUrl: "https://arxiv.org/abs/2611.03238"
+  pdfUrl: "https://arxiv.org/pdf/2611.03238"
+  score: 93
+  scoreNote: "推荐理由：论文把 Skill 构建、Reference 复用、执行失败诊断、独立验证与 held-out 评测组成完整闭环，并在 276 个真实科学软件任务、多模型与原生 Agent 上给出强证据；主要扣分来自只覆盖六个应用、强模型增益收窄、陈旧 Skill 可能产生负迁移，以及文档缺失时框架仍无法创造可靠知识。"
+---
+
+> [!NOTE]
+> 论文于 **2026 年 11 月 2 日**首次公开，共 57 页。它不是泛泛讨论“给 Agent 一个 Skill 文件”，而是明确回答三件事：知识从哪里来、失败后怎样更新、怎样证明更新不是偶然成功。
+
+## 一句话结论
+
+**ScienceCUA 先把官方 PDF/HTML 文档拆成面向任务的 Skills 与可复用的 References，再用真实执行失败提出修改；但任何修改都必须在重置环境、fresh session、不给失败理由的条件下独立复验，成功后才进入候选池。初始库最高带来 7.23 个百分点增益，完整演化相对 Vanilla 最高提升 17.12 个百分点，说明可靠 Skill 的核心不是“总结得像”，而是来源可追溯、执行可验证、测试不泄漏。**
+
+<figure><img src="/paper-radar/images/sciencecua/pipeline.svg" alt="ScienceCUA 从文档构建 Skills 与 References，再用执行失败演化并独立验证的流程" width="1700" height="900" loading="eager"/><figcaption>图 1：根据论文 Figure 3 与 Sections 3–4 重绘。演化任务和最终测试任务严格分离，更新必须通过 fresh-session 验证。</figcaption></figure>
+
+## 为什么“直接把文档塞进上下文”不是答案
+
+科学软件的困难并非只有按钮识别。GRASS GIS、KAlgebra、Lean、Celestia、TeXstudio 等应用同时包含命令语法、参数约束、界面状态、领域概念和多步流程。完整文档可能长达数百万 token；每次注入会增加 prefill、检索噪声和执行迟延，而且用户手册通常按功能组织，不按 Agent 的目标组织。
+
+ScienceCUA 把知识库写成：
+
+```text
+L₀ = (S₀, R₀)
+```
+
+`S₀` 是 Skills 集合，`R₀` 是 References 集合。单个 Skill：
+
+```text
+s = (n_s, d_s, a_s, p_s, b_s)
+```
+
+分别表示名称、描述、适用条件/触发、程序步骤与边界/注意事项。Reference 更像共享事实表：命令语法、参数含义、快捷键、坐标约束、软件版本差异。Skill 回答“怎样完成目标”，Reference 回答“这个系统的共同语法是什么”。
+
+拆分的价值是去重与控制粒度：多个任务可以共享同一条命令约束，而不必复制进每个 Skill；Agent 只加载当前相关条目，而不读取整套手册。论文要求所有下游知识保留 source-grounded evidence，避免模型凭执行结果编造新规则。
+
+## Resource-to-Skill：从资料生成可执行知识
+
+构建过程由多个受约束的子会话完成。它们读取文档、识别目标导向流程、抽取共享 reference，并遵守 executable contract：输出格式、证据、预算和不可越界事项都预先规定。
+
+高质量 Skill 不能只写“点击 File 并导出”，而要包含：
+
+- 前置状态与触发条件；
+- 可观察的 UI/命令证据；
+- 顺序敏感步骤；
+- 参数选择与版本差异；
+- 成功判据与常见恢复路径；
+- 哪些事实来自 Reference，而不是在多个 Skill 中重复。
+
+这一步本质上是把人类文档从“阅读材料”编译为“Agent 可调用的程序接口”。编译结果不一定完美，所以论文把真正的创新放在第二阶段：执行证据驱动的演化。
+
+## 执行引导演化：失败不等于立即改 Skill
+
+总数据集 ScienceBoard-VE 有 276 个任务：108 个只用于 evolution，168 个 held-out verified tasks 只用于最终评测。一次失败被归入三类：
+
+1. **Grounding failure**：库中已有正确知识，但 Agent 没找到或没正确调用；
+2. **Modification**：已有 Skill/Reference 含糊、过时或步骤不充分；
+3. **Addition**：官方资料中存在必要知识，但当前库完全缺失。
+
+第一类不应随意改知识内容，可能需要改善描述、路由或触发；第二类需要修订已有条目；第三类才新增 source-supported knowledge。这个分类避免把所有失败都归咎于“Skill 不够长”。
+
+候选更新提出后，系统重置应用环境，创建 fresh session，并且不提供原失败轨迹的解释。只有候选库在独立验证中完成任务，更新才进入池中。这样做阻止三种污染：记住具体鼠标坐标、复述失败分析中的答案、依赖上一次运行留下的界面状态。
+
+形式上，更新门可以理解为：
+
+```text
+accept(ΔL) = 1[ Success(task, Reset(env), L ⊕ ΔL) ]
+```
+
+`ΔL` 是候选修改，`⊕` 表示合并，`Reset(env)` 清除运行状态。论文不是用一次 self-critique 代替验证，而是把“提出知识”与“证明知识能执行”分离。
+
+## 结果：两阶段增益都是真实的
+
+<figure><img src="/paper-radar/images/sciencecua/results.svg" alt="ScienceCUA 初始知识库、演化后知识库的成功率和构建成本结果" width="1600" height="900" loading="lazy"/><figcaption>图 2：根据论文 Figures 1、6 与 Tables 1–3 重绘。蓝色是初始库的收益，紫色是执行引导演化的额外收益。</figcaption></figure>
+
+在 model-based setting：
+
+| 模型 | Vanilla | 初始库 | 完整 ScienceCUA | 总增益 |
+|---|---:|---:|---:|---:|
+| Grok-4.6 xhigh | 37.47 | 44.70 | 54.59 | +17.12 pp |
+| GPT-5.5 xhigh | 51.40 | 57.16 | 65.81 | +14.41 pp |
+
+初始 Skills + References 相对 Vanilla 提升 5.76–7.23 个百分点；演化再带来 9.89 与 8.65 个百分点。重要的是，演化没有拿 held-out tasks 反复试到成功，而是在独立的 108 个任务上学习，再到 168 个测试任务上测迁移。
+
+原生 Agent setting 也成立：Grok Build 的 Vanilla 平均 46.29，ScienceCUA 为 55.41；Codex 的 54.09 提升到 59.82。不同原生 harness 会改变工具调用与上下文组织，但知识库仍有收益。
+
+## Skill 与 Reference 为什么要分开
+
+Grok-4.6 的消融中：skill-only 为 40.09，reference-only 为 40.62，二者同时为 44.70；Native Grok Build 对应 49.89、51.14、55.41。两类资源不是重复包装：
+
+- Skill 降低长流程的搜索空间，给出目标级控制流；
+- Reference 提供跨任务共享的精确语法，减少错误参数与界面误解；
+- 二者结合，Skill 可以保持短而清晰，把细节委托给 Reference。
+
+如果把所有参考细节复制到每个 Skill，库会迅速陈旧、冲突且难维护；如果只有 Reference，Agent 又必须每次从零规划长流程。
+
+## 成本：压缩知识比全文注入更快
+
+ScienceCUA 初始库构建时间比 VisualSkill 少 **62.2%**，比 SkillFoundry 少 **34.6%**。直接文档注入在论文示例中让平均执行时间增加约 **49–56%**，还受 context window 限制。ScienceCUA 的优势不是“文档更少”本身，而是把一次性离线构建成本摊薄到大量任务，并在运行时只调用相关资源。
+
+但构建成本不能只看小时数：还要计算更新审查、版本迁移与错误回滚。一个部署到组织内的 Skill 库，应把每条条目绑定软件版本、来源 hash、验证任务和最后成功日期。
+
+## 工程上怎样复用这套方法
+
+可以把生产 Skill 生命周期设计成：
+
+```text
+官方资料快照
+→ Skill / Reference 编译
+→ 静态证据检查
+→ 隔离环境执行
+→ 候选库
+→ 回归任务集
+→ 分批发布与版本回滚
+```
+
+日志至少记录：加载过哪些 Skill/Reference、哪一步首次偏离、是否 UI grounding 失败、环境版本、最终验证证据。失败修复时先判断是 routing、content 还是 environment，不要默认增长 prompt。
+
+## 局限与风险
+
+第一，只覆盖六个科学应用，知识结构能否原样迁移到大型企业 SaaS、移动端或高动态网页未知。第二，基础模型越强，边际增益可能越小；陈旧 Skill 甚至会限制强模型自行找到新路径。第三，官方文档若遗漏任务关键条件，source-grounded 约束意味着系统也无法凭空获得可靠知识。第四，GUI 更新、版本漂移和本地化会让步骤失效。第五，论文的成功率是任务级指标，尚未完整衡量安全误操作、可恢复性和长期库冲突。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么失败轨迹不能直接变成新 Skill？</summary><div class="thought-answer">一次成功修复可能依赖残留窗口、偶然坐标、缓存或失败分析中泄漏的答案。若直接写入长期库，偶然性会被固化。ScienceCUA 用重置环境、fresh session 和不提供失败理由的独立验证，测试知识是否能脱离原轨迹复现。</div></details>
+
+<details class="thought-question"><summary>2. 哪类失败应该改路由，而不是改 Skill 内容？</summary><div class="thought-answer">如果库中已有正确、足够的步骤，但 Agent 没检索到或被描述误导，这是 grounding/routing failure。此时增加触发关键词、改善描述或资源索引更合理；修改正确步骤可能制造重复和冲突。只有执行已加载条目后仍因内容不足而失败，才进入 modification。</div></details>
+
+<details class="thought-question"><summary>3. 为什么强模型可能被 Skill 伤害？</summary><div class="thought-answer">Skill 是先验约束。弱模型受益于缩小搜索空间；强模型本可根据新 UI 或新文档探索更优路径，却可能服从旧步骤。解决办法包括版本/置信度、允许模型拒绝 Skill、并行尝试无 Skill 路径，以及持续回归验证，而不是把 Skill 当不可违背的系统规则。</div></details>
+
+<details class="thought-question"><summary>4. 如何判断一个知识应放 Skill 还是 Reference？</summary><div class="thought-answer">若内容描述“为达成某目标按什么顺序行动、何时分支、怎样确认完成”，它属于 Skill；若内容会被多个目标复用，如命令语法、参数约束、快捷键、坐标系或格式定义，则属于 Reference。重复率和更新耦合是实用判断标准。</div></details>
+
+<details class="thought-question"><summary>5. 企业内部部署时，held-out 评测怎样避免被日常反馈慢慢污染？</summary><div class="thought-answer">要维持三层集合：在线失败只产生候选；固定回归集用于发布门；另有永不参与调试的周期审计集。若审计任务暴露，就轮换并保留时间切分。还应对软件版本分层，防止“在新版任务上更新后，用旧版成绩宣称进步”。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2611.03238)
+- [PDF](https://arxiv.org/pdf/2611.03238)

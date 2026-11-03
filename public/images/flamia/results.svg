@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#08111f"/><style>.t{fill:#f1f5f9;font:700 34px system-ui}.s{fill:#a8b7cc;font:21px system-ui}.h{fill:#7dd3fc;font:700 25px system-ui}.v{fill:#fff;font:700 28px system-ui}.c{fill:#10233b;stroke:#294a6c;stroke-width:2}</style>
+  <text x="70" y="70" class="t">FLAMIA：低比特 attention 的收益、代价与稳定性</text><text x="70" y="108" class="s">根据 Tables 1–6 与 Section 4 重绘；不同 shape 的速度区间不可直接当成统一峰值</text>
+  <rect x="70" y="155" width="700" height="300" rx="24" class="c"/><text x="105" y="205" class="h">训练调用（含量化）相对 BF16 FA4</text>
+  <text x="110" y="270" class="s">B200 · MXFP8</text><rect x="310" y="235" width="350" height="52" rx="12" fill="#0369a1"/><text x="680" y="272" class="v" text-anchor="end">1.10–1.40×</text>
+  <text x="110" y="355" class="s">B300 · MXFP8</text><rect x="310" y="320" width="360" height="52" rx="12" fill="#0891b2"/><text x="690" y="357" class="v" text-anchor="end">1.06–1.42×</text>
+  <text x="105" y="418" class="s">Kernel-only NVFP4 backward 最高约 2×；端到端收益会被量化、softmax 与 I/O 稀释。</text>
+  <rect x="830" y="155" width="700" height="300" rx="24" class="c"/><text x="865" y="205" class="h">1B 模型 / 100B FineWeb-Edu tokens</text>
+  <g transform="translate(900 245)"><rect width="155" height="145" rx="16" fill="#334155"/><rect x="190" width="155" height="145" rx="16" fill="#075985"/><rect x="380" width="155" height="145" rx="16" fill="#7c3aed"/>
+  <text x="77" y="52" class="s" text-anchor="middle">BF16</text><text x="267" y="52" class="s" text-anchor="middle">MXFP8</text><text x="457" y="52" class="s" text-anchor="middle">NVFP4/FP8</text>
+  <text x="77" y="101" class="v" text-anchor="middle">2.392</text><text x="267" y="101" class="v" text-anchor="middle">2.397</text><text x="457" y="101" class="v" text-anchor="middle">2.406</text></g>
+  <text x="865" y="420" class="s">末 1000 step 平均 loss；下游均值 0.5832 / 0.5737 / 0.5814。</text>
+  <rect x="70" y="510" width="1460" height="285" rx="24" class="c"/><text x="105" y="560" class="h">真正决定能否训练的不是单步 cosine similarity</text>
+  <text x="105" y="620" class="s">✓ forward 与 backward 使用同一量化 Q/K、相同 tile、指数近似与对角处理</text><text x="105" y="667" class="s">✓ dS 按 32×32 方块定标，兼顾 dQ 与 dK 两个收缩方向</text><text x="105" y="714" class="s">✓ packed 131072-token 输入：2.7 GB，而 padded 方案为 16.8 GB</text><text x="105" y="761" class="s">✗ 全 4-bit 路径并非默认最优：额外转置副本与量化开销使它更慢，loss 也更高</text>
+  <text x="70" y="858" class="s">结论：Blackwell 的低比特 Tensor Core 只是起点；scale layout、softmax、因果语义与反向一致性共同决定真实收益。</text>
+</svg>
