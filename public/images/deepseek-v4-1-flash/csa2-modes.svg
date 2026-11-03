@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="900" viewBox="0 0 1700 900">
+  <rect width="1700" height="900" fill="#08121f"/>
+  <style>.t{fill:#fff;font:700 36px system-ui}.s{fill:#a9b8ca;font:21px system-ui}.h{fill:#67e8f9;font:700 27px system-ui}.v{fill:#fff;font:700 22px system-ui}.card{fill:#10263c;stroke:#31536f;stroke-width:2}.yes{fill:#0f766e}.reuse{fill:#6d28d9}.no{fill:#334155}</style>
+  <text x="70" y="70" class="t">CSA2 的三个模式：到底复用了什么？</text>
+  <text x="70" y="110" class="s">根据技术报告 Figure 4、Figure 5 与 Section 2.3 重绘</text>
+
+  <rect x="70" y="170" width="480" height="520" rx="26" class="card"/>
+  <text x="310" y="225" text-anchor="middle" class="h">Full Mode</text>
+  <rect x="120" y="280" width="380" height="62" rx="14" class="yes"/><text x="310" y="320" text-anchor="middle" class="v">新算 main KV + indexer K</text>
+  <rect x="120" y="365" width="380" height="62" rx="14" class="yes"/><text x="310" y="405" text-anchor="middle" class="v">扫描全部可见上下文</text>
+  <rect x="120" y="450" width="380" height="62" rx="14" class="yes"/><text x="310" y="490" text-anchor="middle" class="v">生成新的 Top-K indices</text>
+  <text x="120" y="575" class="s">最贵，但建立共享 KV 与候选池。</text>
+  <text x="120" y="620" class="s">decoder 首层还生成 16384-position pool。</text>
+
+  <rect x="610" y="170" width="480" height="520" rx="26" class="card"/>
+  <text x="850" y="225" text-anchor="middle" class="h">Reindex Mode</text>
+  <rect x="660" y="280" width="380" height="62" rx="14" class="reuse"/><text x="850" y="320" text-anchor="middle" class="v">复用 main KV + indexer K</text>
+  <rect x="660" y="365" width="380" height="62" rx="14" class="yes"/><text x="850" y="405" text-anchor="middle" class="v">只在 candidate pool 重打分</text>
+  <rect x="660" y="450" width="380" height="62" rx="14" class="yes"/><text x="850" y="490" text-anchor="middle" class="v">为本层生成新 Top-K</text>
+  <text x="660" y="575" class="s">不重复存 KV，但允许深层改变检索位置。</text>
+  <text x="660" y="620" class="s">最终每层仍选 Top-512。</text>
+
+  <rect x="1150" y="170" width="480" height="520" rx="26" class="card"/>
+  <text x="1390" y="225" text-anchor="middle" class="h">Reuse Mode</text>
+  <rect x="1200" y="280" width="380" height="62" rx="14" class="reuse"/><text x="1390" y="320" text-anchor="middle" class="v">复用 main KV + indexer K</text>
+  <rect x="1200" y="365" width="380" height="62" rx="14" class="reuse"/><text x="1390" y="405" text-anchor="middle" class="v">复用上一 indexing 层的 Top-K</text>
+  <rect x="1200" y="450" width="380" height="62" rx="14" class="no"/><text x="1390" y="490" text-anchor="middle" class="v">不再运行 indexer</text>
+  <text x="1200" y="575" class="s">最便宜；多数层属于这一模式。</text>
+  <text x="1200" y="620" class="s">风险是检索选择跨层保持不变。</text>
+
+  <path d="M310 735 H1390" stroke="#22d3ee" stroke-width="5"/>
+  <circle cx="310" cy="735" r="12" fill="#22d3ee"/><circle cx="850" cy="735" r="12" fill="#22d3ee"/><circle cx="1390" cy="735" r="12" fill="#22d3ee"/>
+  <text x="70" y="815" class="s">三种模式都重新计算本层 main Q 与 SWA KV；复用的只是 global branch 的 main KV、indexer K 和/或 Top-K indices。</text>
+  <text x="70" y="855" class="s">因此 CSA2 同时压缩 layer dimension 的缓存冗余与 indexer 计算，而不是简单地“所有层共用同一 attention”。</text>
+</svg>

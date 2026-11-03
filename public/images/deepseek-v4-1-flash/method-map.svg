@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1020" viewBox="0 0 1800 1020">
+  <rect width="1800" height="1020" fill="#07111f"/>
+  <style>
+    .title{fill:#f8fafc;font:700 38px system-ui}.sub{fill:#9fb0c5;font:22px system-ui}.h{fill:#67e8f9;font:700 27px system-ui}.body{fill:#cbd5e1;font:22px system-ui}.num{fill:#fff;font:800 28px system-ui}.value{fill:#fff;font:800 26px system-ui}.card{fill:#10253b;stroke:#2f526f;stroke-width:2}.arrow{stroke:#67e8f9;stroke-width:6;fill:none}
+  </style>
+  <text x="70" y="70" class="title">DeepSeek-V4.1-Flash 的方法主线：四层压缩，不是一个单点技巧</text>
+  <text x="70" y="110" class="sub">根据技术报告 Sections 2–3 与 Figures 3–5 重绘</text>
+
+  <rect x="70" y="175" width="360" height="670" rx="26" class="card"/>
+  <circle cx="125" cy="235" r="30" fill="#0e7490"/><text x="125" y="245" text-anchor="middle" class="num">1</text>
+  <text x="175" y="245" class="h">Prefill 计算</text>
+  <text x="105" y="310" class="body">问题：长 prompt 每次都跑 40 层</text>
+  <rect x="105" y="365" width="290" height="105" rx="18" fill="#164e63"/>
+  <text x="250" y="410" text-anchor="middle" class="value">CED：20 + 20 层</text>
+  <text x="250" y="445" text-anchor="middle" class="body">decoder KV 由 encoder 投影</text>
+  <text x="105" y="535" class="body">结果：</text>
+  <text x="105" y="585" class="value">8B activated / prefill</text>
+  <text x="105" y="630" class="value">16B activated / decode</text>
+  <text x="105" y="705" class="body">复杂度约从 O(NL)</text>
+  <text x="105" y="745" class="body">降到 O(NL/2)</text>
+
+  <path d="M445 510 H485" class="arrow"/><path d="M472 495 L495 510 L472 525" fill="#67e8f9"/>
+  <rect x="500" y="175" width="360" height="670" rx="26" class="card"/>
+  <circle cx="555" cy="235" r="30" fill="#6d28d9"/><text x="555" y="245" text-anchor="middle" class="num">2</text>
+  <text x="605" y="245" class="h">HBM 中的 global KV</text>
+  <text x="535" y="310" class="body">问题：每层 KV 与索引重复存储</text>
+  <rect x="535" y="365" width="290" height="150" rx="18" fill="#4c1d95"/>
+  <text x="680" y="405" text-anchor="middle" class="value">CSA2</text>
+  <text x="680" y="443" text-anchor="middle" class="body">Full / Reindex / Reuse</text>
+  <text x="680" y="480" text-anchor="middle" class="body">跨层共享 KV 与 Top-K</text>
+  <text x="535" y="570" class="body">再叠加：</text>
+  <text x="535" y="620" class="value">FP4 main KV</text>
+  <text x="535" y="665" class="body">E2M1 + E4M3 scale / 16 ch</text>
+  <text x="535" y="735" class="value">890 bytes / token</text>
+  <text x="535" y="775" class="body">约 V4-Flash 的 1/4</text>
+
+  <path d="M875 510 H915" class="arrow"/><path d="M902 495 L925 510 L902 525" fill="#67e8f9"/>
+  <rect x="930" y="175" width="360" height="670" rx="26" class="card"/>
+  <circle cx="985" cy="235" r="30" fill="#c2410c"/><text x="985" y="245" text-anchor="middle" class="num">3</text>
+  <text x="1035" y="245" class="h">持久 KV 生命周期</text>
+  <text x="965" y="310" class="body">问题：短命 SWA KV 占用长期 SSD</text>
+  <rect x="965" y="365" width="290" height="145" rx="18" fill="#7c2d12"/>
+  <text x="1110" y="405" text-anchor="middle" class="value">Bounded Replay</text>
+  <text x="1110" y="443" text-anchor="middle" class="body">只重放最后 128 tokens</text>
+  <text x="1110" y="480" text-anchor="middle" class="body">不再长期保存 SWA KV</text>
+  <text x="965" y="575" class="body">Global KV：长尾复用</text>
+  <text x="965" y="620" class="body">SWA KV：分钟级 DRAM pool</text>
+  <text x="965" y="690" class="value">persistent KV ≈ 1/8</text>
+  <text x="965" y="735" class="body">代价：恢复状态是近似值</text>
+
+  <path d="M1305 510 H1345" class="arrow"/><path d="M1332 495 L1355 510 L1332 525" fill="#67e8f9"/>
+  <rect x="1360" y="175" width="370" height="670" rx="26" class="card"/>
+  <circle cx="1415" cy="235" r="30" fill="#15803d"/><text x="1415" y="245" text-anchor="middle" class="num">4</text>
+  <text x="1465" y="245" class="h">吞吐与能力补齐</text>
+  <text x="1395" y="310" class="body">问题：内存流量、静态知识、decode</text>
+  <rect x="1395" y="365" width="300" height="250" rx="18" fill="#14532d"/>
+  <text x="1545" y="410" text-anchor="middle" class="value">Single-Pass mHC</text>
+  <text x="1545" y="447" text-anchor="middle" class="body">activation traffic 约减半</text>
+  <text x="1545" y="500" text-anchor="middle" class="value">196B Engram</text>
+  <text x="1545" y="537" text-anchor="middle" class="body">记忆与计算解耦</text>
+  <text x="1545" y="590" text-anchor="middle" class="value">DSpark</text>
+  <text x="1545" y="627" text-anchor="middle" class="body">5-position speculative draft</text>
+  <text x="1395" y="700" class="body">训练侧：</text>
+  <text x="1395" y="745" class="body">45T tokens + task synthesis</text>
+  <text x="1395" y="785" class="body">DSec 百万级 sandbox</text>
+
+  <rect x="70" y="900" width="1660" height="4" fill="#22d3ee" opacity=".7"/>
+  <text x="70" y="955" class="sub">阅读顺序：先看 CED 如何少算，再看 CSA2/FP4 如何少存，最后看 Bounded Replay 如何改变缓存生命周期。</text>
+</svg>
