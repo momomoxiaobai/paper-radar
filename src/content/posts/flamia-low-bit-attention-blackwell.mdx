@@ -35,24 +35,26 @@ paper:
 
 ## 从标准 Attention 看低比特路径的真正难点
 
-单头 Attention 设 `Q,K,V ∈ R^(L×d)`：
+单头 Attention 设 $Q,K,V\in\mathbb{R}^{L\times d}$：
 
-```text
-S = QKᵀ / √d
-P = softmax(S)
-O = PV
-```
+$$
+\begin{aligned}
+S &= \frac{QK^\top}{\sqrt d}\in\mathbb{R}^{L\times L}, \\
+P &= \operatorname{softmax}(S), \\
+O &= PV\in\mathbb{R}^{L\times d}.
+\end{aligned}
+$$
 
-`L` 是序列长度，`d` 是 head dimension，`S` 是 score，`P` 是归一化概率，`O` 是输出。反向传播会重算 `P`，并形成：
+$L$ 是序列长度，$d$ 是 head dimension，$S$ 是 score，$P$ 是归一化概率，$O$ 是输出。反向传播会重算 $P$，并形成：
 
-```text
-dV = Pᵀ dO
-dP = dO Vᵀ
-Dᵢ = Σⱼ Pᵢⱼ dPᵢⱼ
-dS = P ∘ (dP − D)
-dQ = dS K
-dK = dSᵀ Q
-```
+$$
+\begin{aligned}
+dV &= P^\top dO, & dP &= dO\,V^\top, \\
+D_i &= \sum_j P_{ij}\,dP_{ij},
+& dS &= P\circ(dP-D), \\
+dQ &= dS\,K, & dK &= dS^\top Q.
+\end{aligned}
+$$
 
 这里的困难不是矩阵乘法数量，而是同一个张量会沿不同轴参加两次乘法。例如 `Q` 在 `QKᵀ` 中沿 head dimension 收缩，在 `dK=dSᵀQ` 中沿 query 维收缩；`P` 在 `PV` 中沿 key 维收缩，在 `PᵀdO` 中沿 query 维收缩。
 
@@ -62,11 +64,13 @@ dK = dSᵀ Q
 
 FLAMIA 对大部分 E4M3 张量采用 token-block scale：连续 32 个 token、完整 head dimension 共用一个 2 的幂指数。`dS` 则以 `32×32` 方块定标。方形 scale region 的关键价值是转置后仍然有效，因此同一份 E4M3 payload 可以同时服务 `dQ` 和 `dK` 的不同收缩方向。
 
-若存储 code 为 `q_Q,q_K`，token block 指数为 `e_Q(i),e_K(j)`，重建 score 可写为：
+若存储 code 为 $q_Q,q_K$，token block 指数为 $e_Q(i),e_K(j)$，重建 score 可写为：
 
-```text
-S̃ᵢⱼ = 2^(e_Q(i)+e_K(j)) · Σₖ q_Q,ik q_K,jk / √d
-```
+$$
+\widetilde S_{ij}
+= 2^{e_Q(i)+e_K(j)}
+\frac{\displaystyle\sum_k q_{Q,ik}q_{K,jk}}{\sqrt d}.
+$$
 
 行因子可以并入 softmax scale，列因子单独施加，不必先把整块张量反量化回 BF16。混合 NVFP4/FP8 路径只让 score 计算的 `Q/K` 使用 per-token NVFP4；`V、dO、gradient products 的 Q/K、dS、P` 大多保留 E4M3。论文也实现了 all-4-bit，但没有把它设为默认：4-bit MMA 缺少可直接复用的转置布局，六份量化副本让 backward preprocessing 过重，最终更慢且 loss 略差。
 
@@ -74,10 +78,12 @@ S̃ᵢⱼ = 2^(e_Q(i)+e_K(j)) · Σₖ q_Q,ik q_K,jk / √d
 
 假设若干 key 的 `V` 共用：
 
-```text
-s = maxⱼ |Vⱼ| / qmax
-V̂ⱼ = round(Vⱼ / s) · s
-```
+$$
+\begin{aligned}
+s &= \frac{\max_j |V_j|}{q_{\max}}, \\
+\widehat V_j &= \operatorname{round}\!\left(\frac{V_j}{s}\right)s.
+\end{aligned}
+$$
 
 对 query `i`，未来 key `j>i` 在 attention score 中会被 mask；但如果未来 `Vⱼ` 抬高了组内最大值，`s` 就会改变。过去可见 key 的 code 会重新舍入，于是 `V̂₁…V̂ᵢ` 发生变化，最终 `Oᵢ` 仍然依赖未来输入。mask 挡住的是矩阵元素，不是量化器的统计量。
 

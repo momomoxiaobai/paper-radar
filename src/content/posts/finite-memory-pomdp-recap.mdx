@@ -34,42 +34,44 @@ paper:
 
 POMDP 写作：
 
-```text
-e = (P_e, O_e, r_e, ξ_e, γ)
-```
+$$
+e=(P_e,O_e,r_e,\xi_e,\gamma).
+$$
 
-`P_e` 是状态转移，`O_e` 是观测模型，`r_e` 是奖励，`ξ_e` 是初始分布，`γ∈(0,1)` 是折扣。完全 history-dependent 策略可以利用从起点到现在的一切；B-bit finite-state controller 的内部状态 `Z_t` 至多有：
+$P_e$ 是状态转移，$O_e$ 是观测模型，$r_e$ 是奖励，$\xi_e$ 是初始分布，$\gamma\in(0,1)$ 是折扣。完全 history-dependent 策略可以利用从起点到现在的一切；B-bit finite-state controller 的内部状态 $Z_t$ 至多有：
 
-```text
-|Z| ≤ 2^B
-```
+$$
+|\mathcal{Z}|\le 2^B.
+$$
 
-记无限记忆最优价值为 `V_e*`，受 B-bit 约束的最优价值为 `V_e*(B)`，论文关心：
+记无限记忆最优价值为 $V_e^*$，受 B-bit 约束的最优价值为 $V_e^*(B)$，论文关心：
 
-```text
-D_e(B) = V_e* − V_e*(B)
-```
+$$
+D_e(B)=V_e^*-V_e^*(B).
+$$
 
 它不是某个算法的 regret，而是环境在给定记忆预算下无法消除的最佳差距。有限状态机相当于编码器：
 
-```text
-history H_t → memory Z_t → action A_t
-```
+$$
+H_t\longrightarrow Z_t\longrightarrow A_t.
+$$
 
 如果两个历史被压到同一 `Z_t`，控制器只能结合当前 observation 区分它们。若 observation 仍然 alias，而两个 posterior belief 要求不同动作，损失就不可避免。
 
 ## Decision witness：把“记不住”变成可计算的行动损失
 
-论文构造 decision witness `(ψ, Y, a*, η)`。映射 `ψ` 把 belief/history 分成标签 `Y`；每个标签有一个应采取的动作 `a*(Y)`；margin `η` 保证跨标签采取错误动作时，Q-value 至少下降 `η`。
+论文构造 decision witness $(\psi,Y,a^*,\eta)$。映射 $\psi$ 把 belief/history 分成标签 $Y$；每个标签有一个应采取的动作 $a^*(Y)$；margin $\eta$ 保证跨标签采取错误动作时，Q-value 至少下降 $\eta$。
 
 Theorem 1 的结构可以概括为：
 
-```text
-memory gap at time t
-≥ γ^t · η · P(E_t) · residual-classification-error(Y_t | Z_t, observation)
-```
+$$
+\operatorname{Gap}_t
+\;\ge\;
+\gamma^t\eta\,\Pr(E_t)\,
+\operatorname{Err}\!\left(Y_t\mid Z_t,\text{observation}_t\right).
+$$
 
-`γ^tη` 是此时选错动作对初始价值的折扣影响，`P(E_t)` 是 witness 条件出现频率，最后一项是知道当前 observation 和 B-bit memory 后仍无法判断 label 的概率。论文用 Fano 型信息界把它写成 label entropy 与 mutual information 的函数；因为 `Z_t` 只有 B bit，它能携带的信息受限。
+$\gamma^t\eta$ 是此时选错动作对初始价值的折扣影响，$\Pr(E_t)$ 是 witness 条件出现频率，最后一项是知道当前 observation 和 B-bit memory 后仍无法判断 label 的概率。论文用 Fano 型信息界把它写成 label entropy 与 mutual information 的函数；因为 $Z_t$ 只有 B bit，它能携带的信息受限。
 
 这比“belief quantization error 大，所以性能差”更锋利：只有与动作选择有关的 belief 区分才应收费。两个 belief 的 TV distance 很远，但若最优动作相同，有限控制器没有必要把它们分开；反过来，距离很近但位于决策边界两侧，也可能值得用一个 memory state 专门区分。
 
@@ -77,15 +79,15 @@ memory gap at time t
 
 在含 K 个隐藏类别的 tracking POMDP 中，B-bit memory 最多编码 `2^B` 个类别。论文给出与下式成比例的损失：
 
-```text
-1 − 2^B / K
-```
+$$
+1-\frac{2^B}{K}.
+$$
 
 当 observation noise 参数 `p=0` 且 `2^B` 整除 `K` 时，下界可达到。直觉是控制器只能完整保留 `2^B` 个类别，其余类别必须碰撞。这个特例说明 Fano 项不只是证明技术造成的松弛，记忆容量与隐藏类别数量的比率确实可以直接决定最优价值。
 
 ## 为什么 RECAP 存 predictive prior，而不是 posterior belief
 
-经典 belief-state controller 在观察 `Y_t` 后得到 posterior `b_t`，执行动作后经转移得到下一时刻 observation 前的 predictive prior `ν_{t+1}`。RECAP 把 codebook 定义在 predictive prior 空间：
+经典 belief-state controller 在观察 $Y_t$ 后得到 posterior $b_t$，执行动作后经转移得到下一时刻 observation 前的 predictive prior $\nu_{t+1}$。RECAP 把 codebook 定义在 predictive prior 空间：
 
 ```text
 representative prior ν^z
@@ -95,14 +97,18 @@ representative prior ν^z
 → nearest representative enc_C(ν')
 ```
 
-这样 memory `Z_t=z` 与当前 observation `Y_t` 维持清晰分工：memory 保存跨时间传递的 prior，实时 observation 完成 correction。这个拆分也与下界一致——Theorem 1 正是在“有限 memory + 当前 observation”条件下计算残余歧义。
+这样 memory $Z_t=z$ 与当前 observation $Y_t$ 维持清晰分工：memory 保存跨时间传递的 prior，实时 observation 完成 correction。这个拆分也与下界一致——Theorem 1 正是在“有限 memory + 当前 observation”条件下计算残余歧义。
 
 最近邻量化使用 total variation：
 
-```text
-enc_C(ν) = argmin_z TV(ν, ν^z)
-TV(p,q) = 1/2 Σ_s |p(s)−q(s)|
-```
+$$
+\begin{aligned}
+\operatorname{enc}_{\mathcal C}(\nu)
+&= \arg\min_z \operatorname{TV}(\nu,\nu^z), \\
+\operatorname{TV}(p,q)
+&= \frac12\sum_s |p(s)-q(s)|.
+\end{aligned}
+$$
 
 选择 TV 是因为 bounded reward 下，它能控制 belief 变化导致的期望价值变化；但 codebook 不只最小化几何覆盖，还要关心量化后的 prior 经观测、动作、转移后是否仍靠近 codebook。
 

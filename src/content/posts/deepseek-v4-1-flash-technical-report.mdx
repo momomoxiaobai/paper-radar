@@ -46,21 +46,26 @@ DeepSeek-V4.1-Flash 包含 **552B backbone parameters**，另有 **196B Engram c
 
 ## CED：为什么 prompt 只走一半“大模型”
 
-标准 decoder-only Transformer 的 prompt 要穿过全部 `L` 层，每层都生成自己的 K/V。V4.1 使用 Causal Encoder-Decoder：前 20 层是 causal encoder，后 20 层是 decoder。decoder 每层的 global KV 不从该层 decoder hidden state 计算，而从 encoder 最终表示投影：
+标准 decoder-only Transformer 的 prompt 要穿过全部 $L$ 层，每层都生成自己的 K/V。V4.1 使用 Causal Encoder-Decoder：前 20 层是 causal encoder，后 20 层是 decoder。decoder 每层的 global KV 不从该层 decoder hidden state 计算，而从 encoder 最终表示投影：
 
-```text
-Cˡ = H^(L/2) W_KVˡ
-Zˡ = H^(L/2) W_Zˡ
-```
+$$
+\begin{aligned}
+C^{(l)} &= H^{(L/2)} W_{KV}^{(l)}, \\
+Z^{(l)} &= H^{(L/2)} W_Z^{(l)}.
+\end{aligned}
+$$
 
-`H^(L/2)` 是第 20 层 encoder 输出；`Cˡ` 是 decoder 第 `l` 层 main KV，`Zˡ` 是 sparse indexer 相关投影。这样 prompt 的主干计算主要经过 20 层 encoder，decoder 只需为最近 SWA window 做 bounded replay。若 prompt 长度为 `N`、SWA replay 长度为 `n_win`：
+$H^{(L/2)}$ 是第 20 层 encoder 输出；$C^{(l)}$ 是 decoder 第 $l$ 层 main KV，$Z^{(l)}$ 是 sparse indexer 相关投影。这样 prompt 的主干计算主要经过 20 层 encoder，decoder 只需为最近 SWA window 做 bounded replay。若 prompt 长度为 $N$、SWA replay 长度为 $n_{\mathrm{win}}$：
 
-```text
-标准 prefill：O(NL)
-CED prefill：O(NL/2 + n_win·L/2) ≈ O(NL/2)
-```
+$$
+\begin{aligned}
+T_{\text{standard}} &= \mathcal{O}(NL), \\
+T_{\text{CED}} &= \mathcal{O}\!\left(\frac{NL}{2} + \frac{n_{\mathrm{win}}L}{2}\right)
+\approx \mathcal{O}\!\left(\frac{NL}{2}\right).
+\end{aligned}
+$$
 
-当 `N ≫ n_win=128`，后项很小。它尤其适合 Agent：system prompt、仓库、工具说明很长，真正新生成的 token 相对少。
+当 $N \gg n_{\mathrm{win}}=128$，后项很小。它尤其适合 Agent：system prompt、仓库、工具说明很长，真正新生成的 token 相对少。
 
 ## CSA2：跨层复用，而不只是每层做 sparse top-k
 
@@ -74,9 +79,10 @@ Encoder 的 18 个 CSA2 层按 3 组、每组 6 层排列：1 个 Full + 5 个 R
 
 第一层 Full indexer 先从全上下文选最多：
 
-```text
-2048 blocks × 8 positions = 16384 candidate positions
-```
+$$
+2048\ \text{blocks} \times 8\ \text{positions/block}
+= 16384\ \text{candidate positions}.
+$$
 
 之后 Reindex 层只在 candidate pool 中搜索，最终每层 sparse attention top-k 为 **512**。因此深层 indexer 的候选规模不再随 1M context 线性增长。代价是：如果第一层没把关键 token 放进候选池，后续层无法找回；报告把极端稀疏检索列为未来重点 stress-test。
 
@@ -94,13 +100,13 @@ CSA2 跨层复用 main KV，减少“每层一份 KV”；global KV 进一步压
 
 ## SWA Bounded Replay：接受近似，换取持久缓存缩小 8 倍
 
-V4 的 Zero SWA Caching 若要精确恢复所有层 SWA，需要重放约 `L×n_win` tokens。V4.1 不再把 SWA KV 放进长期 persistent cache，而放入约占每台机器 host DRAM 10% 的短 TTL 分布式池。命中 global KV、但 SWA 已过期时，只重放最近 `n_win=128` tokens。
+V4 的 Zero SWA Caching 若要精确恢复所有层 SWA，需要重放约 $L\,n_{\mathrm{win}}$ tokens。V4.1 不再把 SWA KV 放进长期 persistent cache，而放入约占每台机器 host DRAM 10% 的短 TTL 分布式池。命中 global KV、但 SWA 已过期时，只重放最近 $n_{\mathrm{win}}=128$ tokens。
 
-对从位置 `s` 开始的 replay，位置 `i` 只能看到：
+对从位置 $s$ 开始的 replay，位置 $i$ 只能看到：
 
-```text
-[ max(s, i−W+1), i ]
-```
+$$
+\left[\max(s,\,i-W+1),\ i\right].
+$$
 
 它截断了 replay 起点之前的 SWA 依赖，所以不是数学上精确的原状态。Encoder replay 复用已缓存 global KV，只再生缺失 SWA；Decoder replay 让最近 128 个 prompt tokens 通过 decoder，以得到首批 decode 所需的 decoder SWA KV。
 
@@ -123,7 +129,7 @@ Single-Pass mHC 用更紧凑的 kernel 完成 residual-stream mixing，减少旧
 - 到 34T tokens 时延伸到 1M context；
 - 线性层用 Muon，RMSNorm 与非矩阵参数用 AdamW，embedding/head 用 Sinkhorn-balanced update；
 - learning rate warmup 2000 steps，28T 后 cosine decay，40T–45T 保持低 LR；
-- best-fit packing 的 padding rate 不超过 `10^-4`。
+- best-fit packing 的 padding rate 不超过 $10^{-4}$。
 
 视觉 encoder 先在约 **47B image-text pairs** 上做 SigLIP 式 contrastive pretraining，再接 4B MoE LLM，在 **236B tokens** 上做 autoregressive visual fine-tuning，随后丢弃临时 LLM，把 ViT 接入最终 backbone。
 
@@ -159,21 +165,29 @@ DeepSeek Elastic Compute 为 RL 和评测运行数百万 concurrent sandboxes。
 
 ## 连续 reasoning effort：怎样训练 1–100 的成本旋钮
 
-系统 prompt 加入整数 effort `b∈{1,…,100}`。对 prompt `x`，每个 effort 采样：
+系统 prompt 加入整数 effort $b\in\{1,\ldots,100\}$。对 prompt $x$，每个 effort 采样：
 
-```text
-z^(b,j) ~ πθ(· | x,b),   j=1,…,M_b
-```
+$$
+z^{(b,j)} \sim \pi_\theta(\,\cdot\mid x,b),
+\qquad j=1,\ldots,M_b.
+$$
 
-同一 `(x,b)` 内做 group-relative advantage，不跨 effort 直接比较 reward。控制长度的核心是 effort-dependent penalty：
+同一 $(x,b)$ 内做 group-relative advantage，不跨 effort 直接比较 reward。控制长度的核心是 effort-dependent penalty：
 
-```text
-r_len^(b,j) = −min(C_max, k(b) · ℓ_(b,j) / L_norm)
+$$
+\begin{aligned}
+r_{\mathrm{len}}^{(b,j)}
+&= -\min\!\left(
+C_{\max},\,
+k(b)\frac{\ell_{b,j}}{L_{\mathrm{norm}}}
+\right), \\
+k(b)
+&= k_0\exp\!\left(-\frac{b-b_{\min}}{\tau}\right),
+\qquad \tau=\lambda\,\Delta b.
+\end{aligned}
+$$
 
-k(b) = k₀ exp(−(b−b_min)/τ),   τ = λΔb
-```
-
-`ℓ` 是 reasoning tokens，`L_norm` 是参考长度，`C_max` 是最大扣分；effort 越高，`k(b)` 指数下降，模型受到的短输出压力越小。增加 `τ` 个 effort 单位，penalty coefficient 乘 `e^-1`。
+$\ell_{b,j}$ 是第 $j$ 个响应的 reasoning token 数，$L_{\mathrm{norm}}$ 是参考长度，$C_{\max}$ 是最大扣分；effort 越高，$k(b)$ 指数下降，模型受到的短输出压力越小。增加 $\tau$ 个 effort 单位，penalty coefficient 乘 $e^{-1}$。
 
 从 effort 25 到 100，8 个 reasoning benchmarks 平均 Pass@1 从 **67.1%→76.3%**，DeepSWE **66.0%→74.2%**，Terminal-Bench 2.1 **82.4%→90.6%**，代价约 2.5× output tokens。收益前置：60–80 拿到大部分精度；最后到 100 的 Agent trajectory 增长 1.6–1.8×，精度只小幅提高。生产 API 的 low/high/max 映射到 50/75/100。
 

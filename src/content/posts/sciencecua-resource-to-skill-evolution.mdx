@@ -35,15 +35,15 @@ paper:
 
 ScienceCUA 把知识库写成：
 
-```text
-L₀ = (S₀, R₀)
-```
+$$
+\mathcal{L}_0=(\mathcal{S}_0,\mathcal{R}_0).
+$$
 
-`S₀` 是 Skills 集合，`R₀` 是 References 集合。单个 Skill：
+$\mathcal{S}_0$ 是 Skills 集合，$\mathcal{R}_0$ 是 References 集合。单个 Skill：
 
-```text
-s = (n_s, d_s, a_s, p_s, b_s)
-```
+$$
+s=(n_s,d_s,a_s,p_s,b_s).
+$$
 
 分别表示名称、描述、适用条件/触发、程序步骤与边界/注意事项。Reference 更像共享事实表：命令语法、参数含义、快捷键、坐标约束、软件版本差异。Skill 回答“怎样完成目标”，Reference 回答“这个系统的共同语法是什么”。
 
@@ -78,11 +78,17 @@ s = (n_s, d_s, a_s, p_s, b_s)
 
 形式上，更新门可以理解为：
 
-```text
-accept(ΔL) = 1[ Success(task, Reset(env), L ⊕ ΔL) ]
-```
+$$
+\operatorname{accept}(\Delta\mathcal{L})
+= \mathbf{1}\!\left[
+\operatorname{Success}\!\left(
+\text{task},\operatorname{Reset}(\text{env}),
+\mathcal{L}\oplus\Delta\mathcal{L}
+\right)
+\right].
+$$
 
-`ΔL` 是候选修改，`⊕` 表示合并，`Reset(env)` 清除运行状态。论文不是用一次 self-critique 代替验证，而是把“提出知识”与“证明知识能执行”分离。
+$\Delta\mathcal{L}$ 是候选修改，$\oplus$ 表示合并，$\operatorname{Reset}(\text{env})$ 清除运行状态。论文不是用一次 self-critique 代替验证，而是把“提出知识”与“证明知识能执行”分离。
 
 ## 结果：两阶段增益都是真实的
 

@@ -132,6 +132,21 @@
     pre {
       @apply focus-visible:outline-accent focus-visible:border-transparent focus-visible:outline-2 focus-visible:outline-dashed;
     }
+
+    .katex {
+      color: var(--color-foreground);
+      font-size: 1.05em;
+    }
+
+    .katex-display {
+      @apply border-border bg-muted/20 my-6 overflow-x-auto rounded-xl border px-4 py-5;
+      max-width: 100%;
+    }
+
+    .katex-display > .katex {
+      min-width: max-content;
+      text-align: center;
+    }
   }
 
   /* ===== Code Blocks & Syntax Highlighting ===== */
