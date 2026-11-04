@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" rx="36" fill="#08111f"/>
+  <text x="80" y="95" fill="#f8fafc" font-size="44" font-family="Arial" font-weight="700">LoopVQ 关键结果：质量、延迟与吞吐</text>
+  <g font-family="Arial">
+    <text x="100" y="175" fill="#cbd5e1" font-size="26">Ouro-2.6B 通用任务平均分</text>
+    <g font-size="23" fill="#fff"><text x="100" y="245">BF16</text><text x="100" y="335">CQ 0.5b</text><text x="100" y="425">LoopVQ 0.5b</text><text x="100" y="515">TaSQ+LoopVQ 0.5b</text><text x="100" y="605">TaSQ+LoopVQ 0.25b</text></g>
+    <g><rect x="390" y="210" width="570" height="48" rx="12" fill="#475569"/><rect x="390" y="300" width="264" height="48" rx="12" fill="#ef4444"/><rect x="390" y="390" width="544" height="48" rx="12" fill="#14b8a6"/><rect x="390" y="480" width="562" height="48" rx="12" fill="#8b5cf6"/><rect x="390" y="570" width="495" height="48" rx="12" fill="#6366f1"/></g>
+    <g fill="#fff" font-size="24"><text x="975" y="244">81.46</text><text x="670" y="334">37.67</text><text x="950" y="424">77.69</text><text x="968" y="514">80.30</text><text x="902" y="604">70.70</text></g>
+    <rect x="1040" y="195" width="470" height="190" rx="25" fill="#0f766e"/><text x="1275" y="255" fill="#ccfbf1" font-size="26" text-anchor="middle">32K context decode</text><text x="1275" y="315" fill="#fff" font-size="42" font-weight="700" text-anchor="middle">约 0.5× latency</text><text x="1275" y="355" fill="#99f6e4" font-size="20" text-anchor="middle">相对 SGLang BF16</text>
+    <rect x="1040" y="420" width="470" height="190" rx="25" fill="#3b0764"/><text x="1275" y="480" fill="#e9d5ff" font-size="26" text-anchor="middle">峰值服务吞吐</text><text x="1275" y="540" fill="#fff" font-size="42" font-weight="700" text-anchor="middle">4.3× / 6.1×</text><text x="1275" y="580" fill="#e9d5ff" font-size="20" text-anchor="middle">Ouro 1.4B / 2.6B</text>
+    <rect x="100" y="700" width="1410" height="105" rx="22" fill="#111827" stroke="#334155"/><text x="805" y="750" fill="#e2e8f0" font-size="23" text-anchor="middle">注意：系统效率只与优化后的 BF16 路径比较；CQ / TaSQ 没有匹配优化程度的 serving kernel</text><text x="805" y="785" fill="#94a3b8" font-size="20" text-anchor="middle">来源：论文 Tables 2–4、Figures 7–8 与 Section 5.3</text>
+  </g>
+</svg>

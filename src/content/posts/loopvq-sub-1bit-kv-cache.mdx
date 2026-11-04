@@ -1,0 +1,152 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-04T22:15:00+08:00
+title: "LoopVQ 论文解读：Looped Transformer 的 KV Cache 为什么能压到 0.25 bit"
+featured: true
+category: infra
+tags:
+  - kv-cache
+  - quantization
+  - looped-transformer
+  - inference-serving
+  - vector-quantization
+description: "详细拆解 LoopVQ 如何沿循环轴联合编码 KV Cache，以输出 KL 微调 codebook，并在 Ouro 与 Huginn 上把缓存压到 0.5/0.25 bit，同时改善长推理稳定性与服务吞吐。"
+paper:
+  title: "LoopVQ: Sub 1-bit KV Cache Quantization for Looped Transformers"
+  venue: "arXiv preprint, 2026"
+  paperUrl: "https://arxiv.org/abs/2611.05304"
+  pdfUrl: "https://arxiv.org/pdf/2611.05304"
+  codeUrl: "https://github.com/mscheong01/LoopVQ"
+  score: 94
+  scoreNote: "推荐理由：论文从 loop 轴相关性出发提出专用 VQ，在准确率、长 CoT、长上下文和 SGLang serving 上形成完整证据链；主要扣分来自只验证少数 looped 模型，系统效率未与拥有同等优化 kernel 的量化基线比较，且 calibration 与 codebook 存储成本仍需在更大模型上验证。"
+---
+
+> [!NOTE]
+> 论文于 **2026 年 11 月 3 日**首次公开，共 17 页。本文区分“缓存位宽”“codebook 额外存储”和“实际 serving 加速”，不把 64× KV 压缩直接等同于 64× 推理提速。
+
+## 一句话结论
+
+**Looped Transformer 反复执行同一组层，参数被复用，但每个 loop step 仍生成一份 KV Cache。LoopVQ 利用不同 loop step 的同通道高度相关这一结构，让多个 step 共用一个向量量化索引，再直接最小化量化模型与 BF16 模型输出分布的 KL。它在 0.5 bit 时接近 BF16，在 0.25 bit 时与 TaSQ 组合仍保留大量能力；SGLang 实现于 32K context 将 decode latency 降到约一半，并把 Ouro-1.4B/2.6B 峰值吞吐提高到 BF16 的 4.3×/6.1×。**
+
+<figure><img src="/paper-radar/images/loopvq/method.svg" alt="LoopVQ 沿循环轴联合编码多个 loop step 的 KV Cache" width="1600" height="900" loading="eager"/><figcaption>图 1：根据论文 Figures 3、5 与 Section 4 重绘。一个 index 覆盖多个 loop step，但每个 step 从 codebook 读取自己的坐标切片。</figcaption></figure>
+
+## 问题：参数省下来了，KV Cache 反而成为主体
+
+设共享的 $L_b$ 层被执行 $T$ 次：
+
+$$
+h_{1:N}^{(t)}=F_\theta\!\left(h_{1:N}^{(t-1)}\right),\qquad t=1,\ldots,T.
+$$
+
+参数 $\theta$ 只保存一份；但每层、每个 KV head、每个 token 在每次循环都产生 $k^{(t,\ell)}$ 和 $v^{(t,\ell)}$，所以 cache 大小仍随 $T$ 线性增长。论文指出 Ouro-1.4B 的每 token KV Cache 甚至是 Llama-3.1-8B 的约 6 倍。
+
+普通 VQ 把一个 $D$ 维 KV 向量切成 $G$ 维子向量 $z$，以最近邻 codebook entry 表示：
+
+$$
+a(z)=\arg\min_{r\le K}\lVert z-e_r\rVert_2^2,
+\qquad \widehat z=e_{a(z)}.
+$$
+
+若 code 是 $b$ bit，平均位宽为 $b/G$ bit/element。问题在于 CQ、TaSQ 等方法把每个 loop step 当成互不相关的 cache，浪费了共享参数造成的跨 step 冗余。
+
+## 观察一：真正强的相关性在 loop 轴
+
+Ouro-1.4B 中，相邻 loop step 的同一 key channel 平均绝对相关达到 **0.85**，同一 step 内其他 channel 之间只有 **0.16**；第一对 step 的相关约 0.69，最后一对提高到 0.94。把四个 step 的少量通道拼成一个向量，在相同位宽和 codebook 数量下，0.5 bit 的重建误差约可减半。
+
+但相关不代表同等重要。只量化一个 loop step 时，Ouro-1.4B 输出相对 BF16 的 KL 为：
+
+| 位宽 | Step 1 | Step 2 | Step 3 | Step 4 |
+|---|---:|---:|---:|---:|
+| 0.5 bit | 0.069 | 0.018 | 0.013 | 0.030 |
+| 0.25 bit | 0.123 | 0.029 | 0.026 | 0.065 |
+
+早期 step 的误差会经过后续循环反复传播，因此“联合编码”之后还必须解决不同 step 的敏感度差异。
+
+## Method 1：Loop-axis vector quantization
+
+LoopVQ 把 $T$ 个 step 按 $T_c$ 个一组。令 $c=G/T_c$，一个 coupled vector 从每个 step 取 $c$ 个通道，总维数仍为 $G$：
+
+$$
+z_j^{(\beta,\ell,h,g)}[iT_c+m]
+=x_{j,h,gc+i}^{(\beta T_c+m+1,\ell)},
+\quad i<c,\;m<T_c.
+$$
+
+量化后只保存一个 index；第 $m$ 个 loop step 从同一个 entry 中取属于自己的 $c$ 维切片：
+
+$$
+\widehat x_{j,h,gc+i}^{(\beta T_c+m+1,\ell)}
+=\left[e_{a(z_j)}\right]_{iT_c+m}.
+$$
+
+关键点是平均位宽没有因联合四个 step 而增加：仍然是 $b/G$。LoopVQ 只是改变“哪些坐标共享一个 code”，让 index 的每一位承载更多与模型结构一致的信息。
+
+## Method 2：不用重建误差，直接对齐模型输出
+
+Fisher-weighted k-means 仍把每个 coded vector 独立处理，无法表达早期误差与后续误差之间的交叉项。LoopVQ 冻结模型参数，只优化 codebook $B$：
+
+$$
+J(B)=\mathbb E_s\left[
+\frac{1}{N}\sum_j
+D_{\mathrm{KL}}\!\left(p_j\,\Vert\,q_j(B)\right)
+\right].
+$$
+
+$p_j$ 是完整精度 cache 下的输出，$q_j(B)$ 是所有 loop step 都读取重建 cache 后的输出。每次迭代重新分配最近 entry，再对 entry 反向传播。这样目标会自然考虑：哪个 step 更敏感、误差如何穿过循环、多个量化误差如何共同改变最终 token 分布。Ouro-1.4B 上，这一步把初始 k-means 的输出 KL 再降约一半。
+
+## Method 3：SGLang 中怎样真正服务
+
+cache 分为三部分：开头 sink tokens、最近窗口保持 BF16；中间页面保存 code indices。页面大小是 8 tokens。prefill 要等同一 block 的 $T_c$ 个 loop step 全部计算完成才编码；decode 先把新 token 写进 BF16 recent window，每生成 8 个 token 再将最老页面编码。
+
+注意力 kernel 对量化页执行：加载当前 loop step 对应的 codebook slice，在寄存器中 lookup key/value，key 重建后再应用 RoPE；BF16 页走原 kernel，最后以 log-sum-exp 合并两部分 softmax。该设计避免先完整反量化 KV Cache。
+
+## 实验设置
+
+- 模型：Ouro-1.4B、Ouro-2.6B、Huginn-3.5B；Ouro 为 4 个 loop step，Huginn 的 core block 循环 32 次。
+- 位宽：8-bit index，$G=16/32$，对应 0.5/0.25 bit；LoopVQ 取 $T_c=4$。
+- calibration：16 条 GPQA main、每条 2048 tokens；12 条训练 codebook，4 条选 checkpoint。
+- 量化窗口：通用任务保留 8 sink + 64 recent tokens；长推理/长上下文保留 64 + 256。
+- 硬件：主效率实验为单张 RTX 6000 Ada 48GB。
+
+## 关键实验结果
+
+<figure><img src="/paper-radar/images/loopvq/results.svg" alt="LoopVQ 在通用任务、解码延迟和峰值吞吐上的关键结果" width="1600" height="900" loading="lazy"/><figcaption>图 2：根据论文 Tables 2–4、Figures 7–8 重绘。吞吐增益包含更大可容纳 batch 和更低单 token decode 延迟两部分。</figcaption></figure>
+
+Ouro-2.6B 四项通用任务平均分：BF16 为 81.46；CQ 0.5 bit 只有 37.67，LoopVQ 为 77.69，TaSQ+LoopVQ 为 80.30。即使 0.25 bit，组合方法仍有 70.70。
+
+长 CoT 更能暴露误差积累。Ouro-2.6B-Thinking 的五项平均：BF16 64.92；CQ/TaSQ 0.5 bit 仅 16.58/28.32；LoopVQ 58.05，组合后 63.83。0.25 bit 下组合方法为 56.02，明显高于 LoopVQ 单独的 24.14。
+
+消融表明 loop-axis coupling 是主要收益来源；fine-tuning 在 GSM8K 增益较小，但在 HumanEval 尤其重要。量化还会改变推理长度：CQ/TaSQ 经常在 GPQA-Diamond 触及 32K 输出上限，而 LoopVQ 的长度分布更接近 BF16，因此“每 token 更快”没有被异常长生成抵消。
+
+## 论文证明了什么，没证明什么
+
+它有力证明了 looped model 的 cache 不能照搬普通 LLM 的独立层量化，并给出 accuracy + serving 的系统实现。但系统实验只把优化后的 LoopVQ 与 SGLang BF16 比；作者没有为 CQ/TaSQ 各自写同等优化的 kernel，因此不能从吞吐数字断言 LoopVQ 在同位宽下系统速度也一定胜过所有 VQ 基线。
+
+## 工程启示
+
+- 量化分组轴应从架构产生的相关性出发，而不是固定沿 channel 切块。
+- calibration 目标要接近最终任务；对递归网络，只最小化局部重建误差会漏掉跨步交互。
+- 评测 reasoning model 时必须同时报告准确率、达到答案的 token 数和超长未终止率。
+- “sub-1-bit”依赖共享 codebook；部署预算必须把 codebook、BF16 sink/recent window 和 indices 一起计算。
+
+## 局限与风险
+
+模型族仍少，最大只有 3.5B；Huginn 的结构也与 Ouro 不同。codebook fine-tuning 依赖校准分布，论文虽显示跨语料波动有限，但未覆盖领域迁移。prefill 需要等待 loop block 完成并编码，因此会略慢。更大 batch、分布式 serving、speculative decoding 和 prefix cache 共享下的真实收益仍待验证。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么 loop-axis coupling 不增加平均位宽？</summary><div class="thought-answer">原来每个 G 维子向量存一个 b-bit index；现在仍对 G 个坐标存一个 b-bit index，只是这 G 个坐标来自多个 loop step。总坐标数和 index 数的比例不变，因此仍为 b/G bit/element。</div></details>
+
+<details class="thought-question"><summary>2. 为什么第一步量化通常最危险？</summary><div class="thought-answer">第一步的 hidden state 会输入第二步，误差经过所有后续共享层继续传播；最后一步的 cache 误差只影响最后一次 attention。递归深度让早期扰动拥有更多传播路径。</div></details>
+
+<details class="thought-question"><summary>3. 为什么 0.25 bit 时 TaSQ 与 LoopVQ 的组合收益突然更大？</summary><div class="thought-answer">极低位宽下单一结构冗余不足。LoopVQ 利用 loop 轴，TaSQ 利用 channel 轴并做 key transform，两者作用近似正交；当 code 容量极紧时，同时消除两类冗余才可能避免信息坍缩。</div></details>
+
+<details class="thought-question"><summary>4. 怎样验证吞吐提升不是只来自更大 batch？</summary><div class="thought-answer">要同时画固定 batch 的 per-token latency、固定显存下的最大 batch、以及完整 request throughput。论文给出了前两类证据：同 batch 在长 context 更快，同时压缩让更多请求装入显存；二者共同形成峰值吞吐增益。</div></details>
+
+<details class="thought-question"><summary>5. 如果 loop 数从 4 增加到 32，是否应该让 T_c=32？</summary><div class="thought-answer">不一定。更大的 T_c 增强共享，但每个 step 分到的通道 c=G/T_c 会变少，codebook lookup、相关性非平稳和早晚 step 敏感度差异也更难拟合。Huginn 实际把 32 步拆成八个 T_c=4 的 block，说明局部相关性与表达容量之间需要折中。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2611.05304)
+- [PDF](https://arxiv.org/pdf/2611.05304)
+- [官方代码](https://github.com/mscheong01/LoopVQ)

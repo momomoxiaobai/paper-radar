@@ -1,0 +1,174 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-04T22:17:00+08:00
+title: "算法重访：Staged Pandora 怎样统一多保真评估、暂停恢复与最优停止"
+featured: true
+category: classic-algorithms
+tags:
+  - bayesian-optimization
+  - optimal-stopping
+  - pandoras-box
+  - multi-fidelity
+  - dynamic-programming
+description: "从 Weitzman Pandora's Box 出发，推导分阶段候选的 covered-call recursion、reservation index、精确 action loss、恢复价值，以及共享 surrogate 破坏独立性后的近似界。"
+paper:
+  title: "The Staged Pandora's Box: Reservation Indices for Multi-Fidelity Bayesian Optimization"
+  venue: "arXiv preprint, 2026"
+  paperUrl: "https://arxiv.org/abs/2611.02722"
+  pdfUrl: "https://arxiv.org/pdf/2611.02722"
+  score: 91
+  scoreNote: "推荐理由：论文把经典 Pandora reservation value 扩展成带指定可收集阶段的显式递归，并给出最优值、停止/推进损失、collection rights 与 resumption 的精确价格；扣分在于实际验证仅为已知有限 law 的精确算例，连续空间、错设 surrogate 和真实 HPO 可扩展性尚未解决。"
+---
+
+> [!NOTE]
+> 论文于 **2026 年 11 月 2 日**首次公开，共 31 页。它是理论论文：数值部分验证恒等式和界，不是拿算法在真实 HPO benchmark 上击败 Hyperband 或 BO 方法。
+
+## 一句话结论
+
+**一个候选可能先产生便宜 proxy，再产生可部署 checkpoint，最后才得到完整结果。Staged Pandora 用 collectable set 区分“只提供信息的读数”和“可以成为最终 incumbent 的读数”，再从梯子末端递归构造 covered-call value $Z$ 与 reservation index $G$。候选独立时，只要最大 $G$ 高于当前最好结果就推进最大者，否则停止，策略精确最优；候选共享 surrogate 时该定理失效，但可用未操作候选的 local-value 变化给出 regret 上界。**
+
+<figure><img src="/paper-radar/images/staged-pandora/recursion.svg" alt="Staged Pandora 从未来可收集读数递归计算 covered call 与 reservation index" width="1600" height="900" loading="eager"/><figcaption>图 1：根据论文 Definition 1、Theorem 1 与 Algorithm 1 重绘。不可收集读数仍能更新后续预测，只是不能直接成为 incumbent。</figcaption></figure>
+
+## 从经典 Pandora 到分阶段搜索
+
+经典 Weitzman Pandora's Box 中，盒子 $i$ 花成本 $c_i$ 打开一次并得到 $Y_i$，reservation value 解：
+
+$$
+\mathbb E[(Y_i-G_i)^+]=c_i.
+$$
+
+当最大 $G_i$ 超过当前 incumbent 时打开它，否则停止。多保真优化更复杂：一个超参数配置会经过多个 fidelity/checkpoint；便宜读数可能只能预测最终结果，或本身就能部署；运行还可暂停后恢复。
+
+每个 arm $i$ 有 $T_i$ 个阶段和 collectable set $K_i$。到达阶段 $t$ 时：
+
+$$
+\widetilde Y=\begin{cases}Y,&t\in K_i,\\-\infty,&t\notin K_i.
+\end{cases}
+$$
+
+不可收集不等于无用：它仍进入 history，改变同一 arm 后续读数的条件分布。目标是在停止时最大化“最好可收集读数减累计成本”。
+
+## Method 1：单 arm 的 keep-or-run 价值
+
+给定外部选项 $r$，允许只继续当前 arm 至多 $k$ 步：
+
+$$
+\Phi_i^{(k)}(S;r)
+=\sup_{\sigma}\left\{
+\mathbb E[(M_\sigma-r)^+\mid S]-\mathbb E[\kappa_\sigma\mid S]
+\right\}.
+$$
+
+$M_\sigma$ 是这段运行中最好新 collectable reading，$\kappa_\sigma$ 是额外成本。index 是仍有正 continuation value 的最大外部选项：
+
+$$
+G_i^{(k)}(S)=\sup\{r:\Phi_i^{(k)}(S;r)>0\}.
+$$
+
+这一定义允许任意 own-history dependence，不要求高斯或一阶 Markov；但 arm 之间必须自治，观察一个 arm 不能改变其他 arm 的 law 和成本。
+
+## Method 2：Covered-call recursion
+
+从 arm 的末端向前。令 $s'$ 是推进后的 own state：
+
+$$
+W(s)=\max\{\widetilde Y,Z(s')\},
+\qquad
+\mathbb E[(W(s)-G(s))^+]=c(s),
+\qquad
+Z(s)=\min\{G(s),W(s)\}.
+$$
+
+$W$ 把本阶段可收集读数与未来 continuation value 取最大；$G$ 是支付当前成本的 break-even threshold；$Z$ 把过高的未来价值截在 $G$，因此类似 covered call payoff。若之后再没有 collectable stage，则 $G=W=Z=-\infty$。
+
+关键恒等式是：
+
+$$
+\mathbb E[\max\{r,Z(s)\}]
+=r+\Phi(s;r)^+.
+$$
+
+它把一个有多阶段、可暂停的 arm 压缩成一个随机 covered-call value，随后可以像经典 Pandora 一样在多个 arm 之间比较。
+
+## 主定理：独立 arms 下精确最优
+
+若各 arm 的完整剩余路径独立，当前 incumbent 为 $q$、累计成本为 $K$：
+
+$$
+V^\star(S)+K
+=\mathbb E\left[\max\left\{q,\max_i Z_i(s_i)\right\}\right].
+$$
+
+因此：$\max_iG_i\le q$ 时停止；否则推进任何 index 最大的 arm。相等时停止和推进都可最优，论文固定选择停止。
+
+这同时覆盖单阶段 Pandora、只有末端可收集的 nested inspection，以及每个 Markov checkpoint 都可收集的已知特例。新增之处不是“发现 index 思想”，而是把指定 collection rights、history-dependent costs、显式价值表示和 action loss 放进同一构造。
+
+## Method 3：每次错误决策损失多少
+
+停止损失为：
+
+$$
+\Delta_{\mathrm{stop}}(S)
+=\mathbb E\left[(\max_jZ_j-q)^+\right].
+$$
+
+若强制推进 arm $i$，令 $O_i=\max\{q,\max_{j\ne i}Z_j\}$：
+
+$$
+\Delta_i(S)
+=c(s_i)-\mathbb E\left[(W_i-\max\{O_i,G_i\})^+\right]\ge0.
+$$
+
+任意策略与最优策略的差，正好等于沿实际轨迹累积的推进损失，加上最终停止损失。它不是松界，而是 performance-difference identity。工程上可用它判断失败来自过早停止、选错候选，还是在已经不值的 arm 上继续烧预算。
+
+## Collection rights 与 resumption
+
+若允许更多阶段成为可收集结果，或降低 own-history costs，则 $W',G',Z'$ 路径上单调不减；额外价值就是新旧最大 covered-call value 的 overshoot。若误用较小 collectable set 做计划，其损失不超过新增 rights 本身的价值。
+
+暂停后回到某个 arm 可能有正价值，即使未观察奖励的 law 不变：随机中间读数会改变“继续这个 arm 还是先试别的”的选择。若所有读数由 own state 确定，最优 index policy 从不需要恢复，no-return 与完整策略同值。
+
+## 共享 surrogate 为什么破坏 index 定理
+
+观察 arm A 会更新 arm B 的 posterior 时，B 的价值改变却没有被 A 的独立单-arm递归计价。论文构造了两组边际 law 完全相同、但最优首个 action 不同的联合分布，证明任何只看各 arm 边际剩余 law 的规则都不可能普遍最优。
+
+在 coherent joint path law 且成本仍 arm-local 时，每次真实观察后重算边际 index。若任何可达状态中，观察 $i$ 对其他 arm local keep-or-run value 的总变化不超过 $\bar\varepsilon$，剩余总步数为 $H$：
+
+$$
+0\le V^\star(S_0)-V^{\pi_{IX}}(S_0)\le2H\bar\varepsilon.
+$$
+
+<figure><img src="/paper-radar/images/staged-pandora/boundaries.svg" alt="Staged Pandora 在独立候选和共享信息情况下的结论边界" width="1600" height="900" loading="lazy"/><figcaption>图 2：根据论文 Propositions 5–7、Corollary 2 与 Limitations 重绘。posterior 在常见轨迹上集中，不足以保证所有可达历史上的统一界。</figcaption></figure>
+
+## 数值实验究竟验证了什么
+
+作者用有限 binary-tree law 和有理数精确运算，对比直接 joint Bellman optimization：最优值、最大 index action、每个 stop/advance loss、任意策略的损失累积、collection-right comparative statics 与 resumption lower bound 全部对齐。共享信息例子也逐状态检查 signed residual 和 envelope bound。
+
+这验证了公式与实现，不证明现实中学出的 surrogate 正确，也不证明在连续 HPO 上计算划算。完整 observation tree 随深度指数增长；连续读数需要积分或离散化，论文没有给离散化策略误差界。
+
+## 工程启示
+
+- checkpoint 是否可直接部署是算法输入，不只是业务注释；它会改变停止规则和首选候选。
+- 记录每次 action 的 counterfactual loss，有助于把优化浪费归因到错误选择还是错误停止。
+- freeze-thaw 系统不要默认“不返回旧任务”；随机 checkpoint 下 resumption 可以有严格正价值。
+- 使用共享 GP/神经 surrogate 时，独立 reservation index 是近似规划，必须监控一次观察对未选候选价值的扰动。
+
+## 局限与风险
+
+定理要求有限梯子、读数有界、成本为正且 arm-local。常用高斯预测无界，需要扩展。目标是最好 observed collectable score 减成本，不是噪声下真实潜在性能。论文没有处理 surrogate misspecification、连续候选生成、批量并行评估或 wall-clock resource contention，也没有现实 benchmark 优越性证据。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么不可收集的 proxy 仍可能值得测？</summary><div class="thought-answer">它不能成为最终 incumbent，但能改变后续 collectable stage 的条件 law，从而决定是否继续支付昂贵阶段。其价值是 information value，而不是 terminal reward。</div></details>
+
+<details class="thought-question"><summary>2. 为什么 covered-call cap 是 min(G,W)？</summary><div class="thought-answer">超过 G 的 upside 恰好用来支付当前成本，reservation equation 使期望超额等于 c。对多 arm 决策而言，超过 G 的部分不应重复计入可比较价值，因此把 W 截在 G 后得到等价的 keep-or-run 表示。</div></details>
+
+<details class="thought-question"><summary>3. 新增一个可部署 checkpoint 为什么可能改变首先评估哪个候选？</summary><div class="thought-answer">它增加的不只是该 arm 的终值，还增加“看到中间成绩后直接停下”的 option value。这会改变 covered-call 分布和 reservation index；共享 latent state 下还会改变另一个 arm 的信息价值，所以首选 action 甚至可随 prior 多次切换。</div></details>
+
+<details class="thought-question"><summary>4. posterior 越集中，为什么共享信息误差不一定越小？</summary><div class="thought-answer">regret 界要求所有可达历史上的统一 local-value 变化都小。常见轨迹的 posterior 集中不排除稀有观察把 belief 拉回高不确定区域；弱收敛也不保证 next-reading kernel 在 total variation 下连续。</div></details>
+
+<details class="thought-question"><summary>5. 怎样把理论落到训练 checkpoint 调度器？</summary><div class="thought-answer">先离散候选与 checkpoint，标记哪些 checkpoint 可部署；从历史或 surrogate 构造每个候选剩余路径的条件分布与增量成本，再用 backward tree 计算 G/Z。规模大时必须近似积分、截断深度或采样 covered-call law，并额外评估这些数值近似造成的策略误差。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2611.02722)
+- [PDF](https://arxiv.org/pdf/2611.02722)

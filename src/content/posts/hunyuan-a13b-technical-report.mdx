@@ -1,0 +1,156 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-04T22:18:00+08:00
+title: "Hunyuan-A13B 技术报告解读：80B 容量、13B 激活与双模式推理怎样组合"
+featured: true
+category: foundation-models
+tags:
+  - foundation-model
+  - hunyuan
+  - mixture-of-experts
+  - reinforcement-learning
+  - long-context
+description: "完整拆解 Hunyuan-A13B 的细粒度 MoE、20T token 预训练、Reasoning SFT/GRPO、全场景奖励体系、Dual-Mode CoT，以及 base、agent、长上下文和吞吐实验。"
+paper:
+  title: "Hunyuan-A13B Technical Report"
+  venue: "Technical report / arXiv, 2026"
+  paperUrl: "https://arxiv.org/abs/2609.27284"
+  pdfUrl: "https://arxiv.org/pdf/2609.27284"
+  codeUrl: "https://github.com/Tencent-Hunyuan/Hunyuan-A13B"
+  score: 89
+  scoreNote: "推荐理由：报告把 MoE 架构、20T 预训练、两段 SFT/RL、双模式 CoT、长上下文和部署吞吐连成完整模型档案，并开放权重与主流推理框架支持；扣分来自训练数据与算力披露不足、部分关键评测为内部集、吞吐硬件信息不完整，且多数对比无法完全确认同一推理预算。"
+---
+
+> [!NOTE]
+> PDF 页首版本日期为 **2025 年 6 月 27 日**，arXiv v1 于 **2026 年 9 月 23 日**公开。本文把“报告撰写版本”和“公开发布日期”分开记录，不把较晚上传误写成模型刚完成训练。
+
+## 一句话结论
+
+**Hunyuan-A13B 的核心不是一个新注意力公式，而是一套效率导向的完整配方：32 层细粒度 MoE 拥有 80B 总参数，每 token 只激活 1 个 shared expert 和 8/64 个 specialized experts，共 13B active parameters；先用 20T tokens 预训练并扩展到 256K context，再依次做 reasoning SFT、无 KL 的 GRPO、全场景 SFT 与多奖励 RL，最后用统一格式支持 fast/slow 两种 CoT。它在 base、长上下文和工具调用上显示出较强的“单位激活参数能力”，但训练透明度和评测公平性仍不够完整。**
+
+<figure><img src="/paper-radar/images/hunyuan-a13b/architecture.svg" alt="Hunyuan-A13B 的 32 层细粒度 MoE 与每 token 专家激活结构" width="1600" height="900" loading="eager"/><figcaption>图 1：根据技术报告 Table 1 与 Sections 2.2–2.3 重绘。80B 是容量，13B 才更接近单 token 的前向计算规模。</figcaption></figure>
+
+## 模型快照
+
+| 项目 | 配置 |
+|---|---:|
+| Transformer 层数 | 32 |
+| Hidden size | 4096 |
+| Attention / KV heads | 32 / 8 |
+| Shared experts | 1，始终激活 |
+| Specialized experts | 64，激活 8 |
+| FFN hidden size | 3072 |
+| 总参数 / 激活参数 | 80B / 13B |
+| 词表 | 128K |
+| 最长训练 context | 256K |
+
+GQA 用 8 个 KV heads 降低 KV Cache；SwiGLU 与 Hunyuan-Large/TurboS 保持一致。报告称 scaling 实验发现：没有 shared expert 会明显退化，多于一个的边际收益很小，因此固定一个常驻 shared expert。
+
+## Method 1：细粒度 MoE 的计算逻辑
+
+对 token 表示 $h$，可把 MoE 层概括为：
+
+$$
+y=E_{\mathrm{shared}}(h)
++\sum_{i\in\operatorname{TopK}(g(h),8)}p_i(h)E_i(h).
+$$
+
+$g(h)$ 是 router，$p_i$ 是被选专家权重。shared expert 吸收高频通用变换；64 个细粒度专家提供容量，只有 8 个参与当前 token。80B/13B 的价值是：参数容量可以接近更大 dense model，FLOPs 与通信却更靠近 13B；代价是 expert routing、负载均衡和 Expert Parallel 变成部署关键路径。
+
+报告没有详细披露 router loss、capacity factor、dropless 策略和各阶段专家负载，因此无法仅凭文档判断是否存在专家塌缩或长尾热点。它给的是产品级模型结构，不是完整 MoE 训练复现手册。
+
+## Method 2：20T token 预训练与三阶段 schedule
+
+数据管线执行去重、低质量过滤、去噪、主题标签、模型抽取与语义去重，并专门抽取 **250B tokens 高质量 STEM 数据**。主训练分三段：
+
+1. **Foundation**：20T tokens，4096 context；学习率 warmup 到 $3\times10^{-4}$，在 13.5T tokens 内余弦降到 $3\times10^{-5}$，之后保持。
+2. **Fast annealing**：再用 300B tokens，context 8192，学习率从 $3\times10^{-5}$ 快速降到 $8\times10^{-6}$。
+3. **Long context**：依次扩展到 32K 和 256K，NTK-aware RoPE 的 $\alpha$ 分别为 50 与 1000。
+
+这里值得注意的是顺序：先让基础能力充分收敛，再用短 annealing 改善最终分布，最后单独做位置外推。报告没有给长上下文阶段 token 数与数据配比，因此 256K 能力更多由结果表支持，无法复现其训练预算。
+
+## Method 3：Reasoning SFT + GRPO
+
+Reasoning SFT 覆盖数学、代码、逻辑、科学。数学与科学使用 verifier/rejection sampling；代码由仓库变换成任务并通过 critic + sandbox；逻辑题结合自动 CoT 评估和复杂样本人审。
+
+RL 使用 GRPO，奖励分为：答案对齐的 outcome verifier，以及支持 36 种语言、1000+ 并发执行的代码 sandbox。150K prompts 的数学:代码:逻辑:科学比例为 2:2:1:1，90% 不与 SFT 重叠；排除选择、判断和证明题，降低猜测或难验证输出污染奖励。
+
+训练先用 24K rollout，再扩到 32K，并明确移除 KL constraint。其含义是允许 policy 更自由地离开 SFT 分布，但也提高 reward overoptimization 与语言漂移风险；报告没有给训练曲线、KL 漂移或不同 reward 的消融。
+
+## Method 4：全场景 SFT/RL 与 Agent 数据
+
+第二轮 SFT 覆盖语言理解、创作、多语、复杂指令、角色扮演、知识问答、多轮和 Agent。Agent 数据由 user/planner/tool/agent/checker 五角色合成器产生，工具反馈来自 sandbox、MCP 与 synthetic tools；作者组合工具格式、action 和 response，得到 20,000 种格式变体，并重点覆盖 Excel、deep search 等高频任务。
+
+全场景 RL 使用生成式奖励模型 GRM 加领域服务：长上下文另设 hallucination reward；创作使用相对偏好避免 reward hacking；Agent 奖励同时检查特殊标记/顺序与 tool、parameter、value 的正确性。整体覆盖 16 个 sub-topics、30 多个 scoring services。
+
+它的优点是奖励按任务分解；风险是系统高度复杂，最终能力来自数据、GRM、规则和采样策略共同作用，很难从报告中做干净归因。
+
+## Method 5：Dual-Mode CoT
+
+同一模型统一训练两种格式：fast-thinking 的 `<think>` block 为空；slow-thinking 写入完整 reasoning。用户以 `/no_think` 和 `/think` 控制，默认 slow。
+
+这不是自动复杂度路由，而是显式控制接口。它避免维护两个模型，但也意味着 fast 模式的准确率不是“把 slow 输出提前截断”，而是模型学到另一种输出分布；线上系统仍需自行决定何时值得支付 reasoning tokens。
+
+## Base model 结果
+
+与 Hunyuan-Large 389B/52B active、Qwen2.5-72B dense、Qwen3-A22B 235B/22B active 比较时，Hunyuan-A13B 的部分结果为：
+
+| Benchmark | Hunyuan-Large | Qwen2.5-72B | Qwen3-A22B | Hunyuan-A13B |
+|---|---:|---:|---:|---:|
+| MMLU | 88.40 | 86.10 | 87.81 | 88.18 |
+| MMLU-Pro | 60.20 | 58.10 | 68.18 | 67.23 |
+| EvalPlus | 75.69 | 65.93 | 77.60 | 78.64 |
+| MultiPL-E | 59.13 | 60.50 | 65.94 | 69.33 |
+| MBPP | 72.60 | 76.00 | 81.40 | 83.86 |
+| MATH | 69.80 | 62.12 | 71.84 | 72.35 |
+| GPQA | 25.18 | 45.90 | 47.47 | 49.12 |
+
+结果支持“小 active size 不等于弱 base model”，尤其代码与 GPQA 较强；但表中 prompt、token budget 与 contamination control 只部分披露，不能视为绝对排行榜。
+
+## Post-training、Agent 与长上下文结果
+
+slow-thinking 中 Hunyuan-A13B 报告 AIME 2024 为 87.3、MATH 94.3、GPQA-Diamond 71.2、BBH 89.1、ZebraLogic 84.7。工具调用上，报告称在 BFCL-v3、$\tau$-Bench、ComplexFuncBench、C3-Bench 具有领先或竞争表现；但对比混有开闭源模型、内部 benchmark 和不同 thinking 模式，应重点看同表相对位置，不把它解释为统一预算下全面领先。
+
+<figure><img src="/paper-radar/images/hunyuan-a13b/training-results.svg" alt="Hunyuan-A13B 的训练阶段、长上下文评测和批量吞吐" width="1600" height="900" loading="lazy"/><figcaption>图 2：根据技术报告 Sections 3–4 与 Tables 5–7 重绘。Table 7 未在邻近正文完整披露硬件，吞吐只适合作为该系统配置记录。</figcaption></figure>
+
+长上下文结果更容易核对：PenguinScrolls 87.7，接近 Gemini 2.5 Pro 88.3；LongBench-v2 55.0，高于 DeepSeek R1 53.8 和 Qwen3-A22B 48.4；FRAMES 81.1，低于 DeepSeek R1 85.7 与 Qwen3 84.0。RULER QA 在 64K–128K 为 73.9，对比 DeepSeek R1 65.6、Qwen3 66.6，退化相对平缓。
+
+## 推理效率
+
+报告支持 vLLM、SGLang、TensorRT-LLM 的 W16A16，以及 WeightOnly INT8、W8A8、KV FP8，并可组合 TP、EP、FusedMoE、Auto Prefix Caching 和 Chunk Prefill。A16W16C16 表中，2048 input / 14336 output 时，batch 1/16/32 吞吐为 190.84/1246.54/1981.99 tokens/s；同 batch 32、output 22528 时为 1725.95。
+
+但缺少足够邻近硬件与并行配置说明，不能将 1981.99 与其他模型表外数字直接比较。MoE 吞吐高度依赖 GPU 数、EP 拓扑、专家负载和 batch。
+
+## 论文证明了什么，没证明什么
+
+报告较充分证明了 Hunyuan-A13B 是一个可部署、能力覆盖广、长上下文稳定的开放 MoE；权重和主流 runtime 支持提升了工程价值。它没有公开预训练计算量、数据组成比例、完整 optimizer/batch、router 细节、RL 训练曲线和大部分消融，无法复现“哪项改动贡献多少”。
+
+## 工程启示
+
+- 评估 MoE 要同时报告 total parameters、active parameters、KV heads 与实际并行拓扑。
+- fast/slow mode 最好共享输出协议，使调用方能显式管理 latency-quality tradeoff。
+- Agent post-training 不能只有 tool-call 格式；需要真实/合成反馈、参数一致性奖励、多轮状态和工具错误恢复。
+- 256K context 应按长度桶报告，而不是只给单一平均分；Hunyuan 的 RULER 分桶值得保留。
+
+## 局限与风险
+
+数据透明度有限，20T 与 250B STEM 的来源、许可和污染控制未详述。内部 ArtifactsBench、LengthCtrl、InsCtrl、ComplexNLU 等使部分结论难以外部复核。Dual-CoT 没有给相同任务上 token/latency/accuracy 的完整 Pareto 曲线。移除 KL 的 GRPO、GRM 奖励与 30 多个 scoring services 可能隐藏 reward hacking 或能力回退。安全评测几乎未展开。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 80B/13B 应该怎样与 72B dense 比较？</summary><div class="thought-answer">13B 更接近单 token FLOPs，80B 更接近容量和显存；但 MoE 还有路由、专家通信与权重访问开销。比较质量看容量与数据，比较成本看 active FLOPs、KV Cache、batch、EP 拓扑和端到端 tokens/s，不能只取一个参数数字。</div></details>
+
+<details class="thought-question"><summary>2. 为什么只有一个 shared expert？</summary><div class="thought-answer">shared expert 为每个 token 提供稳定的通用变换，让 specialized experts 更专注；报告称零个明显变差，多于一个收益递减。更多 shared experts 还会线性增加每 token 固定计算，削弱稀疏 MoE 的效率。</div></details>
+
+<details class="thought-question"><summary>3. fast-thinking 为什么不能简单理解为少生成几步？</summary><div class="thought-answer">它在训练中对应空 think block，是单独学习的条件分布；slow 模式则包含显式 reasoning、反思和回溯。前者不是后者的 early exit。若要自动选择，仍需上层 router 估计任务难度和错误代价。</div></details>
+
+<details class="thought-question"><summary>4. 长上下文成绩好是否证明 256K 每个位置都可靠？</summary><div class="thought-answer">不能。RULER 分桶只覆盖特定 QA 合成任务，PenguinScrolls/LongBench/FRAMES 也各自偏向不同能力。需要位置敏感 retrieval、多文档冲突、长代码、needle 密度、生成长度与 KV 精度等更细测试。</div></details>
+
+<details class="thought-question"><summary>5. 如果用于企业 Agent，最先补哪类评测？</summary><div class="thought-answer">应补真实工具 schema 漂移、权限错误、部分成功、超时重试、长会话状态恢复与不可逆操作安全；同时以 fast/slow 两模式报告成功率、调用次数、总 tokens、wall-clock 和成本，而不只看 BFCL 类函数调用准确率。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2609.27284)
+- [PDF](https://arxiv.org/pdf/2609.27284)
+- [官方代码与权重说明](https://github.com/Tencent-Hunyuan/Hunyuan-A13B)
+- [Hugging Face 模型](https://huggingface.co/tencent/Hunyuan-A13B-Instruct)

@@ -1,0 +1,144 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-04T22:16:00+08:00
+title: "FreeForm Harness 解读：移动端 Agent 如何既允许任意插件，又不丢掉安全与连续性"
+featured: true
+category: harness
+tags:
+  - agent-harness
+  - mobile-agent
+  - plugin-system
+  - tool-use
+  - agent-safety
+description: "系统解读 FreeForm Harness 的 L0/L1/L2 分层、统一插件契约、位置与后台触发约束吸收、三层委托式创作，以及 Android 原型的覆盖率、闭环率和运行成本。"
+paper:
+  title: "FreeForm Harness: A Mobile-Native Agent Harness for Open and Composable Extensions"
+  venue: "arXiv preprint, 2026"
+  paperUrl: "https://arxiv.org/abs/2611.04579"
+  pdfUrl: "https://arxiv.org/pdf/2611.04579"
+  score: 90
+  scoreNote: "推荐理由：论文没有把 Harness 简化为 prompt 包装，而是给出永久角色、开放插件、设备端准入、进程恢复和资源仲裁的完整架构并做 Android 实现；扣分在于 50 例 benchmark 与单一设备规模有限，Tier 3 只做可行性验证，安全性缺少恶意发布者与长期真实用户研究。"
+---
+
+> [!NOTE]
+> 论文于 **2026 年 11 月 3 日**首次公开，共 12 页。它主要是系统架构与原型验证，不是模型能力 benchmark；阅读重点应是边界是否自洽、机制是否真正落地。
+
+## 一句话结论
+
+**移动 Agent 不能靠“所有东西都是可卸载插件”获得开放性，因为位置、后台触发、事件日志和相机/音频等独占资源必须始终有人负责。FreeForm Harness 把系统拆成冻结内核 $L_0$、实现可换但角色永久的 $L_1$、自由安装的 $L_2$；所有扩展受同一声明式契约和设备端准入约束。Android 原型能表达 50/50 个请求并闭环 44 个，而 recipe automation 只能表达 38 个、闭环 17 个，代价是 8 小时电量从 3.2% 增至 4.1%。**
+
+<figure><img src="/paper-radar/images/freeform-harness/architecture.svg" alt="FreeForm Harness 的冻结内核、永久必需角色与开放插件三层结构" width="1600" height="900" loading="eager"/><figcaption>图 1：根据论文 Figures 1–3 与 Section 2 重绘。永久性附着在角色上，不附着在某个具体实现上。</figcaption></figure>
+
+## 为什么移动端比桌面插件更难
+
+“快到家时提醒我取快递”同时依赖位置、通知、持续状态、后台唤醒与展示渠道。桌面 Agent 的插件进程通常可保持在线；手机进程会被回收，定位有耗电与权限约束，多个插件还会争抢相机、音频焦点或通知槽。
+
+两个极端都失败：单体 Assistant 保证关键部件常驻，却没有开放安装面；完全动态插件系统很开放，却无法保证每次执行都仍有可信的位置源、恢复逻辑和资源仲裁器。
+
+## Method 1：把“可替换”与“可消失”分开
+
+设非插件内核为 $K$，插件集合为 $P$：
+
+$$
+L_0=K,\qquad L_1\subseteq P,\qquad L_2=P\setminus L_1.
+$$
+
+- $L_0$：不可替换、永久存在，负责启动插件系统和唯一语义。
+- $L_1$：实现可替换，但每个 required role 必须始终有一个实现。
+- $L_2$：可安装、卸载、重组的开放扩展。
+
+组件进入 $L_1$ 需同时满足：缺少它会破坏安全、创作闭环或连续性至少一项；但插件系统本身仍能启动，因此它不是 $L_0$。这个判据避免凭感觉把大量功能硬编码进内核。
+
+## Method 2：统一 Plugin Descriptor
+
+插件声明为九元组：
+
+$$
+d=\langle R,O,P,H_o,H_b,H_w,E,C,\alpha\rangle.
+$$
+
+$R/O/P$ 是必需、可选和提供的服务；$H_o/H_b/H_w$ 是拥有、观察和包装的 hook；$E$ 是允许发出的事件前缀；$C$ 是配置类型；$\alpha$ 是 eager、lazy 或 event-triggered 激活策略。
+
+系统能在代码执行前检查：同一 hook 不能有两个 owner；observe/wrap 必须指向已有 owner；一个 service key 最多一个 provider；事件只能使用已声明前缀。实例只能收窄 class 权限：
+
+$$
+d_i\preceq d_c
+\Longleftrightarrow
+R(d_i)\subseteq R(d_c)\land O(d_i)\subseteq O(d_c)\land
+\alpha(d_i)\succeq\alpha(d_c).
+$$
+
+这里更“具体”的触发条件被视为收窄，而不是扩大权限。插件卸载还必须撤销其注册、事件订阅和 scheduler effect，保证 temporal coherence。
+
+## Method 3：Constraint absorption
+
+论文把三类全局约束集中到 $L_1$：
+
+1. **Location Source**：位置事实只有一个 producer，统一采样、精度、坐标系与耗电策略。
+2. **Intake Dispatcher + Background Wakeup**：注册/取消先写事件日志；进程恢复时，以日志为权威重建缺失 handle、删除孤儿 handle。
+3. **Exclusive-Resource Arbiter**：相机、音频焦点、presentation slot 等以单持有者 lease 管理；冲突处理为 interrupt/defer/discard，多资源申请原子成功或全部失败。
+
+开放插件只声明局部需要，系统级保证由一个持续存在的 authority 实现。这个“吸收约束”的思想比多加权限检查更重要：它消除了插件之间无法局部协调的全局状态。
+
+## Method 4：五维组合空间与三层创作
+
+反应式移动行为被投影为：
+
+$$
+\pi(s)\in\mathcal B=T\times D\times A\times S\times A_s,
+$$
+
+对应 trigger、data、action、presentation slot、asset。新增行为通常只是重新组合五个维度，不需写新 pipeline。
+
+找不到现有扩展时，系统根据“引擎是否已存在” $G$ 与“是否可由零逻辑声明表达” $Z$ 选最低充分层级：$G\land Z$ 为 Tier 1 声明；$G\land\neg Z$ 为 Tier 2 沙箱脚本；$\neg G$ 为 Tier 3 原生包。Tier 3 先过云端 disposable Android test base，再在设备上限时试运行；最终准入仍由设备和用户决定。
+
+## Android 实现边界
+
+APK 只带 $L_0$、assembly layer 和用于 bootstrap 的 market client，不携带持续演化的领域能力。market 分发 $L_1/L_2$ 包及签名/吊销状态；cloud 只负责分发、Tier 3 测试和 coding-agent 委托，不运行生产 Harness。
+
+冷启动通过事件日志 replay 重建；安装、替换和卸载是可回滚事务；$L_1$ 替换必须重新跑该角色的约束测试。已准入快照可以离线运行，网络只用于下载、吊销检查或生成新扩展。
+
+## 实验结果
+
+<figure><img src="/paper-radar/images/freeform-harness/results.svg" alt="FreeForm Harness 的表达覆盖、端到端闭环与移动端运行成本" width="1600" height="900" loading="lazy"/><figcaption>图 2：根据论文 Table 2 与 Sections 4.2–4.4 重绘。闭环失败包含明确的 unsupported、unauthorable 与 principled refusal。</figcaption></figure>
+
+50 个请求全部落入既有五维组合空间；23 个涉及移动/位置，全部涉及主动触发和至少一种稀缺展示或独占资源。FFH 表达 50 个，automation baseline 表达 38 个，其中仅 15 个直接表达、23 个依赖 workaround、12 个无法表达。
+
+端到端流程闭环 44/50：17 个直接检索命中，27 个进入委托创作并全部在主实验成功准入执行；其余 6 个在生成前诚实终止。27 个中 Tier 1/2/3 分别为 4/22/1，说明强结论主要来自声明与脚本层，不能把它外推为“任意原生能力都能安全自动生成”。
+
+10 个 commissioned cases 重跑 5 次，共 46/50 成功，平均 revision 1.6；7 次需标准化重述意图。36 次 required-role 替换中，30 个合法变体无需修改 interpreter，6 个越界组合被拒绝；automation baseline 只有 3/36 能局部替换。
+
+运行成本：Xiaomi 14 Pro / Android 16 上，冷启动中位 380ms；replay recovery 上界 505ms；安装/替换/卸载为 178/335/19ms；8 小时混合触发耗电 4.1%，弱化版 3.5%，automation 3.2%。
+
+## 怎样读这组证据
+
+实验足以说明架构机制在一个真实 Android 原型中可执行，而非纯概念图；但它没有证明恶意插件无法绕过所有边界，也没有长期普通用户研究。50 个案例、单一手机、单一 commissioned coding-agent 配置都限制了泛化。
+
+## 工程启示
+
+- Harness 设计应先列出不能由任意插件局部维护的全局不变量，再决定哪些角色必须永久存在。
+- 权限与依赖要成为机器可检查的 manifest，而不是 README 里的约定。
+- 后台任务必须 write-ahead：先持久化意图，再注册系统 handle，恢复时才能机械对账。
+- 生成式插件不能有旁路；检索、第三方发布和 AI 生成都走同一 admission pipeline。
+- “设备端最终决定”同时改善隐私、离线性和责任边界，但会增加端侧测试与回滚复杂度。
+
+## 局限与风险
+
+Tier 3 只有一个主 benchmark 例子；恶意发布者、供应链攻击、签名密钥泄漏和撤销延迟未做系统红队。Location Source 成为关键集中角色，替换虽受契约约束，但实现错误仍会影响所有插件。用户 preview 被赋予语义判断责任，而普通用户未必能识别隐藏副作用。论文也未披露 coding-agent 的模型敏感性和生成成本。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么“所有东西都是插件”反而会破坏开放性？</summary><div class="thought-answer">如果位置、恢复和资源仲裁也可任意缺席，上层插件无法假设基本环境存在，组合契约就失去意义。稳定开放面需要少量不可消失的角色；开放的是其实现和上层行为，而不是让系统不变量随机消失。</div></details>
+
+<details class="thought-question"><summary>2. 为什么 L1 必须实现可替换，但角色永久？</summary><div class="thought-answer">永久具体实现会造成供应商锁定；角色也可消失则无法保证连续性。把永久性附着到接口与约束，让更好的位置源或仲裁器可以替换旧实现，同时维持“总有人负责”的系统承诺。</div></details>
+
+<details class="thought-question"><summary>3. 设备端准入怎样与开放市场共存？</summary><div class="thought-answer">市场只负责发现和分发，不拥有最后信任决定。设备验证签名、契约、沙箱/试运行结果并获取用户接受；已准入快照随后可离线执行。开放作者身份与集中运行控制因此被拆开。</div></details>
+
+<details class="thought-question"><summary>4. 44/50 的 closure 是否意味着系统失败率 12%？</summary><div class="thought-answer">不完全。六个 non-closure 包含设备不支持、权限不可授予和原则性拒绝，论文把“诚实不执行”视为安全结果。评估应同时报告 task success 与 unsafe/unsupported refusal，不能把所有拒绝都算能力失败，也不能把拒绝算完成任务。</div></details>
+
+<details class="thought-question"><summary>5. 如果迁移到桌面或浏览器，哪些 L1 角色会变化？</summary><div class="thought-answer">Location Source 可能降级，取而代之的是凭据、文件系统、浏览器 profile、窗口焦点和网络代理 authority；Background Wakeup 在桌面更容易，但 durable intent 和资源仲裁仍需要。方法不是复制角色清单，而是重新做 safety/authoring/continuity absence test。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2611.04579)
+- [PDF](https://arxiv.org/pdf/2611.04579)
