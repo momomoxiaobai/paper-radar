@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1000" viewBox="0 0 1800 1000" role="img" aria-labelledby="title desc">
+  <title id="title">不同错误代价如何移动贝叶斯决策阈值</title>
+  <desc id="desc">比较零一损失与漏诊代价更高时的二分类阈值，并展示拒绝决策区域。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#f1f5f9"/></linearGradient>
+    <style>.title{font:700 46px system-ui,-apple-system,"Noto Sans SC",sans-serif;fill:#0f172a}.sub{font:400 23px system-ui,-apple-system,"Noto Sans SC",sans-serif;fill:#475569}.h{font:700 28px system-ui,-apple-system,"Noto Sans SC",sans-serif;fill:#0f172a}.p{font:400 21px system-ui,-apple-system,"Noto Sans SC",sans-serif;fill:#334155}.small{font:500 18px system-ui,-apple-system,"Noto Sans SC",sans-serif;fill:#475569}.mono{font:600 20px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#312e81}.axis{stroke:#334155;stroke-width:4}.mark{stroke:#64748b;stroke-width:3;stroke-dasharray:10 8}.box{fill:#fff;stroke:#cbd5e1;stroke-width:2}.good{fill:#dcfce7}.bad{fill:#fee2e2}.reject{fill:#fef3c7}</style>
+  </defs>
+  <rect width="1800" height="1000" rx="36" fill="url(#bg)"/>
+  <text x="85" y="85" class="title">阈值不是自然常数：错误代价改变最优行动</text>
+  <text x="85" y="130" class="sub">横轴是后验 P(C₁|x)。零一损失得到 0.5；漏诊更贵时，判为阳性的阈值会下降。</text>
+
+  <rect x="85" y="210" width="1630" height="255" rx="28" class="box"/>
+  <text x="130" y="270" class="h">场景 A：误报与漏报代价相同</text>
+  <rect x="180" y="335" width="700" height="70" class="bad"/><rect x="880" y="335" width="700" height="70" class="good"/>
+  <line x1="180" y1="415" x2="1580" y2="415" class="axis"/><line x1="880" y1="320" x2="880" y2="430" class="mark"/>
+  <text x="170" y="450" class="small">0</text><text x="855" y="450" class="small">0.5</text><text x="1560" y="450" class="small">1</text>
+  <text x="470" y="378" class="p">预测 C₀</text><text x="1160" y="378" class="p">预测 C₁</text>
+
+  <rect x="85" y="520" width="1630" height="300" rx="28" class="box"/>
+  <text x="130" y="580" class="h">场景 B：漏诊代价 C_FN = 9，误报代价 C_FP = 1</text>
+  <text x="130" y="620" class="mono">threshold = C_FP / (C_FP + C_FN) = 0.1</text>
+  <rect x="180" y="680" width="140" height="70" class="bad"/><rect x="320" y="680" width="1260" height="70" class="good"/>
+  <line x1="180" y1="760" x2="1580" y2="760" class="axis"/><line x1="320" y1="665" x2="320" y2="775" class="mark"/>
+  <text x="170" y="795" class="small">0</text><text x="295" y="795" class="small">0.1</text><text x="1560" y="795" class="small">1</text>
+  <text x="207" y="723" class="p">C₀</text><text x="900" y="723" class="p">较早触发 C₁ / 复检</text>
+  <text x="130" y="865" class="p">概率模型没有变，变化的是行动规则。业务阈值应由代价、资源和约束决定，而不是默认 0.5。</text>
+
+  <rect x="410" y="910" width="980" height="55" rx="26" class="reject" stroke="#f59e0b" stroke-width="2"/>
+  <text x="465" y="946" class="p">还可以加入“拒绝/转人工”：不确定区域先不做不可逆决定。</text>
+</svg>

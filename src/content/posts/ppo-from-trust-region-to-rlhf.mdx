@@ -1,6 +1,7 @@
 ---
 author: Yanjie Liang
 pubDatetime: 2026-11-05T00:40:00+08:00
+modDatetime: 2026-11-05T01:15:00+08:00
 title: "训练方法 01｜PPO 详解：从策略梯度、TRPO、GAE 到大模型 RLHF"
 featured: true
 category: training-methods
@@ -11,7 +12,7 @@ tags:
   - gae
   - actor-critic
   - rlhf
-description: "从零推导 PPO：先解释策略梯度与 importance ratio，再拆开 PPO-Clip 的正负优势分段几何、KL penalty、GAE、actor-critic 完整损失和训练循环，核对原论文连续控制与 Atari 实验，并说明实现细节、RLHF 映射、局限与诊断方法。"
+description: "面向初学者从强化学习、MDP、回报、策略、价值函数和 advantage 开始，再推导 PPO 的策略梯度、importance ratio、Clip、GAE、actor-critic 完整损失与训练循环，核对原论文实验并解释 RLHF 映射。"
 paper:
   title: "Proximal Policy Optimization Algorithms"
   venue: "arXiv preprint, 2017"
@@ -24,11 +25,138 @@ paper:
 > [!NOTE]
 > PPO 论文于 **2017 年 7 月 20 日**首次公开，当前 arXiv 版本日期为 2017 年 8 月 28 日。本文是「06 训练方法」系列第一篇。阅读范围不只包括 PPO 原文，还交叉核对了 TRPO、GAE、InstructGPT，以及 OpenAI Spinning Up、Stable-Baselines3 和 PPO 实现细节复现研究。公式中的目标默认写成“最大化”形式；代码库若实现成 loss 最小化，需要整体取负号。
 
+## 阅读前先判断：你应该从哪里开始
+
+这篇文章同时服务三类读者，不需要强迫自己一次读完。
+
+| 你的基础 | 建议阅读顺序 | 暂时可以跳过 |
+|---|---|---|
+| 第一次接触强化学习 | 先读“0. 强化学习是什么”“符号表”“策略梯度直觉”，再看训练循环；第二遍再看公式 | TRPO 二阶优化、KL penalty、实验细节 |
+| 会深度学习，但没系统学过 RL | 从 MDP、return、$V/Q/A$ 开始，重点读策略梯度、GAE 和 Clip 分段图 | 原论文历史背景可快速浏览 |
+| 已经实现过 REINFORCE / A2C | 直接从 importance ratio、PPO-Clip、实现细节和诊断开始 | 强化学习入门部分 |
+| 只关心大模型 RLHF | 先读强化学习角色映射，再读第 3、5、7、11 节 | MuJoCo/Atari 细节可后读 |
+
+### 如果下面四个问题都陌生，建议先补这些知识
+
+1. 条件概率 $p(y\mid x)$ 与期望 $\mathbb E[X]$ 是什么？
+2. 神经网络为什么可以用梯度下降更新参数？
+3. `log probability` 和交叉熵有什么关系？
+4. 一个随机变量的均值和方差分别描述什么？
+
+建议的最短先修路线是：**概率与条件概率 → 导数和梯度下降 → 监督学习中的 log-likelihood / cross-entropy → 神经网络反向传播**。不要求先学动态规划、Q-learning 或所有强化学习算法；理解 PPO 所需的最小 RL 背景会在下面补齐。
+
+> [!TIP]
+> 初读时不要试图记住所有希腊字母。先抓住五句话：Agent 与环境交互；reward 告诉它刚才有多好；return 汇总未来 reward；value 预测未来；policy 决定动作。PPO 只是在回答“怎样更新 policy，既变好又不要一步变得太多”。
+
+## 0. 强化学习到底是什么
+
+监督学习通常给定输入 $x$ 和正确答案 $y$，模型只需把预测靠近标签。强化学习没有为每一步提供标准答案：Agent 选择动作，动作改变环境，环境稍后才返回奖励；今天的动作还会改变明天能看到的状态。
+
+最基本的交互循环是：
+
+```text
+环境给出状态 s_t
+→ Agent 按策略 π 选择动作 a_t
+→ 环境返回奖励 r_t 和新状态 s_{t+1}
+→ 重复，直到 episode 结束
+```
+
+<figure><img src="/paper-radar/images/ppo/rl-primer.svg" alt="强化学习中 Agent、环境、状态、动作、奖励、策略与价值函数的关系" width="1800" height="1050" loading="eager"/><figcaption>图 1：强化学习的最小结构。Policy 负责行动，value function 负责预测未来，reward 来自环境；PPO 更新的是 policy，同时通常训练一个 critic 帮助估计 advantage。</figcaption></figure>
+
+### 用 CartPole 建立直觉
+
+小车上立着一根杆。状态可以包含小车位置、速度、杆角度和角速度；动作是向左或向右推；杆每保持一小步不倒就得到奖励。没有数据集告诉模型“杆向右倾 3 度时标准动作一定是左推”，模型只能通过许多次尝试，比较哪些动作最终让杆站得更久。
+
+语言模型 RLHF 也能写成同一结构：状态是 prompt 加已经生成的前缀，动作是下一个 token，完整回答结束后 reward model 或 verifier 给出奖励。
+
+### MDP：把交互问题写成数学对象
+
+常用 Markov Decision Process 表示：
+
+$$
+\mathcal M=(\mathcal S,\mathcal A,P,R,\gamma).
+$$
+
+| 符号 | 初学者解释 | CartPole 例子 |
+|---|---|---|
+| $\mathcal S$ | 所有可能状态 | 位置、速度、角度、角速度 |
+| $\mathcal A$ | 所有可能动作 | 左推、右推 |
+| $P(s'\mid s,a)$ | 做动作后环境怎样变化 | 物理模拟器推进一步 |
+| $R(s,a,s')$ | 环境给的即时奖励 | 杆没有倒，奖励 +1 |
+| $\gamma$ | 多重视未来奖励 | 越接近 1，越重视长期结果 |
+
+“Markov”假设是：给定当前状态和动作后，下一状态的分布不再需要更早历史。真实 Agent 未必完全满足；工程上会用历史窗口、RNN、belief state 或完整上下文近似一个足够状态。
+
+### Reward 不等于 return
+
+$r_t$ 只是一步的即时奖励。训练真正关心的是从时刻 $t$ 起的累计折扣回报：
+
+$$
+G_t=r_t+\gamma r_{t+1}+\gamma^2r_{t+2}+\cdots.
+$$
+
+$\gamma\in[0,1)$ 是 discount factor。若 $\gamma=0$，只看眼前奖励；若接近 1，遥远结果也重要。比如 $\gamma=0.99$ 时，100 步后的奖励权重约为 $0.99^{100}\approx0.366$。它既表达任务时间偏好，也帮助无限序列的和收敛。
+
+### Policy、V、Q 和 Advantage 各做什么
+
+策略是 Agent 的行动规则：
+
+$$
+\pi_\theta(a\mid s)=\Pr(A_t=a\mid S_t=s).
+$$
+
+神经网络参数 $\theta$ 决定动作分布。价值函数把“未来可能有多好”分成三种视角：
+
+$$
+\begin{aligned}
+V^\pi(s)&=\mathbb E_\pi[G_t\mid S_t=s],\\
+Q^\pi(s,a)&=\mathbb E_\pi[G_t\mid S_t=s,A_t=a],\\
+A^\pi(s,a)&=Q^\pi(s,a)-V^\pi(s).
+\end{aligned}
+$$
+
+- $V(s)$：站在这个状态，之后按当前策略行动，平均还能拿多少回报；
+- $Q(s,a)$：在这个状态先指定做动作 $a$，之后按当前策略行动，平均能拿多少；
+- $A(s,a)$：这个动作相对当前状态的平均水平好多少。
+
+如果 $A>0$，该动作比“策略平常会做的动作”更好；如果 $A<0$，它更差。PPO 不需要精确知道环境动力学 $P$，但需要从 rollout 中估计 advantage。
+
+### Actor–Critic：一个负责做，一个负责评
+
+PPO 通常是 actor–critic：
+
+- **Actor** 是 policy $\pi_\theta$，真正选择动作；
+- **Critic** 是 value function $V_\phi$，预测未来 return；
+- Critic 帮助构造低方差 advantage，Actor 根据 advantage 调整动作概率。
+
+Critic 不是裁判或 reward model。reward 来自环境；critic 只是学习预测这些 reward 将怎样累积。若 critic 预测错误，advantage 也可能错，因此后文会反复强调 value loss 与 explained variance。
+
+## 全文符号和超参数速查
+
+| 符号/参数 | 含义 | 常见起点，不是固定规则 |
+|---|---|---|
+| $s_t,a_t,r_t$ | 第 $t$ 步状态、动作、即时奖励 | 由环境定义 |
+| $\pi_\theta$ | Actor / 当前策略，参数为 $\theta$ | 神经网络 |
+| $V_\phi$ | Critic / 价值函数，参数为 $\phi$ | 可与 actor 共享部分网络 |
+| $\gamma$ | 折扣因子 | 0.99 |
+| $\lambda$ | GAE 偏差—方差折中 | 0.95 |
+| $\epsilon$ | PPO ratio clip 范围 | 0.1–0.3，常见 0.2 |
+| $\hat A_t$ | 从样本估计的 advantage | 常做均值 0、方差 1 标准化 |
+| $N$ | 并行环境或 actor 数 | 依吞吐决定 |
+| $T$ | 每个 actor 单轮采样步数 | 与任务 horizon 共同决定 |
+| $K$ | 同一 rollout 的优化 epoch 数 | 常见 3–10 |
+| $M$ | minibatch size | 应小于总 batch $NT$ |
+| $c_v,c_e$ | value loss、entropy bonus 权重 | 需按 reward scale 调整 |
+| $\beta$ | KL penalty 系数 | penalty 版本或 RLHF 使用 |
+| `target_kl` | 单轮更新允许的 KL 参考阈值 | 用于 early stopping |
+
+看到后文公式时，优先问三件事：这个量来自环境、旧策略还是正在更新的新策略？它是观测到的样本，还是神经网络估计？目标是在最大化 reward，还是在限制更新幅度？这三个问题比背符号更重要。
+
 ## 一句话结论
 
 **PPO 的核心不是“把概率比率裁到 0.8–1.2”，而是：在旧策略采到的一批数据上，用 importance ratio 衡量新策略相对旧策略怎样改变动作概率，再用一个悲观的 clipped surrogate 阻止“已经朝正确方向走太远”的样本继续贡献收益；配合 GAE、critic、多轮 minibatch 更新和 KL/clip fraction 监控，它用普通一阶优化近似实现了 TRPO 的保守策略更新。它简单、吞吐友好，但既不保证 KL 一定小，也不解决 on-policy 样本效率、reward hacking 或 critic 偏差。**
 
-<figure><img src="/paper-radar/images/ppo/ppo-method-map.svg" alt="PPO 从策略梯度、TRPO、PPO-Clip、GAE 到 RLHF 的方法全景" width="1800" height="1050" loading="eager"/><figcaption>图 1：根据 PPO、TRPO、GAE 与 InstructGPT 方法部分重绘。PPO-Clip 只是一层更新约束，GAE、critic、采样边界与优化细节共同决定最终算法。</figcaption></figure>
+<figure><img src="/paper-radar/images/ppo/ppo-method-map.svg" alt="PPO 从策略梯度、TRPO、PPO-Clip、GAE 到 RLHF 的方法全景" width="1800" height="1050" loading="lazy"/><figcaption>图 2：根据 PPO、TRPO、GAE 与 InstructGPT 方法部分重绘。PPO-Clip 只是一层更新约束，GAE、critic、采样边界与优化细节共同决定最终算法。</figcaption></figure>
 
 ## 先给 PPO 一个准确定位
 
@@ -167,7 +295,7 @@ $$
 
 若 $r_t<1-\epsilon$，继续压低坏动作概率不再获得额外收益。但若 $r_t>1+\epsilon$，也就是反而提高坏动作概率，较差的 surrogate 仍然保留，不会被截断掩盖。
 
-<figure><img src="/paper-radar/images/ppo/clip-objective.svg" alt="PPO-Clip 在正优势和负优势下的分段目标" width="1800" height="1000" loading="lazy"/><figcaption>图 2：根据 PPO 原论文 Figure 1 重绘并补充中文解释。红点表示更新起点 r=1；紫线只在“继续朝有利方向走得过头”时变成平台。</figcaption></figure>
+<figure><img src="/paper-radar/images/ppo/clip-objective.svg" alt="PPO-Clip 在正优势和负优势下的分段目标" width="1800" height="1000" loading="lazy"/><figcaption>图 3：根据 PPO 原论文 Figure 1 重绘并补充中文解释。红点表示更新起点 r=1；紫线只在“继续朝有利方向走得过头”时变成平台。</figcaption></figure>
 
 这就是论文所谓 pessimistic bound 的直觉：对每个样本取更保守的 surrogate。它不是对真实回报的全局下界，也不是严格 trust region。不同状态和动作的概率变化可以组合成较大 KL，即使许多单样本 ratio 已被 clip。
 
@@ -307,7 +435,7 @@ $$
 
 所谓“样本复用”只发生在第 6 步的短 update window 内。同一 rollout 被优化越多轮，当前策略就越不同于行为策略，数据越来越 off-policy；clip 只是缓解，不会把 PPO 变成 replay-buffer 算法。
 
-<figure><img src="/paper-radar/images/ppo/training-loop.svg" alt="PPO 从 rollout、GAE、多 epoch minibatch 更新到诊断的完整循环" width="1800" height="1050" loading="lazy"/><figcaption>图 3：根据 PPO Algorithm 1、Spinning Up、Stable-Baselines3 与复现研究整理。真正的 PPO 是训练循环与实现约定的集合，不只是目标函数。</figcaption></figure>
+<figure><img src="/paper-radar/images/ppo/training-loop.svg" alt="PPO 从 rollout、GAE、多 epoch minibatch 更新到诊断的完整循环" width="1800" height="1050" loading="lazy"/><figcaption>图 4：根据 PPO Algorithm 1、Spinning Up、Stable-Baselines3 与复现研究整理。真正的 PPO 是训练循环与实现约定的集合，不只是目标函数。</figcaption></figure>
 
 ## 8. 一份接近代码的数学实现
 

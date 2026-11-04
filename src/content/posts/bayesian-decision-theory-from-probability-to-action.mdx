@@ -1,0 +1,491 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-05T00:55:00+08:00
+title: "机器学习经典 01｜贝叶斯决策论：从条件概率到最小风险分类"
+featured: true
+category: ml-classics
+tags:
+  - bayesian-decision-theory
+  - bayes-rule
+  - generative-classifier
+  - gda
+  - lda
+  - qda
+  - calibration
+description: "面向初学者从条件概率、先验、似然和后验讲起，再引入行动、损失、条件风险与 Bayes risk，推导 MAP、代价敏感阈值、拒绝选项和高斯判别分析，并解释生成式分类、参数估计、校准与工程使用边界。"
+---
+
+> [!NOTE]
+> 这是「05 机器学习经典」第一篇。它不是只介绍一个分类器，而是建立后续 Naive Bayes、LDA/QDA、Logistic Regression、概率校准和决策阈值的共同语言。本文参考 Stanford CS229 生成式学习与 Bayesian statistics 讲义、Kevin Murphy 的 Probabilistic Machine Learning 在线教材，以及 scikit-learn 的 Naive Bayes 文档；所有数值例子和图均重新推导、绘制。
+
+## 阅读建议：先判断你需要读到哪一层
+
+| 你的目标 | 建议读法 |
+|---|---|
+| 第一次学概率机器学习 | 按顺序读到“零一损失为什么得到 MAP”，先不追 GDA 矩阵推导 |
+| 会分类模型，想理解概率输出 | 重点读 posterior、conditional risk、校准与阈值 |
+| 做医疗、风控、审核或异常检测 | 重点读非对称代价、拒绝选项和分布漂移 |
+| 准备学习 Naive Bayes / LDA / QDA | 完整读生成式分类、高斯判别和参数估计 |
+
+### 最低先修知识
+
+你只需要知道：概率在 0 到 1 之间；条件概率 $P(A\mid B)$ 表示“已知 B 后 A 的概率”；求和与平均；一元二次式。协方差矩阵和矩阵逆只出现在后半部分，不熟悉也可以先抓几何直觉。
+
+如果“条件概率为什么不是把两个概率直接相乘”还不清楚，建议先补：**集合与概率 → 联合/条件/边缘概率 → 期望 → 一维高斯分布**。本文会复习核心定义，但不会从计数原理重新讲起。
+
+## 一句话结论
+
+**贝叶斯决策论把机器学习分成两个相互独立的问题：先用先验和似然计算“世界处于各状态的后验概率”，再用损失函数决定“面对这些概率应该采取什么行动”。当所有分类错误代价相同时，它退化为选择后验最大的 MAP 分类；当漏诊、误报、人工复检或拒绝成本不同时，最优阈值不再是 0.5，概率最大的类别也不一定是最优行动。**
+
+<figure><img src="/paper-radar/images/bayes-decision/bayes-pipeline.svg" alt="贝叶斯决策论从先验和似然形成后验，再结合损失选择行动" width="1800" height="1050" loading="eager"/><figcaption>图 1：贝叶斯公式负责更新信念，损失函数负责选择行动。分类只是决策问题的一种特殊形式。</figcaption></figure>
+
+## 1. 为什么“概率最高”还不够
+
+假设模型判断一位患者患病概率为 20%。应该怎样行动？
+
+- 若疾病轻微、复检昂贵，也许继续观察；
+- 若疾病致命且早期治疗代价很低，20% 已足以触发复检；
+- 若治疗不可逆且副作用巨大，可能需要更高证据；
+- 若模型不确定或样本超出训练分布，最优动作可能是转人工，而不是硬分一类。
+
+概率只描述不确定性，不包含后果。把 posterior probability 直接拿来做行动，需要额外指定“每种错误有多贵”。贝叶斯决策论正是把二者连接起来。
+
+## 2. 先复习四种概率：联合、条件、边缘与先验
+
+设类别 $C\in\{C_0,C_1\}$，观测特征为 $x$。
+
+### 联合概率
+
+$$
+p(x,C_i)
+$$
+
+表示“样本特征是 $x$ 且类别为 $C_i$”同时发生的概率密度/概率。
+
+### 条件概率
+
+$$
+p(x\mid C_i)
+$$
+
+表示已知类别是 $C_i$ 时，看到特征 $x$ 的可能性。分类语境中它常叫 **class-conditional likelihood**。
+
+### 先验概率
+
+$$
+P(C_i)
+$$
+
+是在看当前特征之前，类别本身有多常见。垃圾邮件比例、疾病患病率、某故障的历史发生率都可以成为先验。
+
+### 边缘概率 / evidence
+
+$$
+p(x)=\sum_j p(x\mid C_j)P(C_j).
+$$
+
+它表示不管类别是什么，看到 $x$ 的总概率；在 Bayes rule 中承担归一化作用。
+
+## 3. Bayes rule：看到证据以后怎样更新信念
+
+由联合概率的两种分解：
+
+$$
+p(x,C_i)=p(x\mid C_i)P(C_i)=P(C_i\mid x)p(x),
+$$
+
+得到：
+
+$$
+P(C_i\mid x)
+=
+\frac{p(x\mid C_i)P(C_i)}{p(x)}.
+$$
+
+| 名称 | 公式 | 问的问题 |
+|---|---|---|
+| prior | $P(C_i)$ | 看数据前，这类多常见？ |
+| likelihood | $p(x\mid C_i)$ | 假设是这类，当前证据多合理？ |
+| evidence | $p(x)$ | 当前证据总体多常见？ |
+| posterior | $P(C_i\mid x)$ | 看完证据后，这类有多可能？ |
+
+对分类只比较大小时，所有类别共享 $p(x)$，所以：
+
+$$
+\arg\max_i P(C_i\mid x)
+=
+\arg\max_i p(x\mid C_i)P(C_i).
+$$
+
+这不等于“可以永远忽略 evidence”。计算校准后的数值 posterior、模型比较或异常程度时，$p(x)$ 仍有意义。
+
+## 4. Base-rate effect：为什么 90% 灵敏度不等于阳性后 90% 患病
+
+考虑一个筛查测试：
+
+- 患病率 $P(D)=1\%$；
+- 灵敏度 $P(+\mid D)=90\%$；
+- 特异度 $P(-\mid \neg D)=95\%$，所以假阳性率 $P(+\mid\neg D)=5\%$。
+
+阳性后的患病概率：
+
+$$
+\begin{aligned}
+P(D\mid +)
+&=
+\frac{P(+\mid D)P(D)}
+{P(+\mid D)P(D)+P(+\mid\neg D)P(\neg D)}\\
+&=
+\frac{0.9\times0.01}
+{0.9\times0.01+0.05\times0.99}
+\approx 0.154.
+\end{aligned}
+$$
+
+直观地看 10000 人：约 100 人患病，其中 90 人阳性；9900 人未患病，其中 495 人假阳性。阳性共 585 人，真正患病只有 90 人，即 15.4%。
+
+这个例子说明：**likelihood 不能脱离 prior 解读。** 稀有事件检测、欺诈识别、安全告警中，即使单项指标不错，也可能因基准率极低产生大量误报。
+
+## 5. 决策论增加了什么：状态、行动和损失
+
+把真实类别记为世界状态 $C_i$，允许采取的行动记为 $\alpha_j$。分类时，$\alpha_j$ 可以是“预测第 j 类”；更一般地，它也可以是“治疗”“复检”“拒绝交易”“转人工”。
+
+损失函数：
+
+$$
+\lambda(\alpha_j,C_i)
+$$
+
+表示真实状态是 $C_i$，却采取 $\alpha_j$ 时付出的代价。它可以是经济成本、误诊伤害、延迟、人工资源或合规风险。
+
+看到 $x$ 后，行动 $\alpha_j$ 的条件风险是：
+
+$$
+R(\alpha_j\mid x)
+=
+\sum_i \lambda(\alpha_j,C_i)P(C_i\mid x).
+$$
+
+Bayes decision rule 选择条件风险最小的行动：
+
+$$
+\alpha^*(x)=\arg\min_{\alpha_j}R(\alpha_j\mid x).
+$$
+
+这是全文最重要的公式。它不是选择“最可能正确”的行动，而是选择 **后验期望损失最小** 的行动。
+
+整个数据分布上的平均最小风险称为 Bayes risk：
+
+$$
+R^*=\mathbb E_X\left[\min_{\alpha}R(\alpha\mid X)\right].
+$$
+
+在假设的概率模型和损失函数正确时，没有其他决策规则能获得更低期望风险。但现实中模型、先验、损失都可能估错，所以“理论 Bayes optimal”不等于部署一定最优。
+
+## 6. 零一损失为什么得到 MAP 分类
+
+零一损失规定：预测正确损失为 0，预测错误损失为 1：
+
+$$
+\lambda(\alpha_j,C_i)=
+\begin{cases}
+0,&i=j,\\
+1,&i\ne j.
+\end{cases}
+$$
+
+预测为 $C_j$ 的条件风险：
+
+$$
+R(\alpha_j\mid x)
+=
+\sum_{i\ne j}P(C_i\mid x)
+=1-P(C_j\mid x).
+$$
+
+最小化风险等价于最大化 posterior：
+
+$$
+\alpha^*(x)=\arg\max_jP(C_j\mid x).
+$$
+
+这就是 Maximum A Posteriori（MAP）分类。二分类时，它给出熟悉的 0.5 posterior threshold。但 0.5 来自“两个错误代价相同且没有拒绝行动”，不是概率论规定的永恒阈值。
+
+## 7. 非对称代价怎样改变阈值
+
+设行动为预测正类或负类：
+
+- 假阳性代价 $C_{FP}$；
+- 假阴性/漏诊代价 $C_{FN}$；
+- 正确预测损失设为 0。
+
+两种行动的条件风险：
+
+$$
+\begin{aligned}
+R(\text{predict }1\mid x)&=C_{FP}P(C_0\mid x),\\
+R(\text{predict }0\mid x)&=C_{FN}P(C_1\mid x).
+\end{aligned}
+$$
+
+选择正类的条件是：
+
+$$
+C_{FP}P(C_0\mid x)<C_{FN}P(C_1\mid x).
+$$
+
+因为 $P(C_0\mid x)=1-P(C_1\mid x)$，可写成 posterior threshold：
+
+$$
+P(C_1\mid x)>
+\frac{C_{FP}}{C_{FP}+C_{FN}}.
+$$
+
+若漏诊代价是误报的 9 倍，阈值变成 $1/(1+9)=0.1$。模型本身完全没变，变的是决策规则。
+
+<figure><img src="/paper-radar/images/bayes-decision/cost-sensitive-boundary.svg" alt="零一损失和非对称代价下不同的贝叶斯决策阈值" width="1800" height="1000" loading="lazy"/><figcaption>图 2：0.5 只对应对称零一损失。代价敏感分类应先定义后果，再从条件风险推导阈值。</figcaption></figure>
+
+也可以写成 likelihood-ratio test：
+
+$$
+\frac{p(x\mid C_1)}{p(x\mid C_0)}
+>
+\frac{C_{FP}}{C_{FN}}
+\frac{P(C_0)}{P(C_1)}.
+$$
+
+右侧同时包含错误代价比与先验 odds。这解释了 Neyman–Pearson 检验、检测理论和许多风控规则为何都围绕 likelihood ratio 设计。
+
+## 8. 拒绝选项：最优决策可以是“现在不判断”
+
+加入行动 $\alpha_R$ 表示复检、转人工或 abstain，损失为 $C_R$。当硬分类的最小条件风险仍高于 $C_R$ 时，拒绝更划算：
+
+$$
+\text{reject if}\quad
+\min_j R(\alpha_j\mid x)>C_R.
+$$
+
+零一损失下，如果拒绝成本为 $c<1/2$，可理解为只有最大 posterior 足够高才自动分类。高风险系统不应只优化 accuracy，还应报告 coverage–risk curve：自动处理多少样本，以及这些样本的错误率/损失。
+
+## 9. 生成式分类器：怎样得到 posterior
+
+贝叶斯决策规则需要 $P(C_i\mid x)$。生成式分类先建模：
+
+$$
+P(C_i),\qquad p(x\mid C_i),
+$$
+
+再用 Bayes rule 得 posterior。与之相对，Logistic Regression 等判别式模型直接学习 $P(C_i\mid x)$ 或决策边界。
+
+| 生成式方法 | 判别式方法 |
+|---|---|
+| 建模类别如何生成特征 $p(x\mid C)$ | 直接建模 $P(C\mid x)$ 或分类边界 |
+| 可采样、处理缺失、结合先验 | 假设通常更弱，分类常更稳健 |
+| 模型正确时数据效率可能更高 | 模型错配时通常更鲁棒 |
+| 例：Naive Bayes、GDA、LDA/QDA | 例：Logistic Regression、SVM |
+
+生成式不是一定更“高级”，而是承担了更强建模责任。强假设正确时能用较少数据；强假设错误时会产生系统偏差。
+
+## 10. 高斯判别分析：从密度到线性/二次边界
+
+若连续特征在每个类别内近似多元高斯：
+
+$$
+p(x\mid C_i)
+=
+\frac{1}{(2\pi)^{d/2}|\Sigma_i|^{1/2}}
+\exp\left[
+-\frac12(x-\mu_i)^T\Sigma_i^{-1}(x-\mu_i)
+\right].
+$$
+
+取对数并加入先验，定义 discriminant score：
+
+$$
+g_i(x)
+=
+-\frac12(x-\mu_i)^T\Sigma_i^{-1}(x-\mu_i)
+-\frac12\log|\Sigma_i|
++\log P(C_i).
+$$
+
+零一损失时选择 $g_i(x)$ 最大的类别；非对称损失则仍应回到 conditional risk。
+
+### LDA：共享协方差
+
+若所有类共用 $\Sigma_i=\Sigma$，比较 $g_i-g_j$ 时相同的 $x^T\Sigma^{-1}x$ 二次项抵消，边界变成：
+
+$$
+w^Tx+b=0.
+$$
+
+它是线性的，因此称 Linear Discriminant Analysis。共享协方差显著减少参数，数据不多时往往更稳定。
+
+### QDA：每类独立协方差
+
+若每类有自己的 $\Sigma_i$，二次项无法抵消，边界为：
+
+$$
+x^TAx+b^Tx+c=0.
+$$
+
+这就是 Quadratic Discriminant Analysis。它能表达弯曲边界，但 $d$ 维协方差每类约有 $d(d+1)/2$ 个自由参数，高维小样本时容易估计不稳。
+
+<figure><img src="/paper-radar/images/bayes-decision/gda-boundaries.svg" alt="共享协方差的 LDA 线性边界与独立协方差的 QDA 二次边界" width="1800" height="1000" loading="lazy"/><figcaption>图 3：边界复杂度来自生成式分布假设。参数更多不自动等于泛化更好；样本量、维度和协方差正则化共同决定选择。</figcaption></figure>
+
+## 11. Naive Bayes 为什么“假设很假”仍然有用
+
+高维离散特征无法直接估计完整联合 $p(x_1,\ldots,x_d\mid C)$。Naive Bayes 假设给定类别后特征条件独立：
+
+$$
+p(x\mid C_i)=\prod_{j=1}^d p(x_j\mid C_i).
+$$
+
+于是：
+
+$$
+P(C_i\mid x)
+\propto
+P(C_i)\prod_jp(x_j\mid C_i).
+$$
+
+实现中用 log 避免大量小概率相乘下溢：
+
+$$
+\log P(C_i\mid x)
+=\text{const}+\log P(C_i)+\sum_j\log p(x_j\mid C_i).
+$$
+
+条件独立通常不完全成立，但分类只需要各类别 score 的相对排序，而不要求联合分布每一处都精确。文本词频、垃圾邮件和小样本高维任务中，它仍是强基线。下一篇会专门拆解 Bernoulli、Multinomial、Gaussian Naive Bayes 与 Laplace smoothing。
+
+## 12. 参数的 MLE、MAP 与 fully Bayesian 不要混淆
+
+贝叶斯分类中的“Bayes”可能指类别推断，也可能指参数推断，两者不是同一层。
+
+### MLE：把参数当未知常数
+
+$$
+\hat\theta_{MLE}=\arg\max_\theta p(D\mid\theta).
+$$
+
+用训练数据找到最可能的单个参数。例如按频率估先验、按样本均值估高斯均值。
+
+### MAP：对参数加入先验
+
+$$
+\hat\theta_{MAP}
+=
+\arg\max_\theta p(D\mid\theta)p(\theta).
+$$
+
+它仍输出一个参数点，但先验会产生 shrinkage/regularization。高斯参数先验常对应 $L_2$ 正则。
+
+### Fully Bayesian：对参数不确定性积分
+
+$$
+p(y\mid x,D)
+=
+\int p(y\mid x,\theta)p(\theta\mid D)d\theta.
+$$
+
+它不是只用一个最佳参数，而是对 posterior 中所有可能参数加权预测。理论上更完整，但高维模型的积分通常不可解，需要共轭公式、Laplace approximation、MCMC 或 variational inference。
+
+小样本时忽略参数不确定性会让模型过度自信；数据很多时，posterior 集中，point estimate 与 Bayesian model averaging 的差异可能缩小。
+
+## 13. Posterior 准确不等于概率校准
+
+模型输出 0.8，并不自动意味着这类样本约 80% 为正。若训练分布、先验、likelihood 假设或模型都不准确，输出只是模型内部的 posterior estimate。
+
+校准关心：
+
+$$
+P(Y=1\mid \hat p(X)=q)\approx q.
+$$
+
+部署时至少区分：
+
+- **ranking**：正样本分数是否普遍高于负样本；
+- **classification**：给定阈值后错多少；
+- **calibration**：0.8 是否真对应约 80%；
+- **decision value**：结合真实代价后，行动是否降低总损失。
+
+AUC 高的模型仍可能校准很差；accuracy 高也可能在类别极不平衡时毫无决策价值。Platt scaling、isotonic regression、temperature scaling 能校准分数，但必须使用与部署分布匹配的验证数据。
+
+## 14. 先验漂移与阈值漂移
+
+训练时先验 $P_{train}(C)$ 与部署先验 $P_{test}(C)$ 常不同。例如欺诈率随节假日变化，故障率随设备老化变化。若 class-conditional likelihood 近似稳定，可以重新校正：
+
+$$
+P_{test}(C_i\mid x)
+\propto
+p(x\mid C_i)P_{test}(C_i).
+$$
+
+但若连 $p(x\mid C)$ 也变化，仅换 prior 不够。需要漂移检测、重估 likelihood 或重新训练。与此同时，业务代价和处理资源也可能变化，使最优阈值再次移动。
+
+## 15. 工程落地清单
+
+1. 明确类别与行动不是一回事：是否允许复检、拒绝、延迟或人工接管？
+2. 写出 cost matrix，不要默认所有错误成本为 1。
+3. 区分 prior、likelihood、posterior 和模型 score。
+4. 在真实基准率下评测，不只看平衡测试集。
+5. 同时报告 confusion matrix、precision/recall、calibration 和 expected cost。
+6. 用验证集选择阈值，测试集只做最终评估。
+7. 监控 prior shift、class-conditional shift 与 calibration drift。
+8. 高风险区域设计 reject option，并记录 coverage–risk。
+9. 对极低概率事件使用 log probability，避免数值下溢。
+10. 当协方差维度接近或超过样本量时，考虑 shared/diagonal covariance、shrinkage 或正则化。
+
+## 常见误解
+
+### “Bayes classifier 就是 Naive Bayes”
+
+不是。Bayes classifier 指按 posterior 与损失进行最优决策的原则；Naive Bayes 是估计 likelihood 的一种具体条件独立模型。
+
+### “先验是主观拍脑袋”
+
+先验可以来自历史频率、分层数据、物理约束或专家知识。真正问题不是它是否主观，而是能否说明来源、做敏感性分析，并随分布更新。
+
+### “阈值 0.5 最公平”
+
+0.5 只在特定损失假设下最优。公平性、资源限制和伤害不对称需要额外约束或多目标决策，不能由 0.5 自动保证。
+
+### “生成式模型会生成数据，所以一定比判别式强”
+
+生成式模型承担更强的联合分布假设。假设接近真实时可能数据效率高；错配严重时，直接学习条件概率的判别式方法更稳健。
+
+## 推荐分
+
+**100 / 100，作为机器学习基础框架。** 这里的“分”不是评价某篇论文，而是评价这套思想的基础价值。它把概率预测、分类阈值、错误代价、拒绝决策和分布漂移放进同一语言中。以后看到任何“模型准确率提升 1%”的结果，都应继续追问：posterior 是否校准？先验是否一致？真实 cost matrix 下期望风险是否真的下降？
+
+## 思考题
+
+<details class="thought-question"><summary>1. 检测器的灵敏度和特异度都很高，为什么 precision 仍可能很低？</summary><div class="thought-answer">precision=P(C₁|+) 还依赖 prior。当正类极稀有时，庞大的负类群体即使只有很小假阳性率，也可能贡献比真阳性更多的阳性结果。灵敏度/特异度是 class-conditional likelihood，precision 是结合先验后的 posterior。</div></details>
+
+<details class="thought-question"><summary>2. 为什么改变业务阈值不等于重新训练模型？</summary><div class="thought-answer">模型估计 posterior 或 score；阈值是把概率映射成行动的 decision rule。若概率估计和分布仍有效，只改变 cost matrix 或资源预算时可重新推导阈值而不改模型。但若 prior/likelihood 漂移导致概率失真，仅调阈值可能不够。</div></details>
+
+<details class="thought-question"><summary>3. 一个 posterior 最大的类别为什么可能不是最优行动？</summary><div class="thought-answer">MAP 隐含零一对称损失。若某个低概率状态一旦漏掉会造成巨大损失，针对它采取复检或保护动作的 posterior expected loss 可能更低；还可能存在拒绝/转人工行动，它不对应任何世界类别，却在不确定区域最优。</div></details>
+
+<details class="thought-question"><summary>4. LDA 为什么是线性边界，QDA 为什么是二次边界？</summary><div class="thought-answer">高斯 log likelihood 含 xᵀΣᵢ⁻¹x。所有类别共享 Σ 时，比较类别分数会消掉相同二次项，只剩线性项；每类协方差不同时二次项不同，无法抵消，因此边界保留 xᵀAx。代价是 QDA 要估更多协方差参数。</div></details>
+
+<details class="thought-question"><summary>5. 为什么 AUC 很高仍可能不适合直接做风险决策？</summary><div class="thought-answer">AUC 主要衡量排序，不要求分数是校准概率，也不包含先验和错误代价。两个模型可能 AUC 相同，但一个把 0.6 对应真实 20%，另一个接近 60%；给定 cost-sensitive threshold 后行动结果会完全不同。需额外评估 calibration 与 expected cost。</div></details>
+
+<details class="thought-question"><summary>6. Fully Bayesian prediction 相比 MAP point estimate 多保留了什么？</summary><div class="thought-answer">它保留参数不确定性，对 p(θ|D) 中不同参数下的预测做平均。小样本或参数不可辨识时，这能避免把一个不确定估计当成确定真值；MAP 只保留 posterior mode，计算便宜但往往更自信。数据充足、posterior 高度集中时二者差异可能变小。</div></details>
+
+## 学完这篇以后读什么
+
+推荐顺序：
+
+1. **Naive Bayes**：看条件独立怎样把高维 likelihood 拆开；
+2. **Logistic Regression**：对比直接建模 $P(C\mid x)$；
+3. **LDA/QDA**：深入协方差假设与边界几何；
+4. **MLE、MAP 与正则化**：理解参数估计；
+5. **概率校准**：把 score 变成可决策概率；
+6. **Decision Tree**：观察不依赖显式概率分布的划分方法。
+
+## 参考资料
+
+- [Stanford CS229 Course Notes](https://cs229.stanford.edu/main_notes.pdf)
+- [Probabilistic Machine Learning: An Introduction](https://probml.github.io/pml-book/book1.html)
+- [scikit-learn: Naive Bayes](https://scikit-learn.org/stable/modules/naive_bayes.html)
+- [scikit-learn: Linear and Quadratic Discriminant Analysis](https://scikit-learn.org/stable/modules/lda_qda.html)

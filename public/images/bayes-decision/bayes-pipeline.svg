@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1050" viewBox="0 0 1800 1050" role="img" aria-labelledby="title desc">
+  <title id="title">贝叶斯决策论从先验、似然到后验与行动</title>
+  <desc id="desc">展示先验知识和观测数据如何通过贝叶斯公式形成后验，再结合损失函数选择期望损失最小的行动。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8fafc"/><stop offset="1" stop-color="#eff6ff"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#0f172a" flood-opacity=".10"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0l10 5-10 5z" fill="#64748b"/></marker>
+    <style>.title{font:700 46px system-ui,-apple-system,"Noto Sans SC",sans-serif;fill:#0f172a}.sub{font:400 23px system-ui,-apple-system,"Noto Sans SC",sans-serif;fill:#475569}.h{font:700 28px system-ui,-apple-system,"Noto Sans SC",sans-serif;fill:#0f172a}.p{font:400 21px system-ui,-apple-system,"Noto Sans SC",sans-serif;fill:#334155}.small{font:500 18px system-ui,-apple-system,"Noto Sans SC",sans-serif;fill:#475569}.mono{font:600 20px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#312e81}.box{fill:#fff;stroke:#cbd5e1;stroke-width:2}.line{stroke:#64748b;stroke-width:4;fill:none;marker-end:url(#arrow)}</style>
+  </defs>
+  <rect width="1800" height="1050" rx="36" fill="url(#bg)"/>
+  <text x="85" y="88" class="title">贝叶斯分类只回答“多可能”，决策论还要回答“怎么办”</text>
+  <text x="85" y="132" class="sub">后验概率与损失函数承担不同角色：前者描述不确定性，后者表达错误代价。</text>
+
+  <rect x="90" y="235" width="310" height="235" rx="28" fill="#eef2ff" stroke="#818cf8" stroke-width="3" filter="url(#shadow)"/>
+  <text x="130" y="290" class="h">先验 Prior</text>
+  <text x="130" y="345" class="mono">P(C)</text>
+  <text x="130" y="395" class="p">观测特征之前</text>
+  <text x="130" y="430" class="small">类别流行率、历史频率、领域知识</text>
+
+  <rect x="490" y="235" width="310" height="235" rx="28" fill="#ecfdf5" stroke="#34d399" stroke-width="3" filter="url(#shadow)"/>
+  <text x="530" y="290" class="h">似然 Likelihood</text>
+  <text x="530" y="345" class="mono">p(x | C)</text>
+  <text x="530" y="395" class="p">若类别成立</text>
+  <text x="530" y="430" class="small">看到当前特征 x 有多合理</text>
+
+  <rect x="890" y="235" width="350" height="235" rx="28" fill="#fff7ed" stroke="#fb923c" stroke-width="3" filter="url(#shadow)"/>
+  <text x="930" y="290" class="h">后验 Posterior</text>
+  <text x="930" y="345" class="mono">P(C | x) ∝ p(x | C)P(C)</text>
+  <text x="930" y="395" class="p">看到证据之后</text>
+  <text x="930" y="430" class="small">各类别概率重新分配</text>
+
+  <rect x="1330" y="235" width="380" height="235" rx="28" fill="#faf5ff" stroke="#c084fc" stroke-width="3" filter="url(#shadow)"/>
+  <text x="1370" y="290" class="h">损失与行动</text>
+  <text x="1370" y="345" class="mono">arg minₐ Σ λ(a,C)P(C|x)</text>
+  <text x="1370" y="395" class="p">不一定选择概率最大的类</text>
+  <text x="1370" y="430" class="small">漏诊、误报、拒绝、复检代价不同</text>
+
+  <path d="M400 352H480M800 352H880M1240 352H1320" class="line"/>
+
+  <rect x="120" y="600" width="1560" height="310" rx="32" class="box"/>
+  <text x="165" y="660" class="h">一个医疗筛查例子</text>
+  <text x="165" y="715" class="p">患病率 1%，灵敏度 90%，特异度 95%。10000 人中：100 人患病，9900 人未患病。</text>
+  <rect x="175" y="765" width="285" height="90" rx="20" fill="#fee2e2"/><text x="210" y="817" class="p">真阳性：90</text>
+  <rect x="500" y="765" width="285" height="90" rx="20" fill="#ffedd5"/><text x="535" y="817" class="p">假阳性：495</text>
+  <rect x="825" y="765" width="370" height="90" rx="20" fill="#eef2ff"/><text x="860" y="817" class="p">阳性后验：90 / 585 ≈ 15.4%</text>
+  <rect x="1235" y="765" width="390" height="90" rx="20" fill="#ecfdf5"/><text x="1270" y="817" class="p">下一步取决于复检和漏诊代价</text>
+  <text x="165" y="880" class="small">检测“看起来很准”不代表阳性就有 90% 患病概率；低先验会产生大量 base-rate effect。</text>
+  <text x="85" y="1000" class="small">贝叶斯公式负责更新信念；Bayes decision rule 负责把信念变成行动。</text>
+</svg>
