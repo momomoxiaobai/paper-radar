@@ -41,7 +41,7 @@ export default {
     categoryDesc: "该频道下的全部文章",
     categoriesTitle: "研究频道",
     categoriesDesc:
-      "按阅读目的组织内容：追踪新信号、拆解 Agent 工程、重访基础方法，并为重要模型保留长期档案。",
+      "按阅读目的组织内容：追踪新信号、拆解 Agent 工程、重访基础方法，并系统学习机器学习经典与现代训练方法。",
     postsTitle: "论文解读",
     postsDesc: "从摘要、方法、实验到结论，记录值得关注的研究工作。",
     archivesTitle: "归档",

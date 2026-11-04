@@ -27,6 +27,8 @@ const posts = defineCollection({
         "skill",
         "classic-algorithms",
         "foundation-models",
+        "ml-classics",
+        "training-methods",
       ]),
       tags: z.array(z.string()).default(["others"]),
       ogImage: image().or(z.string()).optional(),

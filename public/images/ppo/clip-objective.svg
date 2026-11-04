@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1000" viewBox="0 0 1800 1000" role="img" aria-labelledby="title desc">
+  <title id="title">PPO clipped surrogate objective 的分段几何</title>
+  <desc id="desc">对比正优势和负优势时，概率比率 r 的截断分别如何限制过度提高和过度降低动作概率。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#f1f5f9"/></linearGradient>
+    <style>
+      .title{font:700 46px system-ui,-apple-system,"Noto Sans SC",sans-serif;fill:#0f172a}.sub{font:400 23px system-ui,-apple-system,"Noto Sans SC",sans-serif;fill:#475569}.h{font:700 30px system-ui,-apple-system,"Noto Sans SC",sans-serif;fill:#0f172a}.p{font:400 21px system-ui,-apple-system,"Noto Sans SC",sans-serif;fill:#334155}.small{font:500 18px system-ui,-apple-system,"Noto Sans SC",sans-serif;fill:#475569}.axis{stroke:#334155;stroke-width:3}.grid{stroke:#cbd5e1;stroke-width:2;stroke-dasharray:10 10}.raw{stroke:#94a3b8;stroke-width:5;stroke-dasharray:14 10;fill:none}.clip{stroke:#4f46e5;stroke-width:10;fill:none;stroke-linecap:round;stroke-linejoin:round}.danger{fill:#fee2e2;opacity:.75}.safe{fill:#dcfce7;opacity:.8}.box{fill:#fff;stroke:#cbd5e1;stroke-width:2}.tag{font:700 18px system-ui,-apple-system,"Noto Sans SC",sans-serif;fill:#312e81}
+    </style>
+  </defs>
+  <rect width="1800" height="1000" rx="36" fill="url(#bg)"/>
+  <text x="85" y="85" class="title">PPO-Clip 的关键：不是把 r 永远截断，而是截断“过度获利”</text>
+  <text x="85" y="128" class="sub">纵轴是单样本 surrogate；横轴 r = πθ(a|s) / πold(a|s)。虚线是未截断目标 rÂ，紫线是 min 后真正优化的目标。</text>
+
+  <rect x="75" y="190" width="800" height="610" rx="28" class="box"/>
+  <text x="120" y="250" class="h">正优势 Â &gt; 0：这个动作比预期好</text>
+  <rect x="190" y="315" width="270" height="390" class="safe"/><rect x="650" y="315" width="145" height="390" class="danger"/>
+  <line x1="180" y1="705" x2="800" y2="705" class="axis"/><line x1="190" y1="720" x2="190" y2="310" class="axis"/>
+  <line x1="460" y1="315" x2="460" y2="720" class="grid"/><line x1="650" y1="315" x2="650" y2="720" class="grid"/>
+  <path d="M200 665L780 350" class="raw"/><path d="M200 665L650 420L790 420" class="clip"/>
+  <circle cx="560" cy="470" r="10" fill="#ef4444"/>
+  <text x="430" y="750" class="small">1−ε</text><text x="550" y="750" class="small">1</text><text x="626" y="750" class="small">1+ε</text><text x="785" y="745" class="p">r</text>
+  <text x="215" y="350" class="tag">概率降低仍受惩罚</text><text x="664" y="350" class="tag">不再奖励继续提高</text>
+  <text x="120" y="850" class="p">当 r &gt; 1+ε，目标进入平台：继续增大该动作概率没有额外收益。</text>
+  <text x="120" y="890" class="small">注意：r &lt; 1−ε 时不会被“保护”，因为那是在让好动作变得更不可能。</text>
+
+  <rect x="925" y="190" width="800" height="610" rx="28" class="box"/>
+  <text x="970" y="250" class="h">负优势 Â &lt; 0：这个动作比预期差</text>
+  <rect x="1005" y="315" width="160" height="390" class="danger"/><rect x="1165" y="315" width="460" height="390" class="safe"/>
+  <line x1="995" y1="500" x2="1635" y2="500" class="axis"/><line x1="1005" y1="720" x2="1005" y2="310" class="axis"/>
+  <line x1="1165" y1="315" x2="1165" y2="720" class="grid"/><line x1="1355" y1="315" x2="1355" y2="720" class="grid"/>
+  <path d="M1015 350L1615 665" class="raw"/><path d="M1015 420L1165 420L1615 657" class="clip"/>
+  <circle cx="1355" cy="520" r="10" fill="#ef4444"/>
+  <text x="1135" y="750" class="small">1−ε</text><text x="1345" y="750" class="small">1</text><text x="1590" y="750" class="small">1+ε</text><text x="1620" y="745" class="p">r</text>
+  <text x="1018" y="350" class="tag">不再奖励继续降低</text><text x="1380" y="350" class="tag">概率提高仍受惩罚</text>
+  <text x="970" y="850" class="p">当 r &lt; 1−ε，目标进入平台：继续压低该动作概率没有额外收益。</text>
+  <text x="970" y="890" class="small">r &gt; 1+ε 仍保留更差的目标值，因为那是在提高坏动作的概率。</text>
+
+  <rect x="350" y="925" width="1100" height="50" rx="25" fill="#eef2ff" stroke="#818cf8" stroke-width="2"/>
+  <text x="410" y="958" class="p">min 让 clipped objective 成为局部“悲观目标”，但它不保证整批数据的 KL 一定小。</text>
+</svg>

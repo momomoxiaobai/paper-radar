@@ -1,0 +1,527 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-05T00:40:00+08:00
+title: "训练方法 01｜PPO 详解：从策略梯度、TRPO、GAE 到大模型 RLHF"
+featured: true
+category: training-methods
+tags:
+  - ppo
+  - policy-gradient
+  - trpo
+  - gae
+  - actor-critic
+  - rlhf
+description: "从零推导 PPO：先解释策略梯度与 importance ratio，再拆开 PPO-Clip 的正负优势分段几何、KL penalty、GAE、actor-critic 完整损失和训练循环，核对原论文连续控制与 Atari 实验，并说明实现细节、RLHF 映射、局限与诊断方法。"
+paper:
+  title: "Proximal Policy Optimization Algorithms"
+  venue: "arXiv preprint, 2017"
+  paperUrl: "https://arxiv.org/abs/1707.06347"
+  pdfUrl: "https://arxiv.org/pdf/1707.06347"
+  score: 96
+  scoreNote: "推荐理由：PPO 把 TRPO 的保守更新直觉压缩成可用一阶优化实现的目标，兼顾简洁、并行采样与数据复用，并长期成为连续控制和 RLHF 的关键基线；扣分来自没有严格信赖域保证、仍是低样本效率的 on-policy 方法，结果高度依赖 GAE、归一化、终止处理、优化器和监控细节，clip 本身也不能阻止 KL 偶发飙升。"
+---
+
+> [!NOTE]
+> PPO 论文于 **2017 年 7 月 20 日**首次公开，当前 arXiv 版本日期为 2017 年 8 月 28 日。本文是「06 训练方法」系列第一篇。阅读范围不只包括 PPO 原文，还交叉核对了 TRPO、GAE、InstructGPT，以及 OpenAI Spinning Up、Stable-Baselines3 和 PPO 实现细节复现研究。公式中的目标默认写成“最大化”形式；代码库若实现成 loss 最小化，需要整体取负号。
+
+## 一句话结论
+
+**PPO 的核心不是“把概率比率裁到 0.8–1.2”，而是：在旧策略采到的一批数据上，用 importance ratio 衡量新策略相对旧策略怎样改变动作概率，再用一个悲观的 clipped surrogate 阻止“已经朝正确方向走太远”的样本继续贡献收益；配合 GAE、critic、多轮 minibatch 更新和 KL/clip fraction 监控，它用普通一阶优化近似实现了 TRPO 的保守策略更新。它简单、吞吐友好，但既不保证 KL 一定小，也不解决 on-policy 样本效率、reward hacking 或 critic 偏差。**
+
+<figure><img src="/paper-radar/images/ppo/ppo-method-map.svg" alt="PPO 从策略梯度、TRPO、PPO-Clip、GAE 到 RLHF 的方法全景" width="1800" height="1050" loading="eager"/><figcaption>图 1：根据 PPO、TRPO、GAE 与 InstructGPT 方法部分重绘。PPO-Clip 只是一层更新约束，GAE、critic、采样边界与优化细节共同决定最终算法。</figcaption></figure>
+
+## 先给 PPO 一个准确定位
+
+强化学习里，策略 $\pi_\theta(a\mid s)$ 直接给出在状态 $s$ 选择动作 $a$ 的概率。策略梯度告诉我们往哪个方向调参数；TRPO 问的是“怎样保证一步不要走太远”；PPO 则把这个保守更新意图改写成普通 SGD/Adam 能直接优化的 surrogate objective。
+
+| 方法 | 更新信号 | 怎样限制策略变化 | 优化代价 | 数据使用 |
+|---|---|---|---|---|
+| REINFORCE / vanilla PG | return 或 advantage | 没有显式限制 | 一阶 | 通常一批数据少量更新 |
+| TRPO | importance-weighted advantage | 显式平均 KL 约束 | Fisher/Hessian-vector、共轭梯度、线搜索 | on-policy |
+| PPO-Penalty | importance-weighted advantage | 自适应 KL penalty | 一阶 | 一批 rollout 多个 epoch |
+| PPO-Clip | clipped probability ratio | 样本级悲观 surrogate | 一阶 | 一批 rollout 多个 epoch |
+
+“Proximal”不是说参数欧氏距离一定很近，而是希望 **更新后的策略行为不要离采样策略太远**。这个区别很重要：神经网络参数变化很小不代表动作分布变化小，反过来也一样。
+
+## 1. 从策略梯度开始：advantage 到底在说什么
+
+目标是最大化折扣回报：
+
+$$
+J(\theta)=\mathbb E_{\tau\sim\pi_\theta}
+\left[\sum_{t=0}^{\infty}\gamma^t r_t\right].
+$$
+
+策略梯度定理给出一种可采样估计：
+
+$$
+\nabla_\theta J(\theta)
+=
+\mathbb E_t\left[
+\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,A^{\pi}(s_t,a_t)
+\right].
+$$
+
+于是可以构造自动微分友好的 surrogate：
+
+$$
+L^{PG}(\theta)
+=
+\hat{\mathbb E}_t\left[
+\log\pi_\theta(a_t\mid s_t)\,\hat A_t
+\right].
+$$
+
+$\hat A_t$ 是 advantage 估计，近似表示“这个动作相对当前状态下的平均选择好多少”。
+
+- 若 $\hat A_t>0$，梯度会提高 $a_t$ 的概率；
+- 若 $\hat A_t<0$，梯度会降低 $a_t$ 的概率；
+- 若接近 0，这个样本对策略更新几乎没有净贡献。
+
+用 return $G_t$ 直接替代 advantage 也能得到无偏方向，但方差很大。减去只依赖状态的 baseline $V(s_t)$ 不改变梯度期望，却能去掉“这个状态整体回报本来就高/低”的噪声：
+
+$$
+\hat A_t=\hat Q_t-V_\phi(s_t).
+$$
+
+问题在于：如果对同一批轨迹反复最大化 $L^{PG}$，当前策略会越来越不同于生成数据的旧策略。样本上的局部好方向可能被反复放大，导致策略性能突然坍塌。
+
+## 2. TRPO 的出发点：先写清楚“不要走太远”
+
+假设 rollout 来自旧策略 $\pi_{\theta_{\mathrm{old}}}$。定义 importance ratio：
+
+$$
+r_t(\theta)
+=
+\frac{\pi_\theta(a_t\mid s_t)}
+{\pi_{\theta_{\mathrm{old}}}(a_t\mid s_t)}.
+$$
+
+它回答的是：同一个已采样动作，在新策略下的概率相对旧策略变成了多少。$r_t=1$ 表示没变，$1.2$ 表示概率提高 20%，$0.8$ 表示下降 20%。由此得到重要性加权 surrogate：
+
+$$
+L^{CPI}(\theta)
+=
+\hat{\mathbb E}_t\left[r_t(\theta)\hat A_t\right].
+$$
+
+只最大化它仍可能产生巨大更新。TRPO 因此解一个带约束问题：
+
+$$
+\begin{aligned}
+\max_\theta\quad &
+\hat{\mathbb E}_t\left[r_t(\theta)\hat A_t\right] \\
+\text{s.t.}\quad &
+\hat{\mathbb E}_t\left[
+D_{KL}\left(
+\pi_{\theta_{\mathrm{old}}}(\cdot\mid s_t)
+\,\|\,
+\pi_\theta(\cdot\mid s_t)
+\right)
+\right]\le\delta.
+\end{aligned}
+$$
+
+理论推导最初涉及最大状态 KL；实际 TRPO 用采样状态上的平均 KL 近似，并在局部将目标线性化、KL 二次化。求解需要 Fisher-vector / Hessian-vector product、共轭梯度和 line search。它比普通 Adam 更难实现，也不自然兼容 dropout、复杂共享网络或大量辅助目标。
+
+PPO 的设计目标就是：**保留“新旧策略别差太远”的行为约束，但只用一阶优化。**
+
+## 3. PPO-Clip：公式为什么是 `min`，而不是简单 clip
+
+PPO 最常见的目标是：
+
+$$
+L^{CLIP}(\theta)
+=
+\hat{\mathbb E}_t\left[
+\min\left(
+r_t(\theta)\hat A_t,
+\operatorname{clip}\left(r_t(\theta),1-\epsilon,1+\epsilon\right)\hat A_t
+\right)
+\right].
+$$
+
+原论文常用 $\epsilon=0.2$。最容易犯的错误是把它解释成“无论如何都把 $r$ 截到 $[0.8,1.2]$”。真正目标取 **未截断项与截断项的较小值**，只消除那些会让 surrogate 继续变好的过度更新；如果更新方向在让目标变差，惩罚仍然保留。
+
+### 正 advantage：阻止好动作概率无限增加
+
+当 $\hat A_t>0$：
+
+$$
+L_t^{CLIP}
+=
+\min\left(r_t\hat A_t,(1+\epsilon)\hat A_t\right).
+$$
+
+若 $r_t>1+\epsilon$，目标进入平台，再提高动作概率不产生额外收益。但若 $r_t<1-\epsilon$，它没有被下界“救回来”；因为降低一个好动作的概率本来就应该让目标更差。
+
+### 负 advantage：阻止坏动作概率无限降低
+
+当 $\hat A_t<0$，乘以负数会反转大小关系，等价于：
+
+$$
+L_t^{CLIP}
+=
+\min\left(r_t\hat A_t,(1-\epsilon)\hat A_t\right).
+$$
+
+若 $r_t<1-\epsilon$，继续压低坏动作概率不再获得额外收益。但若 $r_t>1+\epsilon$，也就是反而提高坏动作概率，较差的 surrogate 仍然保留，不会被截断掩盖。
+
+<figure><img src="/paper-radar/images/ppo/clip-objective.svg" alt="PPO-Clip 在正优势和负优势下的分段目标" width="1800" height="1000" loading="lazy"/><figcaption>图 2：根据 PPO 原论文 Figure 1 重绘并补充中文解释。红点表示更新起点 r=1；紫线只在“继续朝有利方向走得过头”时变成平台。</figcaption></figure>
+
+这就是论文所谓 pessimistic bound 的直觉：对每个样本取更保守的 surrogate。它不是对真实回报的全局下界，也不是严格 trust region。不同状态和动作的概率变化可以组合成较大 KL，即使许多单样本 ratio 已被 clip。
+
+## 4. PPO-Penalty：另一条没有成为主流的分支
+
+论文同时给出自适应 KL penalty：
+
+$$
+L^{KLPEN}(\theta)
+=
+\hat{\mathbb E}_t\left[
+r_t(\theta)\hat A_t
+-\beta D_{KL}\left(
+\pi_{\theta_{\mathrm{old}}}(\cdot\mid s_t)
+\,\|\,
+\pi_\theta(\cdot\mid s_t)
+\right)
+\right].
+$$
+
+每次 policy update 后测得平均 KL 为 $d$，再用启发式规则调整 $\beta$：
+
+$$
+\beta\leftarrow
+\begin{cases}
+\beta/2, & d<d_{\mathrm{targ}}/1.5,\\
+2\beta, & d>1.5d_{\mathrm{targ}},\\
+\beta, & \text{otherwise}.
+\end{cases}
+$$
+
+这比固定 penalty 更能适应训练不同阶段，但原论文的连续控制搜索中，PPO-Clip 的最佳平均归一化分数为 **0.82**，优于自适应 KL 的最佳 **0.74** 和固定 KL 的最佳 **0.72**，因此 clip 版本后来更常用。
+
+两者并不互斥。实际系统常同时使用 clipped objective、监控 approximate KL，并在超过 target KL 时提前停止本轮 epoch。Stable-Baselines3 也明确提示：clipping 不足以阻止大更新，`target_kl` 可作为额外保护。
+
+## 5. GAE：PPO 为什么离不开一个好的 advantage 估计
+
+PPO 只规定怎样使用 $\hat A_t$，没有自动保证 $\hat A_t$ 准确。实际常用 Generalized Advantage Estimation（GAE）。先定义 TD residual：
+
+$$
+\delta_t
+=
+r_t+\gamma V_\phi(s_{t+1})-V_\phi(s_t).
+$$
+
+再把未来 residual 指数加权：
+
+$$
+\hat A_t^{GAE(\gamma,\lambda)}
+=
+\sum_{l=0}^{T-t-1}
+(\gamma\lambda)^l\delta_{t+l}.
+$$
+
+反向递推实现更高效：
+
+$$
+\hat A_t=\delta_t+\gamma\lambda(1-d_t)\hat A_{t+1},
+$$
+
+其中 $d_t$ 表示真正终止且不应 bootstrap 的边界。
+
+### $\lambda$ 在控制什么
+
+- $\lambda=0$：只用一步 TD residual，方差低，但高度依赖 critic，critic 不准就有较大偏差；
+- $\lambda=1$：接近 Monte Carlo return 减 baseline，偏差较小但方差高；
+- $0<\lambda<1$：在多步 return 之间做指数加权，取得折中。
+
+GAE 原论文进一步区分 $\gamma$ 与 $\lambda$：$\gamma<1$ 即使 value function 完美，也会相对未折扣目标引入偏差；$\lambda<1$ 的额外偏差主要来自 value function 不准确。常见默认值 $\gamma=0.99,\lambda=0.95$ 不是理论常数，而是经验起点。
+
+### `terminated` 与 `truncated` 不能混为一谈
+
+如果 episode 因环境真正终止，例如角色死亡，终止后的 value 通常为 0。若只是达到 time limit 或 rollout 固定长度截断，环境状态仍有未来价值，应从 $V(s_{t+1})$ bootstrap。把所有 `done` 都当终止会系统性低估边界前 return，是 PPO 复现中常见但隐蔽的错误。
+
+## 6. Actor、critic 和 entropy：完整目标长什么样
+
+原论文把 clipped policy objective、value loss 与 entropy bonus 合在一起最大化：
+
+$$
+L^{CLIP+VF+S}(\theta,\phi)
+=
+\hat{\mathbb E}_t\left[
+L_t^{CLIP}(\theta)
+-c_v\left(V_\phi(s_t)-\hat R_t\right)^2
++c_e\,\mathcal H\left[\pi_\theta(\cdot\mid s_t)\right]
+\right].
+$$
+
+若代码写成最小化 loss，常见形式是：
+
+$$
+\mathcal L
+=
+-L^{CLIP}
++c_v\mathcal L_{value}
+-c_e\mathcal H.
+$$
+
+这两个公式只差优化符号，不能一边写最大化又把 value error 加正号。三项分工如下：
+
+| 项 | 作用 | 常见风险 |
+|---|---|---|
+| policy surrogate | 用 advantage 更新动作分布 | KL 过大、clip fraction 过高 |
+| value loss | 学习 return，降低 advantage 方差 | critic 过拟合、value scale 爆炸 |
+| entropy bonus | 延缓策略过早确定化 | 系数太大导致无法收敛，太小导致探索坍塌 |
+
+部分实现还会 clip value update：
+
+$$
+V_{clip}(s_t)
+=
+V_{old}(s_t)+
+\operatorname{clip}\left(V_\phi(s_t)-V_{old}(s_t),-\epsilon_v,\epsilon_v\right).
+$$
+
+它不在 PPO 的核心理论里，而是 OpenAI 系实现中的稳定化变体；其效果依赖 reward scaling，不能机械照搬。
+
+## 7. 完整训练循环：为什么它仍然是 on-policy
+
+一次 PPO iteration 可以写成：
+
+```text
+1. 固定 θ_old，用 N 个并行环境各采 T 步 rollout。
+2. 保存 state、action、reward、old log-prob、old value 与边界类型。
+3. 从后向前计算 bootstrap return 与 GAE advantage。
+4. 对 advantage 做 batch normalization（常见实现选择）。
+5. 将 N×T 样本 shuffle，分成 minibatch。
+6. 在同一批 rollout 上做 K 个 epoch：
+   - 重算当前策略 log-prob、entropy 和 value；
+   - 由 log-prob 差得到 ratio；
+   - 优化 clipped policy loss + value loss - entropy bonus；
+   - 做 gradient clipping；
+   - 记录 KL、clip fraction、entropy、value error。
+7. 若 approximate KL 超过阈值，可提前停止 policy epoch。
+8. 丢弃 rollout，令 θ_old ← θ，重新采样。
+```
+
+所谓“样本复用”只发生在第 6 步的短 update window 内。同一 rollout 被优化越多轮，当前策略就越不同于行为策略，数据越来越 off-policy；clip 只是缓解，不会把 PPO 变成 replay-buffer 算法。
+
+<figure><img src="/paper-radar/images/ppo/training-loop.svg" alt="PPO 从 rollout、GAE、多 epoch minibatch 更新到诊断的完整循环" width="1800" height="1050" loading="lazy"/><figcaption>图 3：根据 PPO Algorithm 1、Spinning Up、Stable-Baselines3 与复现研究整理。真正的 PPO 是训练循环与实现约定的集合，不只是目标函数。</figcaption></figure>
+
+## 8. 一份接近代码的数学实现
+
+保存旧 log probability 后，ratio 最稳定的计算方式是：
+
+$$
+r_t(\theta)
+=
+\exp\left(
+\log\pi_\theta(a_t\mid s_t)
+-\log\pi_{\theta_{old}}(a_t\mid s_t)
+\right).
+$$
+
+伪代码如下：
+
+```python
+ratio = exp(new_logprob - old_logprob)
+unclipped = ratio * advantage
+clipped = clip(ratio, 1 - eps, 1 + eps) * advantage
+policy_loss = -mean(min(unclipped, clipped))
+
+value_loss = 0.5 * mean((new_value - return_target) ** 2)
+entropy_bonus = mean(entropy)
+
+loss = policy_loss + vf_coef * value_loss - ent_coef * entropy_bonus
+loss.backward()
+clip_grad_norm_(parameters, max_grad_norm)
+optimizer.step()
+```
+
+常用诊断量：
+
+$$
+\begin{aligned}
+\widehat{KL}
+&\approx
+\hat{\mathbb E}_t\left[
+\log\pi_{old}(a_t\mid s_t)-\log\pi_\theta(a_t\mid s_t)
+\right],\\
+\mathrm{clipfrac}
+&=
+\hat{\mathbb E}_t
+\left[\mathbf 1\{|r_t-1|>\epsilon\}\right].
+\end{aligned}
+$$
+
+approximate KL 持续过大，说明整个策略更新太激进；clip fraction 很高，说明很多样本已进入平台，额外 epoch 提供的有效梯度下降；entropy 过快下降意味着探索或生成多样性塌缩；explained variance 变差则提示 critic 可能已无法解释 return。
+
+## 9. 原论文实验：PPO 当时真正证明了什么
+
+### 9.1 surrogate objective 对照
+
+论文先在 7 个 MuJoCo 连续控制任务上训练 100 万步，每个设置 3 个随机种子，共 21 次运行。按环境归一化后：
+
+| 设置 | 平均归一化分数 |
+|---|---:|
+| 无 clipping / penalty | -0.39 |
+| clipping，$\epsilon=0.1$ | 0.76 |
+| **clipping，$\epsilon=0.2$** | **0.82** |
+| clipping，$\epsilon=0.3$ | 0.70 |
+| adaptive KL，最佳设置 | 0.74 |
+| fixed KL，最佳设置 | 0.72 |
+
+没有任何限制的多 epoch 更新在 HalfCheetah 上产生非常差的结果，说明“采一批、反复做 vanilla PG”确实会破坏策略。$\epsilon=0.2$ 在这组搜索里最好，但这不意味着所有环境、batch size 和模型都应固定用 0.2。
+
+### 9.2 连续控制
+
+论文比较 PPO-Clip、TRPO、A2C、带 trust region 的 A2C、CEM 与 adaptive-step vanilla PG。在 HalfCheetah、Hopper、InvertedDoublePendulum、InvertedPendulum、Reacher、Swimmer 和 Walker2d 上，PPO 在多数任务的学习速度或最终回报领先。它的关键优势不是每个环境都绝对第一，而是用同一套一阶优化框架取得了较稳定的跨任务表现。
+
+### 9.3 Atari
+
+Atari 共 49 个游戏，比较 A2C、ACER 与 PPO，三个算法使用相同策略网络。按“整个训练期平均 episode reward”计胜场：
+
+| 算法 | 胜场数 |
+|---|---:|
+| A2C | 1 |
+| ACER | 18 |
+| **PPO** | **30** |
+
+按“最后 100 个 episode 平均 reward”计：A2C 1、ACER 28、PPO 19，另有 1 个平局。这说明 PPO 更突出的是学习过程中的样本效率；最终性能并没有在所有游戏上压过 ACER。
+
+### 9.4 实验证据的边界
+
+原论文是 2017 年的短论文，连续控制只有 7 个环境、每设置 3 个种子；Atari 用胜场聚合而非现代统计报告；实现里连续控制 actor 和 value function 不共享参数且不使用 entropy bonus。今天常见的共享 backbone、value clipping、advantage normalization、LR annealing 并不都来自论文正文。因此复现“PPO”必须写清楚具体实现谱系。
+
+## 10. 37 个实现细节为何会比 clip 公式更重要
+
+后续复现研究把常见 PPO 实现拆成大量细节。以下不是所有项目都必须开启，但必须显式决定：
+
+### 数据与边界
+
+- observation normalization 是否在线更新，测试时是否冻结；
+- reward normalization / scaling / clipping 怎样影响 value target；
+- 并行环境数量 $N$、rollout 长度 $T$ 与总 batch size；
+- terminated 与 time-limit truncated 是否分别 bootstrap；
+- RNN/LSTM 的 hidden state 是否在真实 episode 边界重置。
+
+### advantage 与 critic
+
+- $\gamma$、$\lambda$、return 计算顺序；
+- advantage 是否按整批或按 minibatch 标准化；
+- value function 是否 clipping；
+- actor/critic 是否共享特征，value loss 会不会干扰 policy representation；
+- critic 的 explained variance、loss scale 与过拟合监控。
+
+### 优化器与初始化
+
+- orthogonal initialization 与 policy/value output layer gain；
+- Adam 的 learning rate 和 $\epsilon_{Adam}$；
+- learning-rate linear annealing；
+- global gradient norm clipping；
+- minibatch 数量、update epochs 与 shuffle 方式。
+
+### 动作分布
+
+- 离散动作使用 categorical；连续动作通常使用 diagonal Gaussian；
+- log standard deviation 是全局参数还是依赖状态；
+- 动作送入环境前若 clip/tanh，计算 log probability 时必须与变换一致；
+- 多离散动作需正确求和各 action head 的 log probability 和 entropy。
+
+一个实现若在 Atari 成功，不代表未经修改就适合 MuJoCo、Procgen 或语言模型。PPO 的“简单”是相对 TRPO 的二阶约束求解而言，不是说工程上只有十行代码。
+
+## 11. PPO 怎样映射到大模型 RLHF
+
+在文本生成里，可以把自回归模型视为策略：
+
+| 强化学习元素 | 语言模型对应物 |
+|---|---|
+| state $s_t$ | prompt 加已生成 token 前缀 |
+| action $a_t$ | 下一个 token |
+| policy $\pi_\theta$ | 当前语言模型 |
+| episode | 一条完整 response / tool trajectory |
+| terminal reward | reward model、verifier 或环境结果 |
+| critic $V_\phi(s_t)$ | 从当前前缀预测剩余回报的 value head |
+
+InstructGPT 的 PPO 环境近似一个终局奖励 bandit：reward model 对 prompt-response 给一个标量回报；同时每个 token 加相对 SFT reference model 的 KL penalty，缓解对 reward model 的过优化：
+
+$$
+R(x,y)
+=
+r_{RM}(x,y)
+-\beta\log
+\frac{\pi_\theta(y\mid x)}{\pi_{ref}(y\mid x)}.
+$$
+
+PPO-ptx 还混合 pretraining log-likelihood，减少公开 NLP 任务上的能力回退：
+
+$$
+J_{PPO\text{-}ptx}(\theta)
+=
+\mathbb E\left[R(x,y)\right]
++\gamma_{ptx}\,
+\mathbb E_{x\sim D_{pretrain}}
+\left[\log\pi_\theta(x)\right].
+$$
+
+### 两种 KL / ratio 约束不要混淆
+
+1. **PPO ratio clipping**：比较当前 update 内的 $\pi_\theta$ 与生成 rollout 的 $\pi_{old}$，防止一批数据被过度优化；
+2. **reference KL**：比较 RL policy 与固定/慢速更新的 $\pi_{ref}$，防止整个 RL 过程远离语言模型先验。
+
+前者是局部优化稳定性，后者是全程行为正则。即使 ratio 每次都只变一点，很多 iteration 累积后仍可远离 reference；即使 reference KL 很小，一次 minibatch update 也可能因 ratio/KL 异常而不稳定。
+
+## 12. PPO 的局限与常见失效模式
+
+1. **没有正式 trust-region 保证。** clip 约束的是已采样动作的 ratio surrogate，不保证所有动作、所有状态或平均 KL 都小。
+2. **on-policy 样本效率低。** rollout 经过少数 epoch 后就丢弃；真实机器人、昂贵工具环境和长文本生成成本很高。
+3. **对超参数与实现敏感。** batch size、epochs、$\epsilon$、GAE、normalization、Adam 和 episode boundary 都能改变结论。
+4. **critic 错误会污染方向。** advantage 的符号若错，clip 会稳定地限制更新幅度，却不会把错误方向变正确。
+5. **多个 epoch 逐渐 off-policy。** $\pi_\theta$ 越来越偏离 $\pi_{old}$，importance ratio 方差和 clip fraction 上升。
+6. **reward hacking 不由 PPO 解决。** PPO 只优化给定 reward；reward model 有漏洞时，它会高效利用漏洞。
+7. **LLM credit assignment 困难。** 长回答常只有终局奖励，哪些 token 真正造成成功并不清楚；value head 和 GAE 只能近似分配信用。
+8. **高方差和训练坍塌仍可能发生。** KL spike、entropy collapse、value explosion、长度投机和模式收缩都需单独监控。
+
+## 13. 工程上怎样调试一个 PPO 系统
+
+不要先问“clip range 要不要从 0.2 改成 0.1”，而应按因果链排查：
+
+| 现象 | 先看什么 | 可能调整 |
+|---|---|---|
+| return 突然坍塌 | approximate KL、clip fraction、grad norm | 降 LR / epoch，启用 target-KL，缩小 clip range |
+| 学得极慢 | advantage 方差、entropy、reward scale | 检查 reward/obs normalization、GAE、batch size |
+| critic loss 爆炸 | return scale、truncation bootstrap、value clipping | 修边界处理，归一化 reward，降低 value LR/coef |
+| entropy 很快归零 | entropy curve、action std | 增大 entropy bonus，检查初始化与动作分布 |
+| clip fraction 长期很高 | epochs、LR、minibatch size | 减少数据复用或单步更新幅度 |
+| RLHF 回复变怪但 reward 升高 | reference KL、长度、人工偏好 | 提高 KL penalty，修 reward model / verifier，做独立 eval |
+
+一次可靠实验至少保存：seed、环境版本、wrapper 顺序、总 environment steps、$N\times T$、minibatch、epoch、optimizer、LR schedule、$\gamma,\lambda,\epsilon$、value/entropy 系数、normalization 与 episode boundary 规则。只报告“用了 PPO”几乎不可复现。
+
+## 推荐分
+
+**96 / 100。** PPO 是理解现代策略优化最合适的入口之一：它把 policy gradient、importance sampling、trust region、advantage estimation 与 actor-critic 工程串在一起；同时，大模型 RLHF 让它继续具有现实影响。扣分不是因为方法过时，而是它常被错误地当成“稳定性的充分条件”：PPO-Clip 只是局部护栏，不能替代正确 reward、critic、数据边界、KL 监控和独立评测。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么不能直接写 `ratio = clip(ratio, 1-ε, 1+ε)` 再乘 advantage？</summary><div class="thought-answer">因为那会同时截断“让目标变好”和“让目标变差”的变化。PPO 的 min 只移除过度有利更新的激励：正 advantage 时截断过大的 r，负 advantage 时截断过小的 r；若好动作概率被错误降低、坏动作概率被错误提高，较差目标必须保留，才能产生纠正梯度。</div></details>
+
+<details class="thought-question"><summary>2. 如果所有样本的 ratio 都在 [1-ε,1+ε]，是否能保证新旧策略 KL 很小？</summary><div class="thought-answer">不能。数据只覆盖旧策略访问到的状态和采到的动作，未采动作概率仍可能变化；ratio 的逐样本范围也不直接等价于整个 categorical/Gaussian 分布的 KL。共享参数会让一个 minibatch 更新同时改变很多状态。实践中仍要测 approximate/exact KL，并可用 target-KL early stop。</div></details>
+
+<details class="thought-question"><summary>3. PPO 为什么可以对同一批 rollout 做多轮更新，却仍称为 on-policy？</summary><div class="thought-answer">它在每个 iteration 开始时用当前策略采新数据，并只在一个短窗口内借 importance ratio 复用这些数据；之后立即丢弃，而不会像 DQN/SAC 那样长期从 replay buffer 抽取旧策略经验。多轮更新越多，数据越 off-policy，所以 clip、KL 诊断和有限 epoch 正是在控制这段偏离。</div></details>
+
+<details class="thought-question"><summary>4. 为什么 λ=0 不一定最稳定，尽管一步 TD 的方差最低？</summary><div class="thought-answer">它把 advantage 几乎完全交给 critic。如果 critic 尚不准确，一步 bootstrap 带来的系统偏差会反复把 policy 推向错误方向；低方差不等于低均方误差。增加 λ 会混入更长 return，牺牲一些方差来降低对 critic 的依赖，往往反而让整体训练更可靠。</div></details>
+
+<details class="thought-question"><summary>5. 在 RLHF 中，PPO ratio clipping 与 reference-model KL 各自解决什么问题？</summary><div class="thought-answer">ratio clipping 限制同一轮中当前 policy 相对 rollout policy 的局部更新，防止重复利用一批 token 轨迹时走太远；reference KL 约束整个 RL 训练相对 SFT/base model 的累计漂移，防止语言质量、知识和安全先验被 reward model 的局部目标覆盖。一个是 update-scale 稳定器，一个是 training-scale 正则器。</div></details>
+
+<details class="thought-question"><summary>6. 如果 clip fraction 已经很高，继续增加 update epochs 会怎样？</summary><div class="thought-answer">更多样本进入平台区，能推动正确方向的 policy gradient 逐渐减少，但 critic 和未被 clip 的样本仍在变化；当前策略继续远离行为策略，KL 可能上升，importance ratio 分布变宽。计算量增加却未必带来有效 policy improvement，甚至会因剩余梯度偏置和 critic 干扰导致退化。</div></details>
+
+## 原始资料与实现参考
+
+- [PPO 论文主页](https://arxiv.org/abs/1707.06347) · [PDF](https://arxiv.org/pdf/1707.06347)
+- [TRPO 论文](https://arxiv.org/abs/1502.05477)
+- [GAE 论文](https://arxiv.org/abs/1506.02438)
+- [InstructGPT / PPO-ptx](https://arxiv.org/abs/2203.02155)
+- [OpenAI Spinning Up: PPO](https://spinningup.openai.com/en/latest/algorithms/ppo.html)
+- [The 37 Implementation Details of PPO](https://iclr-blog-track.github.io/2022/03/25/ppo-implementation-details/)
+- [Stable-Baselines3 PPO 文档](https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html)
