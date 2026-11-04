@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-03T08:17:40.109609+00:00",
+  "generated_at": "2026-11-04T07:47:23.582898+00:00",
   "note": "Heuristic queues by editorial track. PDF research and article publication require a later verified generation stage.",
   "lanes": [
     {
@@ -39,184 +39,89 @@
           "track": "frontier"
         },
         {
-          "arxiv_id": "2611.02609",
-          "title": "Whitened Advantage Summation Policy Optimization: Correlation-Aware Aggregation for Multi-Reward Reinforcement Learning",
+          "arxiv_id": "2611.05304",
+          "title": "LoopVQ: Sub 1-bit KV Cache Quantization for Looped Transformers",
           "authors": [
-            "Olaitan Olaleye",
-            "Jayson Meribe",
-            "Temidayo Olaleye"
+            "Minsoo Cheong",
+            "Sungjoo Yoo"
           ],
-          "abstract": "Reinforcement learning for language models often combines several rewards by normalizing each one and adding them with fixed weights. When the rewards are correlated, the variation they share is counted once for every reward that carries it. In terms of the ZCA-decorrelated components of the reward signal, the weighted sum applies weights $Σ^{1/2} w$ rather than the chosen weights $w$, where $Σ$ is the reward correlation matrix. We study WAS-PO, which whitens the normalized advantages with $Σ^{-1/2}$ before adding them, so that the chosen weights apply to those components. We derive the scalarized objective whose gradient it follows when normalization statistics are held fixed, show that its weights on the raw rewards can be negative, give an exact two-reward condition under which the lighter-weighted reward is reversed, and give a loose bound on the error from estimating $Σ$ during training. On tool calling with Qwen2.5-1.5B-Instruct, WAS-PO reached a higher mean training reward than GDPO in all seven seeds with three rewards (3.8% higher) and all three seeds with four (3.9% higher). WAS-PO also replaces GDPO's per-prompt normalization with batch-level normalization, and we did not separate the two changes with three or four rewards. The training-reward gains did not carry over to held-out accuracy, which was slightly lower than GDPO's with three rewards (not significant) and 0.03 lower in absolute terms with four (two seeds evaluated). With two rewards, WAS-PO trailed GDPO in training reward, and a three-seed control weakly suggests that the gap comes from batch-level normalization rather than whitening. In a math setting where the two rewards were nearly identical by construction, WAS-PO drove down the lighter-weighted reward, as the sign condition predicts.",
+          "abstract": "Looped transformers are a parameter-efficient alternative to standard transformers for language modeling. By reapplying the same layers across multiple loop steps, recent looped language models match the performance of non-looped models several times their size. While this architecture effectively reduces parameter memory, each loop step still stores its own keys and values, so the key-value (KV) cache grows linearly with the number of loop steps and becomes the main memory bottleneck. We observe that the KV cache of looped models is highly redundant along the loop axis and that the loop steps differ substantially in their sensitivity to quantization. Based on these observations, we propose $\\textbf{LoopVQ}$, a KV cache vector quantization method for looped transformers that codes channels of multiple loop steps jointly, and fine-tunes the codebooks to match the output of the full-precision model. At 0.5 bits per element, LoopVQ outperforms existing KV cache vector quantization methods for standard LLMs on general, long chain-of-thought reasoning, and long-context retrieval tasks with Ouro and Huginn models. Its design is orthogonal to these methods, and combined with TaSQ, it retains much of the BF16 accuracy even at 0.25 bits per element. We also implement LoopVQ in SGLang, where it nearly halves the decode latency at a 32K-token context and raises the peak serving throughput by up to $4.3\\times$ and $6.1\\times$ on the 1.4B and 2.6B Ouro models compared to the BF16 baseline.",
           "categories": [
             "cs.LG",
+            "cs.AI",
+            "cs.CL"
+          ],
+          "published": "2026-11-03T18:16:29Z",
+          "paper_url": "http://arxiv.org/abs/2611.05304v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.05304v1.pdf",
+          "score": 97,
+          "score_reasons": [
+            "分类：Infra",
+            "标题命中：kv cache",
+            "标题命中：quantization",
+            "摘要命中：throughput",
+            "cs.CL"
+          ],
+          "category": "infra",
+          "category_label": "Infra",
+          "track": "frontier"
+        },
+        {
+          "arxiv_id": "2611.05263",
+          "title": "JHiMA-WebRL: A Joint Hierarchical Multi-Agent Reinforcement Learning Framework for Long-Horizon Web Tasks",
+          "authors": [
+            "Shanka Subhra Mondal",
+            "Jiayun Wang"
+          ],
+          "abstract": "Multimodal web agents have shown promising capabilities for interacting with websites through graphical user interfaces (GUIs), yet realistic web tasks often require long-horizon, multi-step planning that remains challenging for monolithic policies. Such agents must jointly infer high-level plans, navigate through intermediate states, track progress over extended interaction histories, and execute visually grounded actions. Although prior work has explored modular multi-agent systems with a separate planner, the planner is typically not updated jointly with the actor. We investigate whether explicitly separating and jointly training planning and execution provides a stronger inductive bias for long-horizon web navigation. We introduce JHiMA-WebRL, a joint hierarchical multi-agent reinforcement learning framework for web agents that couples a task decomposer with an actor. To train the decomposer, we use a strong teacher model to construct structured subtask supervision from multimodal GUI trajectories, and use these annotations to fine-tune both the decomposer and the subtask-conditioned actor. We then extend Group Relative Policy Optimization (GRPO) to jointly optimize the decomposer and actor in the interactive WebArena environment through hierarchical rollout grouping and role-specific advantages. On WebArena-Lite-v2, JHiMA-WebRL-14B, consisting of a 7B actor and a 7B decomposer, achieves an average success rate of 37.2%, compared with 24% for a ScaleCUA-32B agent that we fine-tune with RL on the same training tasks and evaluate under the same protocol. Ablations show that jointly updating the decomposer during RL outperforms updating the actor alone. These results suggest that jointly learned role factorization with smaller models can be a competitive alternative to scaling monolithic agents for long-horizon web tasks.",
+          "categories": [
             "cs.AI"
           ],
-          "published": "2026-11-02T06:30:27Z",
-          "paper_url": "http://arxiv.org/abs/2611.02609v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.02609v1.pdf",
-          "score": 100,
+          "published": "2026-11-03T17:49:14Z",
+          "paper_url": "http://arxiv.org/abs/2611.05263v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.05263v1.pdf",
+          "score": 90,
           "score_reasons": [
             "分类：RL",
             "标题命中：reinforcement learning",
-            "标题命中：policy optimization",
-            "摘要命中：dpo"
+            "摘要命中：policy optimization",
+            "摘要命中：grpo"
           ],
           "category": "rl",
           "category_label": "RL",
           "track": "frontier"
         },
         {
-          "arxiv_id": "2611.03627",
-          "title": "Not All Reasoning Generalizes: A Case Study on Learning Generalizable Reasoning Strategies in RLVR",
+          "arxiv_id": "2611.04878",
+          "title": "TraceRouter++: Causal Semantic Routing Realignment via Optimal Transport",
           "authors": [
-            "Ziqi Pang",
-            "Yu-Xiong Wang"
+            "Chuancheng Shi",
+            "Shangze Li",
+            "Wenhua Wu",
+            "Hengzhi Chen",
+            "Fei Shen",
+            "Li Zhuo",
+            "Zhiyong Wang",
+            "Tat-Seng Chua"
           ],
-          "abstract": "Reinforcement learning with verifiable rewards (RLVR) can enable generalizable improvement for large language model (LLM) reasoning. This paper studies how to incentivize such generalization via reasoning strategies. We study this question with a controllable equation-solving framework: finding multiple inputs x for equations f(x)=y, where f is a non-bijective string function. This setting makes reasoning strategies observable while supporting a clear definition of easy-to-hard out-of-distribution (OOD) shifts, e.g., more solutions, longer y, etc. We uncover a subtle RLVR failure: it teaches the model to solve in-distribution tasks with high accuracy and structured step-by-step derivation, yet under OOD shifts, the same model abandons derivation and collapses to ineffective brute-force enumeration, causing sharp accuracy drops. This observation reveals the deeper challenges of RLVR generalization as it is neither incapable base model nor reward hacking, since the model succeeds in-distribution with the correct reasoning strategy. The key to mitigating this failure is an indirect intervention that surprisingly helps: co-training with bijective inversion tasks. Although these bijective tasks are actually not uniformly harder and even further from the non-bijective OOD evaluation, they make derivation more certain and substantially restore the correct strategy and accuracy under OOD shifts. This effect further motivates our theoretical analysis: outcome-only RLVR can shape reasoning processes through implicitly crediting the effective reasoning strategies more, even without process supervision. To conclude, our analysis framework and findings systematically reveal the crucial role and incentivization of reasoning strategies in RLVR generalization under OOD shifts. Code is available at https://github.com/ziqipang/rl_meta_thinking.",
+          "abstract": "Despite their remarkable capabilities, large foundation models (LFMs) remain susceptible to adversarial manipulation. Current safety intervention methods primarily rely on the \\textit{locality hypothesis}, rigidly suppressing isolated neurons or features. However, harmful semantics manifest as distributed, cross-layer circuits, rendering localized ablations both brittle against complex jailbreaks and detrimental to general utility. To bridge this gap, we propose TraceRouter++, a routing-level safety intervention framework that explicitly traces safety-relevant causal routing pathways activated under harmful inputs and realigns their unsafe activation states. Our framework operates in a \\textit{Discover-Trace-Realign} paradigm: it first pinpoints a sensitive onset layer via attention divergence and disentangles dense activations into interpretable routing features using sparse autoencoders (SAEs). Subsequently, it maps these features to downstream causal circuits via feature influence scores (FIS). Crucially, departing from rigid suppression paradigms, TraceRouter++ introduces a constrained optimal transport (OT)-based soft routing realignment. By formulating safety intervention as a tractable coordinate-wise marginal optimal transport approximation, our method redirects unsafe activation marginals toward safe-reference marginals within causally identified routing subspaces while preserving non-selected coordinates at the intervention point. This mechanism safely redirects malicious semantic flows while leaving orthogonal computational routes intact. Extensive experiments across representative large language models (LLMs), multimodal large language models (MLLMs), and diffusion models (DMs) show that TraceRouter++ outperforms evaluated baselines, improving adversarial robustness while maintaining a favorable safety-utility trade-off. WARNING: This paper contains unsafe model responses.",
           "categories": [
-            "cs.LG"
+            "cs.CL"
           ],
-          "published": "2026-11-02T18:53:54Z",
-          "paper_url": "http://arxiv.org/abs/2611.03627v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.03627v1.pdf",
-          "score": 96,
-          "score_reasons": [
-            "分类：RL",
-            "摘要命中：reinforcement learning",
-            "摘要命中：ppo",
-            "标题命中：rlvr",
-            "摘要命中：verifiable reward"
-          ],
-          "category": "rl",
-          "category_label": "RL",
-          "track": "frontier"
-        },
-        {
-          "arxiv_id": "2611.03377",
-          "title": "Same Outputs, Different Scores: Auditing the Unchecked Graders of Multimodal LLM Benchmarks",
-          "authors": [
-            "Ahmad Jarjis Hasan",
-            "Jonathan Lwowski"
-          ],
-          "abstract": "Every multimodal-LLM multiple-choice benchmark ends with a scoring rule that converts a model's response, often free-form text rather than a clean option letter, into a right/wrong verdict, buried in its code. Unlike the dataset, this rule is chosen without justification and left unexamined, yet it sets the published number. We reproduce the official scorers of eight peer-reviewed benchmarks on five open vision-language models (VLMs) that fit a single 16 GB GPU, and introduce a blinded human-plus-LLM-judge adjudication (Cohen's kappa=0.956) that recovers what the model actually answered. The scoring rule alone moves accuracy by up to 22 points on identical outputs, yet exactly 0 wherever a model emits clean option letters, so it hides on strong-model leaderboards. It is the fallback and not the rambling that does the damage: the benchmark with the highest non-compliance we measure has an artifact of exactly zero, because its scorer abstains instead of guessing; a reasoning model with non-compliance 0.000 still swings 9.5 points with which regex match of its trace the parser keeps. No standard rule is reliable: snapping a non-answer to its closest option credits answers never given yet buries correct ones, abstention discards answers stated in words, and likelihood scoring follows answer-token priors, so a single grade conflates capability with luck rather than measuring either. We release all code, labels, and the protocol, and argue benchmarks should report a non-compliance rate and at least two rules, not one unexamined grade.",
-          "categories": [
-            "cs.AI",
-            "cs.CL",
-            "cs.CV"
-          ],
-          "published": "2026-11-02T16:20:07Z",
-          "paper_url": "http://arxiv.org/abs/2611.03377v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.03377v1.pdf",
-          "score": 93,
+          "published": "2026-11-03T13:30:34Z",
+          "paper_url": "http://arxiv.org/abs/2611.04878v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.04878v1.pdf",
+          "score": 89,
           "score_reasons": [
             "分类：LLM",
+            "摘要命中：large language model",
             "摘要命中：language model",
-            "摘要命中：reasoning",
-            "标题命中：benchmark",
-            "标题命中：multimodal",
+            "标题命中：alignment",
+            "摘要命中：multimodal",
             "cs.CL"
           ],
           "category": "llm",
           "category_label": "LLM",
-          "track": "frontier"
-        },
-        {
-          "arxiv_id": "2611.01552",
-          "title": "Can Large Language Models Extend Their Agentic Capabilities to Goal Pursuit in Open-Ended Multi-Turn Interaction?",
-          "authors": [
-            "Mingyu Chen",
-            "Jingkai Lin",
-            "Xiaofen Xing",
-            "Liankai Huang",
-            "Ruiqi Xiong",
-            "Xiangmin Xu"
-          ],
-          "abstract": "Goal pursuit in open-ended dialogue requires agents to adapt their actions to interaction feedback across successive exchanges. We investigate whether agentic capabilities developed for multi-step tool use carry over to dialogue organized through the model's native tool interface, and how this changes interaction behavior. We define Tool-Mediated Interaction (TMI) as a training-free protocol that represents dialogue actions as tool calls and counterpart responses as tool results, maintaining a continuous reasoning-action-observation loop with retained reasoning and interaction history. We evaluate TMI across social interaction, emotional support, persuasion, and price negotiation using two models and 15,678 main-experiment episodes. Across both models, TMI improves social goal attainment, emotional-support preference, donation amounts, and buyer negotiation margins over conversational baselines with and without thinking. A Qwen ablation further shows that TMI outperforms ordinary conversation with retained reasoning on all four primary outcomes. Behavioral analyses associate the improvements with task-specific patterns in initial proposals and responses to interaction feedback. Alongside these gains, TMI reduces mean reasoning tokens per decision by 42.0-81.5% relative to the thinking baseline and lowers mean cross-turn phrase reuse across all eight model-environment pairs. These findings show that interaction organization shapes both goal attainment and reasoning across dialogue turns.",
-          "categories": [
-            "cs.CL"
-          ],
-          "published": "2026-11-01T04:23:27Z",
-          "paper_url": "http://arxiv.org/abs/2611.01552v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.01552v1.pdf",
-          "score": 92,
-          "score_reasons": [
-            "分类：LLM",
-            "标题命中：large language model",
-            "标题命中：language model",
-            "摘要命中：reasoning",
-            "cs.CL"
-          ],
-          "category": "llm",
-          "category_label": "LLM",
-          "track": "frontier"
-        },
-        {
-          "arxiv_id": "2611.02269",
-          "title": "Qubrio: High-Performance Quantum Compilation via Multi-Agent LLM Collaboration",
-          "authors": [
-            "Jixuan Ruan",
-            "Zhuo Cui",
-            "Zhengding Hu",
-            "Zhongkai Yu",
-            "Xiang Fang",
-            "Yue Guan",
-            "Jason Ludmir",
-            "Phillip E. Weinberg",
-            "Xiuzhe Luo",
-            "Shengtao Wang",
-            "Sonia Lopez Alarcon",
-            "Hezi Zhang",
-            "Yufei Ding"
-          ],
-          "abstract": "Large Language Models (LLMs) offer an adaptable alternative to traditional quantum compilation heuristics, which bottleneck progress by demanding costly manual redesigns whenever hardware evolves. However, naive single-pass LLM approaches fail under the unique challenges introduced by quantum compilation. We introduce Qubrio, a practical agentic framework that significantly reduces heuristic redesigns through a three-level decomposition. By (1) partitioning programs into sequential operation stages, (2) deploying specialized agents for placement, routing and optimization, and (3) using disaggregated feedback for precise error correction, our system reliably navigates complex physical constraints. Beyond serving as a direct compiler, our LLM framework also uncovers novel strategies that facilitate convoy-style shuttling, substantially enhancing hardware concurrency without sacrificing fidelity. We further integrate these strategies into the previous state-of-the-art (SOTA) compiler, recovering a significant fraction of the LLM's performance advantages. On realistic workloads, our compiler achieves significant improvements in hardware runtime and program fidelity over the SOTA baseline PowerMove, seamlessly adapting to new hardware capabilities. Qubrio features an open user interface for practical use, and its code is publicly available at https://github.com/crosaa/Qubrio.",
-          "categories": [
-            "quant-ph",
-            "cs.AI"
-          ],
-          "published": "2026-11-01T22:49:33Z",
-          "paper_url": "http://arxiv.org/abs/2611.02269v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.02269v1.pdf",
-          "score": 91,
-          "score_reasons": [
-            "分类：Agent",
-            "标题命中：multi-agent",
-            "摘要命中：agentic",
-            "标题命中：agent"
-          ],
-          "category": "agent",
-          "category_label": "Agent",
-          "track": "frontier"
-        },
-        {
-          "arxiv_id": "2611.03066",
-          "title": "Towards a Trustworthy and Governable Internet of Agentics: An Architectural Perspective on Protocols, Systems, and Services",
-          "authors": [
-            "Haoyi Xiong",
-            "Yi Liu",
-            "Jiang Bian",
-            "Peng Diao",
-            "Bin Zhu",
-            "Tingting Hu",
-            "Yi Wang",
-            "Sumi Helal"
-          ],
-          "abstract": "Large language model applications are increasingly being organized as tool-using and multi-agent workflows rather than as isolated chat interfaces. This perspective paper examines the architectural problem that follows from that shift: agents may reason, invoke tools, and delegate work, but dependable deployment still requires interoperability across frameworks, runtimes, data boundaries, and organizational control domains. We study this problem through the lens of the \\emph{Internet of Agentics} (IoA), an emerging service-computing view in which heterogeneous agents are treated as governable service participants rather than only as stand-alone model endpoints. The paper organizes the landscape as a three-layer progression: from today's fragmented agent ecosystem, to interoperable agents, and ultimately to trustworthy and governable autonomy. First, it examines the protocol stack centered on the Agentic AI Foundation, including MCP for agent--tool interaction; A2A for agent--agent coordination; AGENTS.md and Skills-style procedural manifests; and discovery, transport, and trust mechanisms such as AGNTCY and SLIM. Second, it reviews the systems abstractions that make agents deployable as service components, including logical agent architectures, orchestration patterns, gateways, registries, runtime control loops, and hardware-aware inference infrastructure. Third, it situates these developments within services computing, arguing that agentic systems reinterpret classical concerns from SOA and microservices---discovery, composition, governance, pricing, and trust---at the level of cognitive capabilities rather than deterministic functions.",
-          "categories": [
-            "cs.AI",
-            "cs.DC"
-          ],
-          "published": "2026-11-02T12:54:14Z",
-          "paper_url": "http://arxiv.org/abs/2611.03066v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.03066v1.pdf",
-          "score": 90,
-          "score_reasons": [
-            "分类：Agent",
-            "摘要命中：multi-agent",
-            "标题命中：agentic",
-            "标题命中：agent"
-          ],
-          "category": "agent",
-          "category_label": "Agent",
           "track": "frontier"
         },
         {
@@ -247,6 +152,97 @@
           "category": "agent",
           "category_label": "Agent",
           "track": "frontier"
+        },
+        {
+          "arxiv_id": "2611.05181",
+          "title": "What Does the Model See? Representation Validity in Multimodal LLM-Based Video Analysis",
+          "authors": [
+            "Christian Pipal",
+            "Eva-Maria Vogel",
+            "Morgan Wack"
+          ],
+          "abstract": "Multimodal large language models (MLLMs) allow social scientists to analyze video at scale, but researchers must decide which parts of a video to provide as input. We use the term representation validity to examine how text, audio, video, and combined inputs affect measurement and subsequent analysis. We compare input representations across six open-weight MLLMs and three human-annotated video datasets. No representation consistently performs best. On seven news-related constructs, native-video performance varies little across models (macro-F1 = .70-.77), while extracted-text performance ranges from .52 to .80. Three models perform better with text and three with video. Combining inputs rarely improves performance. Higher classification accuracy also does not reliably produce estimates closer to those based on human codes. The highest-F1 representation best reproduces human-coded regression coefficients in 17 of 42 comparisons. Even when each model uses its highest-F1 deployable representation, 45% of sample-prevalence estimates differ from the human-coded benchmark by more than ten percentage points. Input representation therefore requires validation for both the construct being measured and the quantity estimated from the resulting labels.",
+          "categories": [
+            "cs.CV",
+            "cs.CL"
+          ],
+          "published": "2026-11-03T16:42:49Z",
+          "paper_url": "http://arxiv.org/abs/2611.05181v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.05181v1.pdf",
+          "score": 85,
+          "score_reasons": [
+            "分类：LLM",
+            "摘要命中：large language model",
+            "摘要命中：language model",
+            "摘要命中：benchmark",
+            "标题命中：multimodal",
+            "cs.CL"
+          ],
+          "category": "llm",
+          "category_label": "LLM",
+          "track": "frontier"
+        },
+        {
+          "arxiv_id": "2611.04960",
+          "title": "An Agentic Framework for Quality-Aware and Scenario-Adaptive Image Compression",
+          "authors": [
+            "Zhenghao Chen",
+            "Lebin Zhou",
+            "Zicong Chen",
+            "Naifu Xue",
+            "Jiahao Li",
+            "Bin Li",
+            "Dong Xu",
+            "Yan Lu"
+          ],
+          "abstract": "Despite decades of progress, image codecs remain difficult to adapt to diverse real-world compression scenarios for two main reasons. First, most image codecs are optimized for a specific objective and require substantial redevelopment when the compression goal changes. Second, they typically assume clean inputs, whereas sensor-captured images often contain degradations that alter rate-quality behavior. To address these challenges, we propose Practical Image Coding Agents (PICA), a multi-agent framework that adapts existing codecs to diverse user requirements and potentially degraded inputs. PICA consists of four collaborative agents: a Perception agent that interprets user intent and analyzes image content, an Improvement agent that jointly considers bitrate and reconstruction quality to guide pre-coding restoration, a Coding agent that refines quality-control settings from global to regional levels, and an After-coding improvement agent that addresses residual degradations and compression-induced artifacts through restoration guided solely by image quality. To enable codec-agnostic regional adaptation, we introduce Agentic ROI Coding (AROIC), which treats the codec as a black box and allows the agent to automatically schedule, execute, evaluate, and reflect ROI coding plans without architectural modifications or codec-specific retraining. We integrate these four agents with a Scenario-Guided Quality-Rate (SGQR) evaluation strategy to enable more effective scenario-adaptive compression across heterogeneous codecs. Comprehensive experiments on clean, noisy, and blurred images across standard, perceptual, and machine-vision compression scenarios demonstrate that PICA consistently enhances the compression performance of both the conventional H.266/VVC codec and the neural Cheng2020 codec, outperforming competing compression methods on the Kodak, CLIC2020, and HEVC datasets.",
+          "categories": [
+            "cs.CV"
+          ],
+          "published": "2026-11-03T14:19:39Z",
+          "paper_url": "http://arxiv.org/abs/2611.04960v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.04960v1.pdf",
+          "score": 85,
+          "score_reasons": [
+            "分类：Agent",
+            "摘要命中：multi-agent",
+            "标题命中：agentic",
+            "标题命中：agent"
+          ],
+          "category": "agent",
+          "category_label": "Agent",
+          "track": "frontier"
+        },
+        {
+          "arxiv_id": "2611.03839",
+          "title": "PianoBench: Evaluating Musical Perception and Reasoning in Language Models",
+          "authors": [
+            "Louis Bradshaw",
+            "Irmak Bukey",
+            "Daniel Chenyu Lin",
+            "John Thickstun",
+            "Chris Donahue"
+          ],
+          "abstract": "Multimodal language models continue to improve on broad music understanding benchmarks, but which musical features can they perceive and reason about? We investigate this question by introducing PianoBench, a benchmark that tasks language models with reasoning about musical performances across congruent acoustic and symbolic input representations. PianoBench is derived from our new multimodal, training-scale dataset comprising more than 20,000 hours of interleaved transcripts of music and spoken musical commentary from instructional piano videos. Open-weight audio-language models achieve at most 52.8% accuracy on PianoBench, and at best only modestly outperform their accuracy on a no-audio control. In contrast, frontier models using chain of thought achieve up to 93.2% accuracy when provided transcripts of music as text, exposing a gap between perceiving musical features from audio and reasoning about musical events when they are given explicitly. We then test whether mid-training on interleaved musical instruction can improve question answering without chain of thought, raising Qwen 3.5 9B Base's zero-shot accuracy on PianoBench with music transcripts from 42.8% to 56.0% after instruction tuning. These experiments suggest that instructional videos may represent an overlooked source of multimodal supervision for music. Available: https://gclef-cmu.org/pianobench.",
+          "categories": [
+            "cs.SD",
+            "cs.AI",
+            "cs.LG"
+          ],
+          "published": "2026-11-02T19:11:56Z",
+          "paper_url": "http://arxiv.org/abs/2611.03839v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.03839v1.pdf",
+          "score": 85,
+          "score_reasons": [
+            "分类：LLM",
+            "标题命中：language model",
+            "标题命中：reasoning",
+            "摘要命中：benchmark",
+            "摘要命中：multimodal"
+          ],
+          "category": "llm",
+          "category_label": "LLM",
+          "track": "frontier"
         }
       ]
     },
@@ -256,74 +252,78 @@
       "cadence": "周一至周五",
       "candidates": [
         {
-          "arxiv_id": "2611.02079",
-          "title": "ParetoSaddler: Pareto-Guided Optimization of Agent Harnesses for Quality and Cost",
+          "arxiv_id": "2611.04579",
+          "title": "FreeForm Harness: A Mobile-Native Agent Harness for Open and Composable Extensions",
           "authors": [
-            "Xingzhi Qian",
-            "Sungho Park",
-            "Rongyuan Tan",
-            "Jianbo Yu",
-            "Jue Zhang",
-            "Lorenzo Cavallaro",
-            "Menglin Xia",
-            "Yanzhi Chen",
-            "Xinnuo Xu",
-            "Yu Kang",
-            "Xinran Zheng",
-            "Gagan Somashekar",
-            "Xuchao Zhang",
-            "Chetan Bansal",
-            "Qingwei Lin",
-            "Victor Rühle"
+            "Bo Zhang",
+            "Pengbo Zhang",
+            "Jiaxin Jiao",
+            "Yue Liu"
           ],
-          "abstract": "Harness optimization can substantially improve LLM agents without modifying model weights, but existing methods primarily optimize response quality. Extending them to joint quality--cost optimization introduces a challenge: applying the deployment preference during intermediate updates can prematurely reject candidates that are valuable for later improvements. We introduce ParetoSaddler, which addresses this mismatch by separating intermediate candidate promotion from final deployment selection. At each iteration, an optimizer updates a parent harness to produce a candidate, and then compares the two over repeated executions and uses Bayesian bootstrap Pareto support to promote candidates showing credible progress in either quality or cost. Promoted candidates receive broader development evaluation and remain available as parents for later optimization steps. We evaluate ParetoSaddler on ClawMark and GAIA2 using domain-disjoint splits. On ClawMark, ParetoSaddler improves quality from 70.86\\% to 81.35\\% while reducing cost from \\$1.17 to \\$1.01 per task; on GAIA2, it improves quality from 56.22\\% to 62.89\\% while reducing cost from \\$0.78 to \\$0.45 per task. The Pareto-selected harnesses also achieve higher quality at lower cost than quality-only harness optimization. Analysis shows that Pareto-aware optimization retains intermediate candidates that would be discarded by deployment preference but can support later improvements, while Bayesian bootstrap screening filters out candidates whose gains are weakly supported across runs.",
+          "abstract": "Mobile phones support many everyday agent tasks, but current mobile agents bundle capabilities into monolithic pipelines with no open recombination point. Users and third parties cannot publish, install, and compose new behaviors, leaving personalized daily-life requests underserved. We argue that the missing piece is a substrate: although phones are the Web's dominant access point, open publication and composition under decentralized authorship stop at the agent harness. We present FreeForm Harness (FFH), a mobile-native agent harness for open, composable extensions. A frozen base and a permanence-aware required layer handle mobile constraints, including location, proactive triggering, and scarce channels. A uniform plugin contract makes independently authored extensions composable, checkable, and replaceable over a frozen socket set. FFH also supports end-user authorship through a tiered commissioned-authoring path. When no existing extension matches a user's intent, a Web coding agent generates a candidate artifact, which is validated and admitted on device under the same contract as other extensions. An Android prototype spans device, market, and cloud. Evaluation shows that architectural boundaries are enforced at runtime; realistic daily-life requests fit the declared composition space without widening it; and user intent reaches on-device execution through retrieval or commissioned authoring, with final trust decisions remaining device-local. FFH advances the agentic Web from \"everything is a plugin\" toward \"everyone is a developer\" on mobile.",
           "categories": [
-            "cs.AI",
-            "cs.CL",
-            "cs.LG",
-            "cs.MA"
+            "cs.SE"
           ],
-          "published": "2026-11-01T17:36:05Z",
-          "paper_url": "http://arxiv.org/abs/2611.02079v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.02079v1.pdf",
-          "score": 93,
+          "published": "2026-11-03T09:39:21Z",
+          "paper_url": "http://arxiv.org/abs/2611.04579v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.04579v1.pdf",
+          "score": 80,
           "score_reasons": [
             "分类：Harness",
-            "标题命中：agent harness",
-            "cs.CL"
+            "标题命中：agent harness"
           ],
           "category": "harness",
           "category_label": "Harness",
           "track": "harness"
         },
         {
-          "arxiv_id": "2611.02833",
-          "title": "Reimagining computational quantum research with AI scientists",
+          "arxiv_id": "2611.05088",
+          "title": "LatentTriad: Pre-Action Risk Representations for Malicious Agent Skill Detection",
           "authors": [
-            "Yuxuan Du",
-            "Hanqing Zhao",
-            "Xinbiao Wang",
-            "Yiming Lu",
-            "Kaining Zhang",
-            "Dacheng Tao"
+            "Zhe Yu",
+            "Yi Liu",
+            "Ying Zhang",
+            "Simin Chen"
           ],
-          "abstract": "AI scientists are expanding automated research across scientific domains, yet their ability to turn the scientific record into a foundation for autonomous discovery remains elusive. Here we uncover a fundamental barrier to this transition and demonstrate a route to overcome it in computational quantum science, where advances shape both what we can learn from complex quantum systems and what quantum computing can ultimately deliver. To identify this barrier, we introduce OmniQ, an expert-audited virtual research environment that converts published studies into executable reproduction tasks. Across 59 papers spanning classical simulation, quantum algorithms and quantum-property characterization, we systematically evaluate five agentic systems powered by large language models and six third-party agent harnesses. Our findings reveal that current AI scientists often fail to reproduce published results, exposing a fundamental mismatch between what scientific papers communicate and what autonomous agents require. By contrast, human expert intervention can turn these failures into successful reproductions, showing that the missing information can be identified and converted into reusable research experience. Guided by this observation, we develop Residual Agents (RA), a quantum-tailored self-improving AI scientist that distils externally verified workflow repairs into such experience. RA substantially improves research performance under fixed base models and limited adaptation budgets. For example, RA raises DeepSeek V4.1 Flash performance from 68% to 85%, matching Claude Code with Opus 5 at a third of its cost despite using a weaker base model. We integrate all reproduced results into an extensible platform built on the model context protocol, making verified research workflows directly accessible to AI scientists and allowing new scientific papers to be continuously incorporated.",
+          "abstract": "Large language model agents are increasingly extended with reusable skills, but untrusted skill content can induce operations outside the user's task. Detecting this contextual risk requires more than suspicious-pattern matching, while dynamic analysis incurs the cost of skill execution. We find that hidden states formed during prefill contain readable information about task-operation consistency, including across held-out expression forms in controlled evaluations. Matched Operation-state interventions also affect later Boundary states and shift fixed risk readouts toward the donor label. Based on these findings, we introduce LatentTriad, which combines contextual Boundary features, group-adjusted Operation directions, and departures from benign state relationships. All branches share one prefill: detection generates no output tokens, invokes no tools, and executes no skill code. Across 5,830 skill packages from five sources and seven backbones, LatentTriad achieves 99.0-99.2% pooled F1 and 93.0-94.6% source-macro F1. A separately measured compact implementation completes prefill and detection in a median of 259-284 ms. These results connect pre-action risk readability and functional influence to execution-free skill screening.",
           "categories": [
-            "quant-ph",
-            "cs.AI",
-            "cs.LG"
+            "cs.AI"
           ],
-          "published": "2026-11-02T09:32:13Z",
-          "paper_url": "http://arxiv.org/abs/2611.02833v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.02833v1.pdf",
-          "score": 71,
+          "published": "2026-11-03T15:46:12Z",
+          "paper_url": "http://arxiv.org/abs/2611.05088v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.05088v1.pdf",
+          "score": 65,
           "score_reasons": [
-            "分类：Harness",
-            "摘要命中：agent harness",
-            "摘要命中：agentic system"
+            "分类：Skill",
+            "标题命中：agent skill"
           ],
-          "category": "harness",
-          "category_label": "Harness",
+          "category": "skill",
+          "category_label": "Skill",
+          "track": "harness"
+        },
+        {
+          "arxiv_id": "2611.03772",
+          "title": "RuntimeTickets: Source-Grounded Security Obligations for Agent Skills",
+          "authors": [
+            "Kuiyi Gao",
+            "Xue Liu",
+            "Bowei He"
+          ],
+          "abstract": "Third-party Agent Skills extend what an autonomous agent can do, but a malicious Skill can hide data exposure or output manipulation inside a legitimate workflow. Neither reading a Skill's description nor granting it tool permissions tells whether its execution meets the user's security requirements. We introduce RuntimeTickets, a protocol that enforces and audits these requirements while a Skill runs. From released malicious-Skill datasets we derive a risk model and build adversarial-benign Skill pairs. From the task's delivery contract, a language model proposes security obligations for that task. Each obligation cites the Skill lines it answers, and the ticket tightens the host's approvals into fine-grained allowed actions but never loosens them. A runtime gate checks the recipient, object and amount of every outbound send before forwarding it, and trusted monitors record the effects within their observation scope. The ticket links these checks and observations to the approved obligations of each Skill run, and a deterministic decoder turns the ticket's status into governable data flows and verifies each obligation. Neither enforcement nor decoding involves a language model, so text injected by a Skill can change the proposal but never the rule that decides a send. We evaluate RuntimeTickets at the network egress boundary of three unmodified agent frameworks against production Skill scanners and runtime baselines, among them an AgentBound-derived allow-list and SkillGuard. RuntimeTickets eliminated both failure modes of current Skill defenses, overlook (malicious Skills let through) and overkill (benign Skills blocked): its overlook rate was 0.0% and its overkill rate 0.0%, while the scanners erred on both sides. RuntimeTickets ties approved requirements to verifiable execution evidence and offers a common foundation for the safe and auditable deployment of third-party Skills.",
+          "categories": [
+            "cs.CR",
+            "cs.AI"
+          ],
+          "published": "2026-11-02T17:31:13Z",
+          "paper_url": "http://arxiv.org/abs/2611.03772v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.03772v1.pdf",
+          "score": 65,
+          "score_reasons": [
+            "分类：Skill",
+            "标题命中：agent skill"
+          ],
+          "category": "skill",
+          "category_label": "Skill",
           "track": "harness"
         },
         {
@@ -383,62 +383,30 @@
           "track": "harness"
         },
         {
-          "arxiv_id": "2611.03238",
-          "title": "ScienceCUA: Resource-to-Skill Construction and Execution-Guided Skill Evolution for Scientific Computer Use Agents",
+          "arxiv_id": "2611.04456",
+          "title": "How Agent Skills Evolve: A Large-Scale Empirical Study of Skills on GitHub",
           "authors": [
-            "Daiqiang Li",
-            "Jingyi Peng",
-            "Rui Hu",
-            "Jia Li",
-            "Xuyang Liu",
-            "Guanren Qiao",
-            "Yujia Xiang",
-            "Qiuzhuang Sun",
-            "Zhiping Xu",
-            "Mingrui Luo"
+            "Jinjun Huang",
+            "Jialun Cao",
+            "Junxiao Han",
+            "Zhonghao Jiang",
+            "Shing-Chi Cheung",
+            "Zhongxin Liu"
           ],
-          "abstract": "Computer-use agents for scientific software require application-specific expertise. Much of this expertise is documented in human-authored software manuals and web pages. However, turning these resources into executable, reusable skills remains challenging due to mismatches between documented and deployed software versions and differences in scope between documentation coverage and task requirements. We introduce ScienceCUA, a two-stage framework combining resource-to-skill construction with execution-guided skill evolution. First, ScienceCUA identifies tasks supported by the software from its documentation, infers operational trajectories, and generalizes them into reusable Skills. Command catalogs, syntax constraints, and shortcuts are organized separately as References for on-demand lookup. Then, ScienceCUA uses execution feedback to drive skill self-evolution by contrasting successful and failed trajectories for the same task, identifying deficiencies, revising existing skills or adding new ones, and updating the skill library only after repeated validation in real environments. To enable reliable evaluation without benchmark noise or task leakage, we introduce two improved benchmarks. ScienceBoard-Verified provides an audited and corrected basis for measuring task performance, while ScienceBoard-VE separates skill evolution from final testing through disjoint evolution and test tasks and further supports native-agent evaluation. Experiments show that the initial Skills and References improve average task success rate by up to 7.23 percentage points over the base model, while skill self-evolution increases the total gain over the baseline to as much as 17.12 percentage points. ScienceCUA turns software documentation into an evolving set of executable skills and queryable references, offering a practical way for general-purpose agents to use scientific software reliably and at scale.",
+          "abstract": "Large language model-based agents increasingly rely on external skills to reuse task-specific knowledge without retraining the model. As skills become common for extending agent capabilities, understanding creation and evolution is critical for reliable agent systems. However, existing studies mainly examine agent skills from a static perspective, leaving their evolution in real-world repositories largely unexplored. This limits our understanding of the patterns and motivations behind skill changes. To fill this gap, we present a large-scale empirical study of agent skills, capturing 84,200 skills and 750,898 commits from GitHub. We manually construct taxonomies of skill components, change patterns, and evolution motivations, and build an automated annotation pipeline to label changes at scale. Based on the taxonomy, we conduct quantitative analyses of skill composition and post-creation evolution frequency, together with qualitative assessments of modified components, change patterns, and motivations. Our findings reveal five implications: (i) reliability receives less attention in skill composition and change, motivating execution-contract skill design that incorporates verification and recovery mechanisms; (ii) evolution changes concentrate in project-coupled skills, calling for automated just-in-time skill updating mechanisms; (iii) change patterns are dominated by incremental enrichment and refinement, motivating pattern-guided skill enhancers that diagnose and improve incomplete skill components; (iv) redundancy is a practical maintenance issue, highlighting the need for context-efficient skill representation; (v) security-motivated changes show limited risk reduction, suggesting skill regression testing methods that objectively verify skill functionality and security. Beyond these insights, our dataset provides a basis for future studies on automated skill techniques.",
           "categories": [
-            "cs.AI"
+            "cs.SE"
           ],
-          "published": "2026-11-02T14:50:06Z",
-          "paper_url": "http://arxiv.org/abs/2611.03238v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.03238v1.pdf",
-          "score": 51,
+          "published": "2026-11-03T07:46:48Z",
+          "paper_url": "http://arxiv.org/abs/2611.04456v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.04456v1.pdf",
+          "score": 60,
           "score_reasons": [
-            "分类：Harness",
-            "标题命中：computer use"
+            "分类：Skill",
+            "标题命中：agent skill"
           ],
-          "category": "harness",
-          "category_label": "Harness",
-          "track": "harness"
-        },
-        {
-          "arxiv_id": "2611.01950",
-          "title": "CertClaim: Towards Certified Model-Claim Verification for Coding-Agent Services",
-          "authors": [
-            "Jiacheng Lu",
-            "Qixuan Yang",
-            "Tao Song",
-            "Daxin Jiang",
-            "Jing Li",
-            "Zuo Bai",
-            "Haibing Guan"
-          ],
-          "abstract": "Coding-agent services are priced by the model they claim, making the verification of such model claims crucial for their users. In this paper, we reveal that existing model auditing methods rely on a latent assumption that the deployment is static, i.e., the claimed model is always served in one reference configuration. This assumption does not hold for coding-agent services, whose providers may legitimately change the sampling preset, the reasoning mode or the system prompt without changing the model. As a result, existing methods either falsely accuse honest providers or miss cheap derivatives of the claimed model. To address this problem, we propose a certified model-claim verification method (dubbed CertClaim). Instead of testing the service against one reference deployment, we make the authorized deployments part of the claim and test whether some authorized deployment explains all the evidence of the service, by calibrating multiple evidence channels in every authorized deployment and fusing them within each deployment. We provide theoretical analyses of its false-accusation rate and detection condition. Extensive experiments on eight claims, two agent harnesses and three task suites verify the effectiveness of CertClaim, which is valid in every setting while separating substitutes far better than existing methods, as well as its resistance to potential adaptive attacks.",
-          "categories": [
-            "cs.CR"
-          ],
-          "published": "2026-11-01T14:31:50Z",
-          "paper_url": "http://arxiv.org/abs/2611.01950v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.01950v1.pdf",
-          "score": 50,
-          "score_reasons": [
-            "分类：Harness",
-            "摘要命中：agent harness"
-          ],
-          "category": "harness",
-          "category_label": "Harness",
+          "category": "skill",
+          "category_label": "Skill",
           "track": "harness"
         }
       ]
@@ -609,196 +577,160 @@
       "cadence": "按价值收录",
       "candidates": [
         {
-          "arxiv_id": "2611.03233",
-          "title": "Axion 1.0: Open Agent Foundation Models, Simplified",
+          "arxiv_id": "2611.04035",
+          "title": "Recursa: Toward Recursively Self-Improving Foundation Model Systems",
           "authors": [
-            "Yuqi Jia",
-            "Yunjie Tian",
-            "Jiayu Zheng",
-            "Yijun Liang",
-            "Jingchen Sun",
-            "Mengyu Zhao",
-            "Di Fu"
+            "Erkang Zhu",
+            "Yin Lin",
+            "Xiaorong Shi",
+            "Xuanrui Lin",
+            "Jingren Zhou"
           ],
-          "abstract": "We introduce Axion 1.0, a fully open agent foundation model that combines strong and broad agentic capabilities with a remarkably simple training recipe. Axion 1.0 is trained in only three stages: two lightweight supervised fine-tuning stages followed by reinforcement learning, without dedicated mid-training, direct preference optimization (DPO), or on-policy distillation (OPD). The first SFT stage develops strong self-contained reasoning through model-aware data construction, where we synthesize challenging problems and adversarially strengthen them based on the base model's own successful solution strategies. The second stage extends these capabilities to tool-dependent reasoning through a scalable pipeline for constructing diverse and automatically verifiable tasks grounded in real-world data sources and deterministic computation. Finally, reinforcement learning further strengthens long-horizon reasoning and interaction with external tools and environments. Despite this compact training recipe, Axion 1.0 achieves strong performance across a broad suite of agentic benchmarks and is competitive with leading commercial models on several of them. Equally importantly, Axion 1.0 is open beyond model weights: we release the complete recipe, including data construction, generation, filtering, verification, prompts, and training code, enabling the entire development process to be reproduced and extended. Axion 1.0 demonstrates that strong agent foundation models can be both open and simple, offering a practical and reproducible path toward advancing open agentic intelligence.",
+          "abstract": "Foundation models in changing environments can encounter unfamiliar domain knowledge that their original training did not cover. However, new domains rarely provide large amounts of expert-created training data or reliable supervisory signals for further training. We introduce Recursa, a foundation model system that adapts to new domains by learning from its own experience without human experts or a stronger teacher model. Recursa uses a knowledge repository to store what it learns: domain-specific skills and instructions on when to apply them, along with memories of past task experiences and reflections on what to improve. Recursa bootstraps the repository from domain materials and then refines it through recursive self-improvement. It uses parallel learners to execute tasks and synthesize local improvements, then validates and merges the improvements into the knowledge repository. On Harvey LAB's Firm Knowledge benchmark, Recursa raises the all-pass rate on held-out test tasks from 30.0% to 55.0% with DeepSeek-V4.1-Flash and from 35.0% to 46.0% with Qwen3.8-Flash.",
           "categories": [
             "cs.AI"
           ],
-          "published": "2026-11-02T14:48:57Z",
-          "paper_url": "http://arxiv.org/abs/2611.03233v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.03233v1.pdf",
-          "score": 81,
+          "published": "2026-11-02T22:30:12Z",
+          "paper_url": "http://arxiv.org/abs/2611.04035v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.04035v1.pdf",
+          "score": 97,
           "score_reasons": [
             "分类：基座模型",
             "标题命中：foundation model",
-            "摘要命中：base model"
+            "摘要命中：qwen",
+            "摘要命中：deepseek"
           ],
           "category": "foundation-models",
           "category_label": "基座模型",
           "track": "foundation-models"
         },
         {
-          "arxiv_id": "2611.02769",
-          "title": "Unlocking the Potential of Vision Foundation Models for Multi-Task Dense Prediction via Mixture of Task Adapters",
+          "arxiv_id": "2611.03948",
+          "title": "Balancing Chain-of-Thought and Answer Supervision for Small Language Models on Medical Question Answering",
           "authors": [
-            "Yunzhi Zhuge",
-            "Xinzhuo Yu",
-            "Sitong Gong",
-            "Lu Zhang",
-            "Pingping Zhang",
-            "Huchuan Lu"
+            "Le Zhou",
+            "Xiao Luo",
+            "Chinmay Chandra",
+            "Zhan Zhang"
           ],
-          "abstract": "Multi-task dense prediction seeks a single, coherent representation that supports simultaneously discriminative semantic recognition and regularized geometric/structural inference. For vision foundation models, pretrained semantic invariances conflict with the frequency and smoothness biases of dense objectives; joint fine-tuning and single-route adapters therefore compress competing gradients into one update channel, causing negative transfer and unstable cross-task agreement. We frame this as two-level adaptation: task-generic alignment that preserves priors, and task-aware specialization that resolves late-stage conflicts. Based on this principle, we propose D2MoE , a Mixture of Task Adapters that explicitly factorizes these roles within a frozen DINOv3 backbone. D2MoE introduces Task-Generic Low-Rank Adaptation (TG-LoRA) in attention projections throughout the network to provide a stable, shared adaptation channel, and a Task-Adaptive Mixture of Experts (TA-MoE) injected only at the final attention block of each stage to enact sparse, task-conditioned perturbations of token mixing in a single forward pass. A Semantic Prior Injector further couples multi-level task features with frozen foundation priors to reinforce semantic coherence while preserving boundary and structural fidelity. Experiments across diverse benchmarks substantiate that this structured factorization yields robust multi-task improvements with a small trainable footprint, establishing a principled and scalable route to prior-preserving, foundation-centric multi-task dense perception.",
+          "abstract": "Small language models (<=9B parameters) can support local medical question answering (QA) while reducing privacy and latency concerns, but effective fine-tuning remains challenging. This paper compares two chain-of-thought (CoT) supervised fine-tuning methods: Uniform-across-Sequence (UaS), which applies equal loss weighting to the full CoT-and-answer sequence, and Segment-weighted (SwS), which separately weights CoT and answer losses. We evaluate six general- and medical-domain models on multiple-choice QA (MedQA and EMS-MCQA) and free-text QA (Med-O1). Results show that neither method is universally best: on multiple-choice QA (MedQA and EMS-MCQA), SwS generally performs better, with general-purpose models benefiting most; notably, Qwen3.5-4B improves by up to 44.8% over its zero-shot baseline on MedQA. In contrast, medical-domain models show smaller or even negative gains on MCQs. On free-text QA (Med-O1), UaS performs best for nearly all models and provides consistent improvements across both model types, with the 3B Llama-3.2 model approaching the performance of much larger 7B medical-domain models. We also find that excessively long CoT generation is associated with lower performance in some models on either multiple-choice or free-text QA tasks, suggesting that limiting the CoT length during training may benefit selected models. Overall, the results show that CoT loss weighting should be matched to the task format and the knowledge already encoded in the base model, rather than using a single fine-tuning strategy for all clinical QA tasks.",
           "categories": [
-            "cs.CV"
+            "cs.CL",
+            "cs.AI"
           ],
-          "published": "2026-11-02T08:47:07Z",
-          "paper_url": "http://arxiv.org/abs/2611.02769v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.02769v1.pdf",
+          "published": "2026-11-02T20:48:29Z",
+          "paper_url": "http://arxiv.org/abs/2611.03948v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.03948v1.pdf",
+          "score": 81,
+          "score_reasons": [
+            "分类：基座模型",
+            "摘要命中：base model",
+            "摘要命中：qwen",
+            "摘要命中：llama",
+            "cs.CL"
+          ],
+          "category": "foundation-models",
+          "category_label": "基座模型",
+          "track": "foundation-models"
+        },
+        {
+          "arxiv_id": "2611.03862",
+          "title": "Dr. No: Feature Steering for Abstention in Vision-Language Models",
+          "authors": [
+            "Farid Hasanov",
+            "Riccardo Renzulli",
+            "Bahram Zonooz",
+            "Mykola Pechenizkiy",
+            "Decebal Constantin Mocanu"
+          ],
+          "abstract": "Large foundation models often answer even when the available visual or textual evidence is insufficient to support a reliable conclusion. This failure to abstain makes them hard to trust in high-stakes or information-seeking settings, where a confident but unsupported answer can be worse than no answer at all. It also raises a natural question: can the internal mechanisms behind this behaviour be identified and controlled at inference time? We present Dr. No, a feature-steering approach that mines sparse autoencoder (SAE) features associated with abstention and commitment, then modulates a small set of them during the prefill pass, without retraining the base model. Dr. No is evaluated on LLaVA-1.6 Mistral 7B across multimodal abstention benchmarks, including UNK-VQA and MM-UPD, and additionally benchmarked on language reasoning tasks using Qwen3.5-2B on AbstentionBench subsets. Against multiple uncertainty-based abstention baselines, feature steering achieves a more favourable balance between correct answering and appropriate abstention than post-hoc rejection methods. The gains are strongest on UNK-VQA and on MM-UPD cases involving image--question or question--answer incompatibility, and transfer most clearly to mathematical reasoning subsets of AbstentionBench. However, performance is more limited on absent-answer detection and retrieval-heavy multi-hop QA, such as MuSiQue. These results suggest that sparse internal features provide lightweight control handles for shaping uncertainty-aware behaviour in foundation models, while also showing that abstention control is source-dependent rather than governed by a single universal signal.",
+          "categories": [
+            "cs.LG"
+          ],
+          "published": "2026-11-02T19:34:06Z",
+          "paper_url": "http://arxiv.org/abs/2611.03862v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.03862v1.pdf",
+          "score": 77,
+          "score_reasons": [
+            "分类：基座模型",
+            "摘要命中：foundation model",
+            "摘要命中：base model",
+            "摘要命中：qwen"
+          ],
+          "category": "foundation-models",
+          "category_label": "基座模型",
+          "track": "foundation-models"
+        },
+        {
+          "arxiv_id": "2611.03947",
+          "title": "RFShape: An IQ-Pretrained Wireless Foundation Model for Heterogeneous IQ & CIR Representations",
+          "authors": [
+            "Mohammad Cheraghinia",
+            "Sebbe Van Der Smissen",
+            "Jaron Fontaine",
+            "Delia Rico",
+            "Eli De Poorter",
+            "Adnan Shahid"
+          ],
+          "abstract": "In wireless systems, foundation models have been proposed as alternative artificial intelligence models to replace task-specific models with a shared pretrained model that can be reused across many downstream applications (source separation, interference detection, localization, etc.). These wireless foundation models promise to reuse learned representations across diverse tasks, but choosing a foundation model also means choosing its input representation. For example, a model pretrained on spectrograms expects spectrograms, while one pretrained on in-phase/quadrature (IQ) samples expects IQ, limiting which pretrained model can be used for a given downstream problem. To remedy this, we present RFShape, a 7.4 M-parameter foundation model that breaks this coupling by adapting how a signal is presented to a shared pretrained encoder. RFShape is pretrained solely on synthetic IQ waveforms, without real captures, labels, or channel impulse responses (CIRs), and uses deterministic representation operators to support heterogeneous downstream inputs. Across ten tasks and nine datasets unseen during pretraining, the same encoder supports classification, ranging-error regression, and two-dimensional positioning. Representation selection alone increases 23-class radar recognition from 23.0% to 69.5% and short-range technology recognition from 70.8% to 97.1%. RFShape also outperforms CIR-pretrained ultra-wideband baselines by up to 12.7 percentage points for (N)LOS classification despite never observing CIRs during pretraining. These results show that foundation-model reuse need not be limited by the representation or modality seen during pretraining, and adapting how a signal is presented can extend a single pretrained encoder across heterogeneous wireless tasks.",
+          "categories": [
+            "eess.SP"
+          ],
+          "published": "2026-11-02T20:46:49Z",
+          "paper_url": "http://arxiv.org/abs/2611.03947v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.03947v1.pdf",
           "score": 72,
           "score_reasons": [
             "分类：基座模型",
             "标题命中：foundation model",
-            "摘要命中：mixture of experts"
+            "摘要命中：pretrained model"
           ],
           "category": "foundation-models",
           "category_label": "基座模型",
           "track": "foundation-models"
         },
         {
-          "arxiv_id": "2611.03592",
-          "title": "Evaluating Uncertainty Calibration in Probabilistic Time Series Foundation Models",
+          "arxiv_id": "2611.05141",
+          "title": "Beyond Foundation Models: PFN Priors Improve Tabular Hyperparameter Optimization",
           "authors": [
-            "Thomas Decker",
-            "Volker Tresp"
+            "Artem Chistyakov",
+            "Renat Sergazinov",
+            "Artem Babenko"
           ],
-          "abstract": "Time series foundation models (TSFMs) are increasingly used for probabilistic forecasting across diverse domains, yet the reliability of their uncertainty estimates remains poorly understood. In this work, we study uncertainty calibration in probabilistic TSFMs from a broader methodological and empirical perspective. We introduce a taxonomy of how TSFMs represent predictive uncertainty and develop a fine-grained evaluation framework for calibration in multi-horizon forecasting that distinguishes pooled, horizon-wise, and stronger conditional notions of calibration. Using this framework, we conduct a comprehensive empirical evaluation of popular TSFMs across diverse datasets and show that current models exhibit distinct and systematic patterns of miscalibration that standard metrics often obscure. We further analyze common post-hoc recalibration methods and characterize which forms of calibration they can improve and which tend to persist. Our results provide practical guidance for evaluating and improving uncertainty calibration in TSFMs and highlight important limitations of current practice.",
+          "abstract": "Synthetic priors have so far served one purpose: pretraining tabular foundation models. We ask whether the same priors can improve conventional tabular models, which are trained from scratch on each dataset. We propose PriorTune, a method that meta-tunes hyperparameter configurations on synthetic tasks alone. Offline, for a given model, we fit a pool of configurations on datasets sampled from a published PFN prior and greedily select the subset with the highest winrate over the random baseline. Online, a new dataset fits only the selected configurations, so the gain comes at no extra cost. Empirically, we observe that scaling both the number of configurations and synthetic datasets has an equal scaling effect on the performance of the final subset of configurations, which we also explain theoretically. On the full BeyondArena benchmark, LightGBM with TabPrep features with our configurations ranks above TabPFN-3 and RealMLP, while being much more efficient at inference. Overall, our results establish existing PFN priors as a scalable source of meta-training data for hyperparameter selection for non-foundational tabular models.",
           "categories": [
-            "cs.LG",
-            "cs.AI"
-          ],
-          "published": "2026-11-02T18:34:50Z",
-          "paper_url": "http://arxiv.org/abs/2611.03592v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.03592v1.pdf",
-          "score": 65,
-          "score_reasons": [
-            "分类：基座模型",
-            "标题命中：foundation model"
-          ],
-          "category": "foundation-models",
-          "category_label": "基座模型",
-          "track": "foundation-models"
-        },
-        {
-          "arxiv_id": "2611.03246",
-          "title": "A Common Language for Dynamic Graphs: Interaction Tokenization Enables Foundation Models",
-          "authors": [
-            "Fuyuan Ma",
-            "Yili Wang",
-            "Xin He",
-            "Xin Zhang",
-            "Ying Wang",
-            "Xin Wang"
-          ],
-          "abstract": "Dynamic graphs capture evolving interactions in Web systems, including online communication, user engagement, and recommendation. Graph foundation models aim to reuse predictive capabilities across networks, but extending this capability to dynamic graphs faces two challenges. First, node identities are graph-specific, and similar interaction patterns can appear at different temporal and activity scales, making histories difficult to represent consistently across networks. Second, the predictive roles of historical patterns vary across interaction dynamics, limiting transfer from a narrow range of training processes. In this paper, we show that a common interaction language, combined with learning across diverse interaction processes, offers a basis for dynamic graph foundation modeling. We propose CL-DGFM, a Common Language Dynamic Graph Foundation Model for temporal link prediction. Its Dynamic Interaction Tokenizer encodes interaction memory, historical connectivity, and ordered destination transitions into calibrated tabular inputs, making dynamic histories accessible to existing predictors without an additional trainable graph encoder. Its Dynamic Interaction Prior trains a pretrained tabular foundation predictor across diverse synthetic dynamics. Labeled historical context guides prediction, with a Contextual Value Adapter modulating attention values. The model transfers to real graphs without target-graph parameter updates. Experiments on TGB and TGB-Seq demonstrate competitive performance. Further comparisons show that the common language supports basic machine learning and neural models, and enables direct use of frozen tabular foundation models on dynamic graphs.",
-          "categories": [
-            "cs.LG",
-            "cs.SI"
-          ],
-          "published": "2026-11-02T14:57:24Z",
-          "paper_url": "http://arxiv.org/abs/2611.03246v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.03246v1.pdf",
-          "score": 65,
-          "score_reasons": [
-            "分类：基座模型",
-            "标题命中：foundation model"
-          ],
-          "category": "foundation-models",
-          "category_label": "基座模型",
-          "track": "foundation-models"
-        },
-        {
-          "arxiv_id": "2611.03178",
-          "title": "CoworkOS:Scaling Agent Coworkers for Real-world Automation",
-          "authors": [
-            "Jiajie Jin",
-            "Guanting Dong",
-            "Chengjun Pan",
-            "Xin Deng",
-            "Zhuohui Sheng",
-            "Guoqiang Wang",
-            "Tao Gui",
-            "Yutao Zhu",
-            "Yujia Chen",
-            "Shihong Yi",
-            "Binze Hu",
-            "Zhixiong Yang",
-            "Zhichao Sun",
-            "Rui Wang",
-            "Han Han",
-            "Mingyu Ma",
-            "Junhao Huang",
-            "Xiaotao Wang",
-            "Huicheng Jiang",
-            "Yuyang Hu",
-            "Xinyu Yang",
-            "Wanghan Xu",
-            "Yajie Yang",
-            "Zhecan Wang",
-            "Honglin Guo",
-            "Xiaoyu Xing",
-            "Xiaoqian Zhang",
-            "Yulun Zhu",
-            "Xiaoxi Li",
-            "Jiahang Lin",
-            "Shaofan Liu",
-            "Shihan Dou",
-            "Zhiheng Xi",
-            "Qi Zhang",
-            "Yu-Gang Jiang",
-            "See-Kiong Ng",
-            "Yang Zhang",
-            "Tat-Seng Chua",
-            "Ji-Rong Wen",
-            "Zhicheng Dou"
-          ],
-          "abstract": "Rapid advances in cowork agents are shifting human-AI collaboration toward real-world automation, delivering software, designs, and other artifacts. However, such productivity work demands both high-quality delivery on complex productivity tasks and continued monitoring and decision-making over long horizons, a combination that remains an open challenge. We introduce CoworkOS, a general-purpose harness for long-horizon work that separates task strategy from execution management: the model decides actions, delegation, and acceptance, while the runtime maintains state and feedback. Its three-layer architecture enables direct execution or delegation to Subagents, synchronously or asynchronously, under stable responsibilities. Through a shared application layer, humans and agents inspect and revise the same evolving documents, presentations, CAD models, and Blender scenes, so human-in-the-loop participation can enter both through conversation and through direct modification of the work itself. To sustain continuity across agents and sessions, CoworkOS further introduces hierarchical workspaces and persistent semantic memory, so working files, key decisions, and long-running Job logs remain shareable, reusable, and resumable after interruption. Across 12 benchmarks and 6 categories of real-world applications, CoworkOS proves highly competitive with frontier agent applications such as Codex and DeepSeek Harness. As a sustained-work case study, CoworkOS uses GLM-5.3 as its backbone to conduct RSI-driven automated post-training on Qwen3.6-35B-A3B. Over five rounds, the model's average score across eight benchmarks rose from 33.19 to 42.95 (+9.76). Looking ahead, we believe CoworkOS opens a meaningful path toward general cowork-agent intelligence.",
-          "categories": [
-            "cs.AI",
-            "cs.CL"
-          ],
-          "published": "2026-11-02T14:15:11Z",
-          "paper_url": "http://arxiv.org/abs/2611.03178v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.03178v1.pdf",
-          "score": 65,
-          "score_reasons": [
-            "分类：基座模型",
-            "摘要命中：qwen",
-            "摘要命中：deepseek",
-            "cs.CL"
-          ],
-          "category": "foundation-models",
-          "category_label": "基座模型",
-          "track": "foundation-models"
-        },
-        {
-          "arxiv_id": "2611.02936",
-          "title": "Why Tabular Foundation Models Excel on Relational Data They Have Never Seen",
-          "authors": [
-            "Linjie Xu",
-            "Yiqun Hu",
-            "Jixiang He",
-            "David Wipf"
-          ],
-          "abstract": "Given a relational database (RDB) storing heterogeneous tabular information, how can we predict missing (or future) values in some target column of interest? As candidate targets are numerous in enterprise settings, it is preferable to avoid learning a new model from scratch each time there is a new prediction task. Frozen foundation models (FMs) based on in-context learning (ICL) and RDB-specific pre-training provide a viable solution, but the ideal design still remains largely unresolved. Perhaps unexpectedly, preliminary evidence has recently shown that existing single-table FMs (aka TFMs), when combined with suitable parameter-free relational encoders, can be quite competitive in practice despite zero exposure to RDB pre-training or relational data of any kind. In this work we first empirically confirm this phenomenon with a more diverse array of experiments. We then turn to our main contribution, namely, surfacing multiple complementary explanations for why TFMs behave so effectively. These explanations ultimately hinge on innate synergies whereby parameter-free encoders map relational effects to fixed-length embeddings that loosely mimic distributions for which TFMs were originally designed; in so doing, desirable single-table properties transfer to relational settings (e.g., convergent posterior predictive distributions). Collectively, our analysis forges new pathways for improving RDB FMs, particularly when we prioritize interpretability and inevitable integration within agentic systems.",
-          "categories": [
-            "cs.AI",
-            "cs.DB",
             "cs.LG"
           ],
-          "published": "2026-11-02T11:02:57Z",
-          "paper_url": "http://arxiv.org/abs/2611.02936v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.02936v1.pdf",
+          "published": "2026-11-03T16:20:15Z",
+          "paper_url": "http://arxiv.org/abs/2611.05141v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.05141v1.pdf",
+          "score": 65,
+          "score_reasons": [
+            "分类：基座模型",
+            "标题命中：foundation model"
+          ],
+          "category": "foundation-models",
+          "category_label": "基座模型",
+          "track": "foundation-models"
+        },
+        {
+          "arxiv_id": "2611.05097",
+          "title": "The Platonic Brain: Representational Convergence in EEG Foundation Models",
+          "authors": [
+            "Nicolas Waehner",
+            "Enzo Tagliazucchi",
+            "Jacobo Sitt",
+            "Demian Wassermann",
+            "Giovanni Franco Gabriel Marraffini",
+            "Trinidad Borrell"
+          ],
+          "abstract": "The Platonic Representation Hypothesis (PRH) predicts that artificial neural networks converge on shared representations as scale and performance increase. We test whether these predictions hold for representations of the human brain with EEG foundation models. Using EEG recordings from six participants watching a television series, together with aligned visual and language content, we tested whether EEG foundation-model representations converge within and across modalities as their embeddings become better at decoding an informative set of EEG markers. We found that EEG models with greater decodability showed stronger cross-family alignment in both local neighbourhood similarity and global structure, not consistently increasing with model parameter count. Cross-modal convergence was modality and metric dependent: greater EEG decodability was associated with stronger global alignment to language, but not consistently to vision models, while local alignment showed no consistent association. This dissociation may reflect local sensitivity to low-level sensory features, whereas global geometry may capture weaker shared semantic structure.",
+          "categories": [
+            "cs.AI"
+          ],
+          "published": "2026-11-03T15:53:13Z",
+          "paper_url": "http://arxiv.org/abs/2611.05097v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.05097v1.pdf",
           "score": 65,
           "score_reasons": [
             "分类：基座模型",
@@ -844,184 +776,89 @@
       "track": "frontier"
     },
     {
-      "arxiv_id": "2611.02609",
-      "title": "Whitened Advantage Summation Policy Optimization: Correlation-Aware Aggregation for Multi-Reward Reinforcement Learning",
+      "arxiv_id": "2611.05304",
+      "title": "LoopVQ: Sub 1-bit KV Cache Quantization for Looped Transformers",
       "authors": [
-        "Olaitan Olaleye",
-        "Jayson Meribe",
-        "Temidayo Olaleye"
+        "Minsoo Cheong",
+        "Sungjoo Yoo"
       ],
-      "abstract": "Reinforcement learning for language models often combines several rewards by normalizing each one and adding them with fixed weights. When the rewards are correlated, the variation they share is counted once for every reward that carries it. In terms of the ZCA-decorrelated components of the reward signal, the weighted sum applies weights $Σ^{1/2} w$ rather than the chosen weights $w$, where $Σ$ is the reward correlation matrix. We study WAS-PO, which whitens the normalized advantages with $Σ^{-1/2}$ before adding them, so that the chosen weights apply to those components. We derive the scalarized objective whose gradient it follows when normalization statistics are held fixed, show that its weights on the raw rewards can be negative, give an exact two-reward condition under which the lighter-weighted reward is reversed, and give a loose bound on the error from estimating $Σ$ during training. On tool calling with Qwen2.5-1.5B-Instruct, WAS-PO reached a higher mean training reward than GDPO in all seven seeds with three rewards (3.8% higher) and all three seeds with four (3.9% higher). WAS-PO also replaces GDPO's per-prompt normalization with batch-level normalization, and we did not separate the two changes with three or four rewards. The training-reward gains did not carry over to held-out accuracy, which was slightly lower than GDPO's with three rewards (not significant) and 0.03 lower in absolute terms with four (two seeds evaluated). With two rewards, WAS-PO trailed GDPO in training reward, and a three-seed control weakly suggests that the gap comes from batch-level normalization rather than whitening. In a math setting where the two rewards were nearly identical by construction, WAS-PO drove down the lighter-weighted reward, as the sign condition predicts.",
+      "abstract": "Looped transformers are a parameter-efficient alternative to standard transformers for language modeling. By reapplying the same layers across multiple loop steps, recent looped language models match the performance of non-looped models several times their size. While this architecture effectively reduces parameter memory, each loop step still stores its own keys and values, so the key-value (KV) cache grows linearly with the number of loop steps and becomes the main memory bottleneck. We observe that the KV cache of looped models is highly redundant along the loop axis and that the loop steps differ substantially in their sensitivity to quantization. Based on these observations, we propose $\\textbf{LoopVQ}$, a KV cache vector quantization method for looped transformers that codes channels of multiple loop steps jointly, and fine-tunes the codebooks to match the output of the full-precision model. At 0.5 bits per element, LoopVQ outperforms existing KV cache vector quantization methods for standard LLMs on general, long chain-of-thought reasoning, and long-context retrieval tasks with Ouro and Huginn models. Its design is orthogonal to these methods, and combined with TaSQ, it retains much of the BF16 accuracy even at 0.25 bits per element. We also implement LoopVQ in SGLang, where it nearly halves the decode latency at a 32K-token context and raises the peak serving throughput by up to $4.3\\times$ and $6.1\\times$ on the 1.4B and 2.6B Ouro models compared to the BF16 baseline.",
       "categories": [
         "cs.LG",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "published": "2026-11-03T18:16:29Z",
+      "paper_url": "http://arxiv.org/abs/2611.05304v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.05304v1.pdf",
+      "score": 97,
+      "score_reasons": [
+        "分类：Infra",
+        "标题命中：kv cache",
+        "标题命中：quantization",
+        "摘要命中：throughput",
+        "cs.CL"
+      ],
+      "category": "infra",
+      "category_label": "Infra",
+      "track": "frontier"
+    },
+    {
+      "arxiv_id": "2611.05263",
+      "title": "JHiMA-WebRL: A Joint Hierarchical Multi-Agent Reinforcement Learning Framework for Long-Horizon Web Tasks",
+      "authors": [
+        "Shanka Subhra Mondal",
+        "Jiayun Wang"
+      ],
+      "abstract": "Multimodal web agents have shown promising capabilities for interacting with websites through graphical user interfaces (GUIs), yet realistic web tasks often require long-horizon, multi-step planning that remains challenging for monolithic policies. Such agents must jointly infer high-level plans, navigate through intermediate states, track progress over extended interaction histories, and execute visually grounded actions. Although prior work has explored modular multi-agent systems with a separate planner, the planner is typically not updated jointly with the actor. We investigate whether explicitly separating and jointly training planning and execution provides a stronger inductive bias for long-horizon web navigation. We introduce JHiMA-WebRL, a joint hierarchical multi-agent reinforcement learning framework for web agents that couples a task decomposer with an actor. To train the decomposer, we use a strong teacher model to construct structured subtask supervision from multimodal GUI trajectories, and use these annotations to fine-tune both the decomposer and the subtask-conditioned actor. We then extend Group Relative Policy Optimization (GRPO) to jointly optimize the decomposer and actor in the interactive WebArena environment through hierarchical rollout grouping and role-specific advantages. On WebArena-Lite-v2, JHiMA-WebRL-14B, consisting of a 7B actor and a 7B decomposer, achieves an average success rate of 37.2%, compared with 24% for a ScaleCUA-32B agent that we fine-tune with RL on the same training tasks and evaluate under the same protocol. Ablations show that jointly updating the decomposer during RL outperforms updating the actor alone. These results suggest that jointly learned role factorization with smaller models can be a competitive alternative to scaling monolithic agents for long-horizon web tasks.",
+      "categories": [
         "cs.AI"
       ],
-      "published": "2026-11-02T06:30:27Z",
-      "paper_url": "http://arxiv.org/abs/2611.02609v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.02609v1.pdf",
-      "score": 100,
+      "published": "2026-11-03T17:49:14Z",
+      "paper_url": "http://arxiv.org/abs/2611.05263v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.05263v1.pdf",
+      "score": 90,
       "score_reasons": [
         "分类：RL",
         "标题命中：reinforcement learning",
-        "标题命中：policy optimization",
-        "摘要命中：dpo"
+        "摘要命中：policy optimization",
+        "摘要命中：grpo"
       ],
       "category": "rl",
       "category_label": "RL",
       "track": "frontier"
     },
     {
-      "arxiv_id": "2611.03627",
-      "title": "Not All Reasoning Generalizes: A Case Study on Learning Generalizable Reasoning Strategies in RLVR",
+      "arxiv_id": "2611.04878",
+      "title": "TraceRouter++: Causal Semantic Routing Realignment via Optimal Transport",
       "authors": [
-        "Ziqi Pang",
-        "Yu-Xiong Wang"
+        "Chuancheng Shi",
+        "Shangze Li",
+        "Wenhua Wu",
+        "Hengzhi Chen",
+        "Fei Shen",
+        "Li Zhuo",
+        "Zhiyong Wang",
+        "Tat-Seng Chua"
       ],
-      "abstract": "Reinforcement learning with verifiable rewards (RLVR) can enable generalizable improvement for large language model (LLM) reasoning. This paper studies how to incentivize such generalization via reasoning strategies. We study this question with a controllable equation-solving framework: finding multiple inputs x for equations f(x)=y, where f is a non-bijective string function. This setting makes reasoning strategies observable while supporting a clear definition of easy-to-hard out-of-distribution (OOD) shifts, e.g., more solutions, longer y, etc. We uncover a subtle RLVR failure: it teaches the model to solve in-distribution tasks with high accuracy and structured step-by-step derivation, yet under OOD shifts, the same model abandons derivation and collapses to ineffective brute-force enumeration, causing sharp accuracy drops. This observation reveals the deeper challenges of RLVR generalization as it is neither incapable base model nor reward hacking, since the model succeeds in-distribution with the correct reasoning strategy. The key to mitigating this failure is an indirect intervention that surprisingly helps: co-training with bijective inversion tasks. Although these bijective tasks are actually not uniformly harder and even further from the non-bijective OOD evaluation, they make derivation more certain and substantially restore the correct strategy and accuracy under OOD shifts. This effect further motivates our theoretical analysis: outcome-only RLVR can shape reasoning processes through implicitly crediting the effective reasoning strategies more, even without process supervision. To conclude, our analysis framework and findings systematically reveal the crucial role and incentivization of reasoning strategies in RLVR generalization under OOD shifts. Code is available at https://github.com/ziqipang/rl_meta_thinking.",
+      "abstract": "Despite their remarkable capabilities, large foundation models (LFMs) remain susceptible to adversarial manipulation. Current safety intervention methods primarily rely on the \\textit{locality hypothesis}, rigidly suppressing isolated neurons or features. However, harmful semantics manifest as distributed, cross-layer circuits, rendering localized ablations both brittle against complex jailbreaks and detrimental to general utility. To bridge this gap, we propose TraceRouter++, a routing-level safety intervention framework that explicitly traces safety-relevant causal routing pathways activated under harmful inputs and realigns their unsafe activation states. Our framework operates in a \\textit{Discover-Trace-Realign} paradigm: it first pinpoints a sensitive onset layer via attention divergence and disentangles dense activations into interpretable routing features using sparse autoencoders (SAEs). Subsequently, it maps these features to downstream causal circuits via feature influence scores (FIS). Crucially, departing from rigid suppression paradigms, TraceRouter++ introduces a constrained optimal transport (OT)-based soft routing realignment. By formulating safety intervention as a tractable coordinate-wise marginal optimal transport approximation, our method redirects unsafe activation marginals toward safe-reference marginals within causally identified routing subspaces while preserving non-selected coordinates at the intervention point. This mechanism safely redirects malicious semantic flows while leaving orthogonal computational routes intact. Extensive experiments across representative large language models (LLMs), multimodal large language models (MLLMs), and diffusion models (DMs) show that TraceRouter++ outperforms evaluated baselines, improving adversarial robustness while maintaining a favorable safety-utility trade-off. WARNING: This paper contains unsafe model responses.",
       "categories": [
-        "cs.LG"
+        "cs.CL"
       ],
-      "published": "2026-11-02T18:53:54Z",
-      "paper_url": "http://arxiv.org/abs/2611.03627v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.03627v1.pdf",
-      "score": 96,
-      "score_reasons": [
-        "分类：RL",
-        "摘要命中：reinforcement learning",
-        "摘要命中：ppo",
-        "标题命中：rlvr",
-        "摘要命中：verifiable reward"
-      ],
-      "category": "rl",
-      "category_label": "RL",
-      "track": "frontier"
-    },
-    {
-      "arxiv_id": "2611.03377",
-      "title": "Same Outputs, Different Scores: Auditing the Unchecked Graders of Multimodal LLM Benchmarks",
-      "authors": [
-        "Ahmad Jarjis Hasan",
-        "Jonathan Lwowski"
-      ],
-      "abstract": "Every multimodal-LLM multiple-choice benchmark ends with a scoring rule that converts a model's response, often free-form text rather than a clean option letter, into a right/wrong verdict, buried in its code. Unlike the dataset, this rule is chosen without justification and left unexamined, yet it sets the published number. We reproduce the official scorers of eight peer-reviewed benchmarks on five open vision-language models (VLMs) that fit a single 16 GB GPU, and introduce a blinded human-plus-LLM-judge adjudication (Cohen's kappa=0.956) that recovers what the model actually answered. The scoring rule alone moves accuracy by up to 22 points on identical outputs, yet exactly 0 wherever a model emits clean option letters, so it hides on strong-model leaderboards. It is the fallback and not the rambling that does the damage: the benchmark with the highest non-compliance we measure has an artifact of exactly zero, because its scorer abstains instead of guessing; a reasoning model with non-compliance 0.000 still swings 9.5 points with which regex match of its trace the parser keeps. No standard rule is reliable: snapping a non-answer to its closest option credits answers never given yet buries correct ones, abstention discards answers stated in words, and likelihood scoring follows answer-token priors, so a single grade conflates capability with luck rather than measuring either. We release all code, labels, and the protocol, and argue benchmarks should report a non-compliance rate and at least two rules, not one unexamined grade.",
-      "categories": [
-        "cs.AI",
-        "cs.CL",
-        "cs.CV"
-      ],
-      "published": "2026-11-02T16:20:07Z",
-      "paper_url": "http://arxiv.org/abs/2611.03377v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.03377v1.pdf",
-      "score": 93,
+      "published": "2026-11-03T13:30:34Z",
+      "paper_url": "http://arxiv.org/abs/2611.04878v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.04878v1.pdf",
+      "score": 89,
       "score_reasons": [
         "分类：LLM",
+        "摘要命中：large language model",
         "摘要命中：language model",
-        "摘要命中：reasoning",
-        "标题命中：benchmark",
-        "标题命中：multimodal",
+        "标题命中：alignment",
+        "摘要命中：multimodal",
         "cs.CL"
       ],
       "category": "llm",
       "category_label": "LLM",
-      "track": "frontier"
-    },
-    {
-      "arxiv_id": "2611.01552",
-      "title": "Can Large Language Models Extend Their Agentic Capabilities to Goal Pursuit in Open-Ended Multi-Turn Interaction?",
-      "authors": [
-        "Mingyu Chen",
-        "Jingkai Lin",
-        "Xiaofen Xing",
-        "Liankai Huang",
-        "Ruiqi Xiong",
-        "Xiangmin Xu"
-      ],
-      "abstract": "Goal pursuit in open-ended dialogue requires agents to adapt their actions to interaction feedback across successive exchanges. We investigate whether agentic capabilities developed for multi-step tool use carry over to dialogue organized through the model's native tool interface, and how this changes interaction behavior. We define Tool-Mediated Interaction (TMI) as a training-free protocol that represents dialogue actions as tool calls and counterpart responses as tool results, maintaining a continuous reasoning-action-observation loop with retained reasoning and interaction history. We evaluate TMI across social interaction, emotional support, persuasion, and price negotiation using two models and 15,678 main-experiment episodes. Across both models, TMI improves social goal attainment, emotional-support preference, donation amounts, and buyer negotiation margins over conversational baselines with and without thinking. A Qwen ablation further shows that TMI outperforms ordinary conversation with retained reasoning on all four primary outcomes. Behavioral analyses associate the improvements with task-specific patterns in initial proposals and responses to interaction feedback. Alongside these gains, TMI reduces mean reasoning tokens per decision by 42.0-81.5% relative to the thinking baseline and lowers mean cross-turn phrase reuse across all eight model-environment pairs. These findings show that interaction organization shapes both goal attainment and reasoning across dialogue turns.",
-      "categories": [
-        "cs.CL"
-      ],
-      "published": "2026-11-01T04:23:27Z",
-      "paper_url": "http://arxiv.org/abs/2611.01552v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.01552v1.pdf",
-      "score": 92,
-      "score_reasons": [
-        "分类：LLM",
-        "标题命中：large language model",
-        "标题命中：language model",
-        "摘要命中：reasoning",
-        "cs.CL"
-      ],
-      "category": "llm",
-      "category_label": "LLM",
-      "track": "frontier"
-    },
-    {
-      "arxiv_id": "2611.02269",
-      "title": "Qubrio: High-Performance Quantum Compilation via Multi-Agent LLM Collaboration",
-      "authors": [
-        "Jixuan Ruan",
-        "Zhuo Cui",
-        "Zhengding Hu",
-        "Zhongkai Yu",
-        "Xiang Fang",
-        "Yue Guan",
-        "Jason Ludmir",
-        "Phillip E. Weinberg",
-        "Xiuzhe Luo",
-        "Shengtao Wang",
-        "Sonia Lopez Alarcon",
-        "Hezi Zhang",
-        "Yufei Ding"
-      ],
-      "abstract": "Large Language Models (LLMs) offer an adaptable alternative to traditional quantum compilation heuristics, which bottleneck progress by demanding costly manual redesigns whenever hardware evolves. However, naive single-pass LLM approaches fail under the unique challenges introduced by quantum compilation. We introduce Qubrio, a practical agentic framework that significantly reduces heuristic redesigns through a three-level decomposition. By (1) partitioning programs into sequential operation stages, (2) deploying specialized agents for placement, routing and optimization, and (3) using disaggregated feedback for precise error correction, our system reliably navigates complex physical constraints. Beyond serving as a direct compiler, our LLM framework also uncovers novel strategies that facilitate convoy-style shuttling, substantially enhancing hardware concurrency without sacrificing fidelity. We further integrate these strategies into the previous state-of-the-art (SOTA) compiler, recovering a significant fraction of the LLM's performance advantages. On realistic workloads, our compiler achieves significant improvements in hardware runtime and program fidelity over the SOTA baseline PowerMove, seamlessly adapting to new hardware capabilities. Qubrio features an open user interface for practical use, and its code is publicly available at https://github.com/crosaa/Qubrio.",
-      "categories": [
-        "quant-ph",
-        "cs.AI"
-      ],
-      "published": "2026-11-01T22:49:33Z",
-      "paper_url": "http://arxiv.org/abs/2611.02269v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.02269v1.pdf",
-      "score": 91,
-      "score_reasons": [
-        "分类：Agent",
-        "标题命中：multi-agent",
-        "摘要命中：agentic",
-        "标题命中：agent"
-      ],
-      "category": "agent",
-      "category_label": "Agent",
-      "track": "frontier"
-    },
-    {
-      "arxiv_id": "2611.03066",
-      "title": "Towards a Trustworthy and Governable Internet of Agentics: An Architectural Perspective on Protocols, Systems, and Services",
-      "authors": [
-        "Haoyi Xiong",
-        "Yi Liu",
-        "Jiang Bian",
-        "Peng Diao",
-        "Bin Zhu",
-        "Tingting Hu",
-        "Yi Wang",
-        "Sumi Helal"
-      ],
-      "abstract": "Large language model applications are increasingly being organized as tool-using and multi-agent workflows rather than as isolated chat interfaces. This perspective paper examines the architectural problem that follows from that shift: agents may reason, invoke tools, and delegate work, but dependable deployment still requires interoperability across frameworks, runtimes, data boundaries, and organizational control domains. We study this problem through the lens of the \\emph{Internet of Agentics} (IoA), an emerging service-computing view in which heterogeneous agents are treated as governable service participants rather than only as stand-alone model endpoints. The paper organizes the landscape as a three-layer progression: from today's fragmented agent ecosystem, to interoperable agents, and ultimately to trustworthy and governable autonomy. First, it examines the protocol stack centered on the Agentic AI Foundation, including MCP for agent--tool interaction; A2A for agent--agent coordination; AGENTS.md and Skills-style procedural manifests; and discovery, transport, and trust mechanisms such as AGNTCY and SLIM. Second, it reviews the systems abstractions that make agents deployable as service components, including logical agent architectures, orchestration patterns, gateways, registries, runtime control loops, and hardware-aware inference infrastructure. Third, it situates these developments within services computing, arguing that agentic systems reinterpret classical concerns from SOA and microservices---discovery, composition, governance, pricing, and trust---at the level of cognitive capabilities rather than deterministic functions.",
-      "categories": [
-        "cs.AI",
-        "cs.DC"
-      ],
-      "published": "2026-11-02T12:54:14Z",
-      "paper_url": "http://arxiv.org/abs/2611.03066v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.03066v1.pdf",
-      "score": 90,
-      "score_reasons": [
-        "分类：Agent",
-        "摘要命中：multi-agent",
-        "标题命中：agentic",
-        "标题命中：agent"
-      ],
-      "category": "agent",
-      "category_label": "Agent",
       "track": "frontier"
     },
     {
@@ -1054,74 +891,169 @@
       "track": "frontier"
     },
     {
-      "arxiv_id": "2611.02079",
-      "title": "ParetoSaddler: Pareto-Guided Optimization of Agent Harnesses for Quality and Cost",
+      "arxiv_id": "2611.05181",
+      "title": "What Does the Model See? Representation Validity in Multimodal LLM-Based Video Analysis",
       "authors": [
-        "Xingzhi Qian",
-        "Sungho Park",
-        "Rongyuan Tan",
-        "Jianbo Yu",
-        "Jue Zhang",
-        "Lorenzo Cavallaro",
-        "Menglin Xia",
-        "Yanzhi Chen",
-        "Xinnuo Xu",
-        "Yu Kang",
-        "Xinran Zheng",
-        "Gagan Somashekar",
-        "Xuchao Zhang",
-        "Chetan Bansal",
-        "Qingwei Lin",
-        "Victor Rühle"
+        "Christian Pipal",
+        "Eva-Maria Vogel",
+        "Morgan Wack"
       ],
-      "abstract": "Harness optimization can substantially improve LLM agents without modifying model weights, but existing methods primarily optimize response quality. Extending them to joint quality--cost optimization introduces a challenge: applying the deployment preference during intermediate updates can prematurely reject candidates that are valuable for later improvements. We introduce ParetoSaddler, which addresses this mismatch by separating intermediate candidate promotion from final deployment selection. At each iteration, an optimizer updates a parent harness to produce a candidate, and then compares the two over repeated executions and uses Bayesian bootstrap Pareto support to promote candidates showing credible progress in either quality or cost. Promoted candidates receive broader development evaluation and remain available as parents for later optimization steps. We evaluate ParetoSaddler on ClawMark and GAIA2 using domain-disjoint splits. On ClawMark, ParetoSaddler improves quality from 70.86\\% to 81.35\\% while reducing cost from \\$1.17 to \\$1.01 per task; on GAIA2, it improves quality from 56.22\\% to 62.89\\% while reducing cost from \\$0.78 to \\$0.45 per task. The Pareto-selected harnesses also achieve higher quality at lower cost than quality-only harness optimization. Analysis shows that Pareto-aware optimization retains intermediate candidates that would be discarded by deployment preference but can support later improvements, while Bayesian bootstrap screening filters out candidates whose gains are weakly supported across runs.",
+      "abstract": "Multimodal large language models (MLLMs) allow social scientists to analyze video at scale, but researchers must decide which parts of a video to provide as input. We use the term representation validity to examine how text, audio, video, and combined inputs affect measurement and subsequent analysis. We compare input representations across six open-weight MLLMs and three human-annotated video datasets. No representation consistently performs best. On seven news-related constructs, native-video performance varies little across models (macro-F1 = .70-.77), while extracted-text performance ranges from .52 to .80. Three models perform better with text and three with video. Combining inputs rarely improves performance. Higher classification accuracy also does not reliably produce estimates closer to those based on human codes. The highest-F1 representation best reproduces human-coded regression coefficients in 17 of 42 comparisons. Even when each model uses its highest-F1 deployable representation, 45% of sample-prevalence estimates differ from the human-coded benchmark by more than ten percentage points. Input representation therefore requires validation for both the construct being measured and the quantity estimated from the resulting labels.",
       "categories": [
-        "cs.AI",
-        "cs.CL",
-        "cs.LG",
-        "cs.MA"
+        "cs.CV",
+        "cs.CL"
       ],
-      "published": "2026-11-01T17:36:05Z",
-      "paper_url": "http://arxiv.org/abs/2611.02079v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.02079v1.pdf",
-      "score": 93,
+      "published": "2026-11-03T16:42:49Z",
+      "paper_url": "http://arxiv.org/abs/2611.05181v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.05181v1.pdf",
+      "score": 85,
+      "score_reasons": [
+        "分类：LLM",
+        "摘要命中：large language model",
+        "摘要命中：language model",
+        "摘要命中：benchmark",
+        "标题命中：multimodal",
+        "cs.CL"
+      ],
+      "category": "llm",
+      "category_label": "LLM",
+      "track": "frontier"
+    },
+    {
+      "arxiv_id": "2611.04960",
+      "title": "An Agentic Framework for Quality-Aware and Scenario-Adaptive Image Compression",
+      "authors": [
+        "Zhenghao Chen",
+        "Lebin Zhou",
+        "Zicong Chen",
+        "Naifu Xue",
+        "Jiahao Li",
+        "Bin Li",
+        "Dong Xu",
+        "Yan Lu"
+      ],
+      "abstract": "Despite decades of progress, image codecs remain difficult to adapt to diverse real-world compression scenarios for two main reasons. First, most image codecs are optimized for a specific objective and require substantial redevelopment when the compression goal changes. Second, they typically assume clean inputs, whereas sensor-captured images often contain degradations that alter rate-quality behavior. To address these challenges, we propose Practical Image Coding Agents (PICA), a multi-agent framework that adapts existing codecs to diverse user requirements and potentially degraded inputs. PICA consists of four collaborative agents: a Perception agent that interprets user intent and analyzes image content, an Improvement agent that jointly considers bitrate and reconstruction quality to guide pre-coding restoration, a Coding agent that refines quality-control settings from global to regional levels, and an After-coding improvement agent that addresses residual degradations and compression-induced artifacts through restoration guided solely by image quality. To enable codec-agnostic regional adaptation, we introduce Agentic ROI Coding (AROIC), which treats the codec as a black box and allows the agent to automatically schedule, execute, evaluate, and reflect ROI coding plans without architectural modifications or codec-specific retraining. We integrate these four agents with a Scenario-Guided Quality-Rate (SGQR) evaluation strategy to enable more effective scenario-adaptive compression across heterogeneous codecs. Comprehensive experiments on clean, noisy, and blurred images across standard, perceptual, and machine-vision compression scenarios demonstrate that PICA consistently enhances the compression performance of both the conventional H.266/VVC codec and the neural Cheng2020 codec, outperforming competing compression methods on the Kodak, CLIC2020, and HEVC datasets.",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-11-03T14:19:39Z",
+      "paper_url": "http://arxiv.org/abs/2611.04960v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.04960v1.pdf",
+      "score": 85,
+      "score_reasons": [
+        "分类：Agent",
+        "摘要命中：multi-agent",
+        "标题命中：agentic",
+        "标题命中：agent"
+      ],
+      "category": "agent",
+      "category_label": "Agent",
+      "track": "frontier"
+    },
+    {
+      "arxiv_id": "2611.03839",
+      "title": "PianoBench: Evaluating Musical Perception and Reasoning in Language Models",
+      "authors": [
+        "Louis Bradshaw",
+        "Irmak Bukey",
+        "Daniel Chenyu Lin",
+        "John Thickstun",
+        "Chris Donahue"
+      ],
+      "abstract": "Multimodal language models continue to improve on broad music understanding benchmarks, but which musical features can they perceive and reason about? We investigate this question by introducing PianoBench, a benchmark that tasks language models with reasoning about musical performances across congruent acoustic and symbolic input representations. PianoBench is derived from our new multimodal, training-scale dataset comprising more than 20,000 hours of interleaved transcripts of music and spoken musical commentary from instructional piano videos. Open-weight audio-language models achieve at most 52.8% accuracy on PianoBench, and at best only modestly outperform their accuracy on a no-audio control. In contrast, frontier models using chain of thought achieve up to 93.2% accuracy when provided transcripts of music as text, exposing a gap between perceiving musical features from audio and reasoning about musical events when they are given explicitly. We then test whether mid-training on interleaved musical instruction can improve question answering without chain of thought, raising Qwen 3.5 9B Base's zero-shot accuracy on PianoBench with music transcripts from 42.8% to 56.0% after instruction tuning. These experiments suggest that instructional videos may represent an overlooked source of multimodal supervision for music. Available: https://gclef-cmu.org/pianobench.",
+      "categories": [
+        "cs.SD",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-11-02T19:11:56Z",
+      "paper_url": "http://arxiv.org/abs/2611.03839v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.03839v1.pdf",
+      "score": 85,
+      "score_reasons": [
+        "分类：LLM",
+        "标题命中：language model",
+        "标题命中：reasoning",
+        "摘要命中：benchmark",
+        "摘要命中：multimodal"
+      ],
+      "category": "llm",
+      "category_label": "LLM",
+      "track": "frontier"
+    },
+    {
+      "arxiv_id": "2611.04579",
+      "title": "FreeForm Harness: A Mobile-Native Agent Harness for Open and Composable Extensions",
+      "authors": [
+        "Bo Zhang",
+        "Pengbo Zhang",
+        "Jiaxin Jiao",
+        "Yue Liu"
+      ],
+      "abstract": "Mobile phones support many everyday agent tasks, but current mobile agents bundle capabilities into monolithic pipelines with no open recombination point. Users and third parties cannot publish, install, and compose new behaviors, leaving personalized daily-life requests underserved. We argue that the missing piece is a substrate: although phones are the Web's dominant access point, open publication and composition under decentralized authorship stop at the agent harness. We present FreeForm Harness (FFH), a mobile-native agent harness for open, composable extensions. A frozen base and a permanence-aware required layer handle mobile constraints, including location, proactive triggering, and scarce channels. A uniform plugin contract makes independently authored extensions composable, checkable, and replaceable over a frozen socket set. FFH also supports end-user authorship through a tiered commissioned-authoring path. When no existing extension matches a user's intent, a Web coding agent generates a candidate artifact, which is validated and admitted on device under the same contract as other extensions. An Android prototype spans device, market, and cloud. Evaluation shows that architectural boundaries are enforced at runtime; realistic daily-life requests fit the declared composition space without widening it; and user intent reaches on-device execution through retrieval or commissioned authoring, with final trust decisions remaining device-local. FFH advances the agentic Web from \"everything is a plugin\" toward \"everyone is a developer\" on mobile.",
+      "categories": [
+        "cs.SE"
+      ],
+      "published": "2026-11-03T09:39:21Z",
+      "paper_url": "http://arxiv.org/abs/2611.04579v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.04579v1.pdf",
+      "score": 80,
       "score_reasons": [
         "分类：Harness",
-        "标题命中：agent harness",
-        "cs.CL"
+        "标题命中：agent harness"
       ],
       "category": "harness",
       "category_label": "Harness",
       "track": "harness"
     },
     {
-      "arxiv_id": "2611.02833",
-      "title": "Reimagining computational quantum research with AI scientists",
+      "arxiv_id": "2611.05088",
+      "title": "LatentTriad: Pre-Action Risk Representations for Malicious Agent Skill Detection",
       "authors": [
-        "Yuxuan Du",
-        "Hanqing Zhao",
-        "Xinbiao Wang",
-        "Yiming Lu",
-        "Kaining Zhang",
-        "Dacheng Tao"
+        "Zhe Yu",
+        "Yi Liu",
+        "Ying Zhang",
+        "Simin Chen"
       ],
-      "abstract": "AI scientists are expanding automated research across scientific domains, yet their ability to turn the scientific record into a foundation for autonomous discovery remains elusive. Here we uncover a fundamental barrier to this transition and demonstrate a route to overcome it in computational quantum science, where advances shape both what we can learn from complex quantum systems and what quantum computing can ultimately deliver. To identify this barrier, we introduce OmniQ, an expert-audited virtual research environment that converts published studies into executable reproduction tasks. Across 59 papers spanning classical simulation, quantum algorithms and quantum-property characterization, we systematically evaluate five agentic systems powered by large language models and six third-party agent harnesses. Our findings reveal that current AI scientists often fail to reproduce published results, exposing a fundamental mismatch between what scientific papers communicate and what autonomous agents require. By contrast, human expert intervention can turn these failures into successful reproductions, showing that the missing information can be identified and converted into reusable research experience. Guided by this observation, we develop Residual Agents (RA), a quantum-tailored self-improving AI scientist that distils externally verified workflow repairs into such experience. RA substantially improves research performance under fixed base models and limited adaptation budgets. For example, RA raises DeepSeek V4.1 Flash performance from 68% to 85%, matching Claude Code with Opus 5 at a third of its cost despite using a weaker base model. We integrate all reproduced results into an extensible platform built on the model context protocol, making verified research workflows directly accessible to AI scientists and allowing new scientific papers to be continuously incorporated.",
+      "abstract": "Large language model agents are increasingly extended with reusable skills, but untrusted skill content can induce operations outside the user's task. Detecting this contextual risk requires more than suspicious-pattern matching, while dynamic analysis incurs the cost of skill execution. We find that hidden states formed during prefill contain readable information about task-operation consistency, including across held-out expression forms in controlled evaluations. Matched Operation-state interventions also affect later Boundary states and shift fixed risk readouts toward the donor label. Based on these findings, we introduce LatentTriad, which combines contextual Boundary features, group-adjusted Operation directions, and departures from benign state relationships. All branches share one prefill: detection generates no output tokens, invokes no tools, and executes no skill code. Across 5,830 skill packages from five sources and seven backbones, LatentTriad achieves 99.0-99.2% pooled F1 and 93.0-94.6% source-macro F1. A separately measured compact implementation completes prefill and detection in a median of 259-284 ms. These results connect pre-action risk readability and functional influence to execution-free skill screening.",
       "categories": [
-        "quant-ph",
-        "cs.AI",
-        "cs.LG"
+        "cs.AI"
       ],
-      "published": "2026-11-02T09:32:13Z",
-      "paper_url": "http://arxiv.org/abs/2611.02833v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.02833v1.pdf",
-      "score": 71,
+      "published": "2026-11-03T15:46:12Z",
+      "paper_url": "http://arxiv.org/abs/2611.05088v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.05088v1.pdf",
+      "score": 65,
       "score_reasons": [
-        "分类：Harness",
-        "摘要命中：agent harness",
-        "摘要命中：agentic system"
+        "分类：Skill",
+        "标题命中：agent skill"
       ],
-      "category": "harness",
-      "category_label": "Harness",
+      "category": "skill",
+      "category_label": "Skill",
+      "track": "harness"
+    },
+    {
+      "arxiv_id": "2611.03772",
+      "title": "RuntimeTickets: Source-Grounded Security Obligations for Agent Skills",
+      "authors": [
+        "Kuiyi Gao",
+        "Xue Liu",
+        "Bowei He"
+      ],
+      "abstract": "Third-party Agent Skills extend what an autonomous agent can do, but a malicious Skill can hide data exposure or output manipulation inside a legitimate workflow. Neither reading a Skill's description nor granting it tool permissions tells whether its execution meets the user's security requirements. We introduce RuntimeTickets, a protocol that enforces and audits these requirements while a Skill runs. From released malicious-Skill datasets we derive a risk model and build adversarial-benign Skill pairs. From the task's delivery contract, a language model proposes security obligations for that task. Each obligation cites the Skill lines it answers, and the ticket tightens the host's approvals into fine-grained allowed actions but never loosens them. A runtime gate checks the recipient, object and amount of every outbound send before forwarding it, and trusted monitors record the effects within their observation scope. The ticket links these checks and observations to the approved obligations of each Skill run, and a deterministic decoder turns the ticket's status into governable data flows and verifies each obligation. Neither enforcement nor decoding involves a language model, so text injected by a Skill can change the proposal but never the rule that decides a send. We evaluate RuntimeTickets at the network egress boundary of three unmodified agent frameworks against production Skill scanners and runtime baselines, among them an AgentBound-derived allow-list and SkillGuard. RuntimeTickets eliminated both failure modes of current Skill defenses, overlook (malicious Skills let through) and overkill (benign Skills blocked): its overlook rate was 0.0% and its overkill rate 0.0%, while the scanners erred on both sides. RuntimeTickets ties approved requirements to verifiable execution evidence and offers a common foundation for the safe and auditable deployment of third-party Skills.",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "published": "2026-11-02T17:31:13Z",
+      "paper_url": "http://arxiv.org/abs/2611.03772v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.03772v1.pdf",
+      "score": 65,
+      "score_reasons": [
+        "分类：Skill",
+        "标题命中：agent skill"
+      ],
+      "category": "skill",
+      "category_label": "Skill",
       "track": "harness"
     },
     {
@@ -1181,62 +1113,30 @@
       "track": "harness"
     },
     {
-      "arxiv_id": "2611.03238",
-      "title": "ScienceCUA: Resource-to-Skill Construction and Execution-Guided Skill Evolution for Scientific Computer Use Agents",
+      "arxiv_id": "2611.04456",
+      "title": "How Agent Skills Evolve: A Large-Scale Empirical Study of Skills on GitHub",
       "authors": [
-        "Daiqiang Li",
-        "Jingyi Peng",
-        "Rui Hu",
-        "Jia Li",
-        "Xuyang Liu",
-        "Guanren Qiao",
-        "Yujia Xiang",
-        "Qiuzhuang Sun",
-        "Zhiping Xu",
-        "Mingrui Luo"
+        "Jinjun Huang",
+        "Jialun Cao",
+        "Junxiao Han",
+        "Zhonghao Jiang",
+        "Shing-Chi Cheung",
+        "Zhongxin Liu"
       ],
-      "abstract": "Computer-use agents for scientific software require application-specific expertise. Much of this expertise is documented in human-authored software manuals and web pages. However, turning these resources into executable, reusable skills remains challenging due to mismatches between documented and deployed software versions and differences in scope between documentation coverage and task requirements. We introduce ScienceCUA, a two-stage framework combining resource-to-skill construction with execution-guided skill evolution. First, ScienceCUA identifies tasks supported by the software from its documentation, infers operational trajectories, and generalizes them into reusable Skills. Command catalogs, syntax constraints, and shortcuts are organized separately as References for on-demand lookup. Then, ScienceCUA uses execution feedback to drive skill self-evolution by contrasting successful and failed trajectories for the same task, identifying deficiencies, revising existing skills or adding new ones, and updating the skill library only after repeated validation in real environments. To enable reliable evaluation without benchmark noise or task leakage, we introduce two improved benchmarks. ScienceBoard-Verified provides an audited and corrected basis for measuring task performance, while ScienceBoard-VE separates skill evolution from final testing through disjoint evolution and test tasks and further supports native-agent evaluation. Experiments show that the initial Skills and References improve average task success rate by up to 7.23 percentage points over the base model, while skill self-evolution increases the total gain over the baseline to as much as 17.12 percentage points. ScienceCUA turns software documentation into an evolving set of executable skills and queryable references, offering a practical way for general-purpose agents to use scientific software reliably and at scale.",
+      "abstract": "Large language model-based agents increasingly rely on external skills to reuse task-specific knowledge without retraining the model. As skills become common for extending agent capabilities, understanding creation and evolution is critical for reliable agent systems. However, existing studies mainly examine agent skills from a static perspective, leaving their evolution in real-world repositories largely unexplored. This limits our understanding of the patterns and motivations behind skill changes. To fill this gap, we present a large-scale empirical study of agent skills, capturing 84,200 skills and 750,898 commits from GitHub. We manually construct taxonomies of skill components, change patterns, and evolution motivations, and build an automated annotation pipeline to label changes at scale. Based on the taxonomy, we conduct quantitative analyses of skill composition and post-creation evolution frequency, together with qualitative assessments of modified components, change patterns, and motivations. Our findings reveal five implications: (i) reliability receives less attention in skill composition and change, motivating execution-contract skill design that incorporates verification and recovery mechanisms; (ii) evolution changes concentrate in project-coupled skills, calling for automated just-in-time skill updating mechanisms; (iii) change patterns are dominated by incremental enrichment and refinement, motivating pattern-guided skill enhancers that diagnose and improve incomplete skill components; (iv) redundancy is a practical maintenance issue, highlighting the need for context-efficient skill representation; (v) security-motivated changes show limited risk reduction, suggesting skill regression testing methods that objectively verify skill functionality and security. Beyond these insights, our dataset provides a basis for future studies on automated skill techniques.",
       "categories": [
-        "cs.AI"
+        "cs.SE"
       ],
-      "published": "2026-11-02T14:50:06Z",
-      "paper_url": "http://arxiv.org/abs/2611.03238v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.03238v1.pdf",
-      "score": 51,
+      "published": "2026-11-03T07:46:48Z",
+      "paper_url": "http://arxiv.org/abs/2611.04456v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.04456v1.pdf",
+      "score": 60,
       "score_reasons": [
-        "分类：Harness",
-        "标题命中：computer use"
+        "分类：Skill",
+        "标题命中：agent skill"
       ],
-      "category": "harness",
-      "category_label": "Harness",
-      "track": "harness"
-    },
-    {
-      "arxiv_id": "2611.01950",
-      "title": "CertClaim: Towards Certified Model-Claim Verification for Coding-Agent Services",
-      "authors": [
-        "Jiacheng Lu",
-        "Qixuan Yang",
-        "Tao Song",
-        "Daxin Jiang",
-        "Jing Li",
-        "Zuo Bai",
-        "Haibing Guan"
-      ],
-      "abstract": "Coding-agent services are priced by the model they claim, making the verification of such model claims crucial for their users. In this paper, we reveal that existing model auditing methods rely on a latent assumption that the deployment is static, i.e., the claimed model is always served in one reference configuration. This assumption does not hold for coding-agent services, whose providers may legitimately change the sampling preset, the reasoning mode or the system prompt without changing the model. As a result, existing methods either falsely accuse honest providers or miss cheap derivatives of the claimed model. To address this problem, we propose a certified model-claim verification method (dubbed CertClaim). Instead of testing the service against one reference deployment, we make the authorized deployments part of the claim and test whether some authorized deployment explains all the evidence of the service, by calibrating multiple evidence channels in every authorized deployment and fusing them within each deployment. We provide theoretical analyses of its false-accusation rate and detection condition. Extensive experiments on eight claims, two agent harnesses and three task suites verify the effectiveness of CertClaim, which is valid in every setting while separating substitutes far better than existing methods, as well as its resistance to potential adaptive attacks.",
-      "categories": [
-        "cs.CR"
-      ],
-      "published": "2026-11-01T14:31:50Z",
-      "paper_url": "http://arxiv.org/abs/2611.01950v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.01950v1.pdf",
-      "score": 50,
-      "score_reasons": [
-        "分类：Harness",
-        "摘要命中：agent harness"
-      ],
-      "category": "harness",
-      "category_label": "Harness",
+      "category": "skill",
+      "category_label": "Skill",
       "track": "harness"
     },
     {
@@ -1393,196 +1293,160 @@
       "track": "classic-algorithms"
     },
     {
-      "arxiv_id": "2611.03233",
-      "title": "Axion 1.0: Open Agent Foundation Models, Simplified",
+      "arxiv_id": "2611.04035",
+      "title": "Recursa: Toward Recursively Self-Improving Foundation Model Systems",
       "authors": [
-        "Yuqi Jia",
-        "Yunjie Tian",
-        "Jiayu Zheng",
-        "Yijun Liang",
-        "Jingchen Sun",
-        "Mengyu Zhao",
-        "Di Fu"
+        "Erkang Zhu",
+        "Yin Lin",
+        "Xiaorong Shi",
+        "Xuanrui Lin",
+        "Jingren Zhou"
       ],
-      "abstract": "We introduce Axion 1.0, a fully open agent foundation model that combines strong and broad agentic capabilities with a remarkably simple training recipe. Axion 1.0 is trained in only three stages: two lightweight supervised fine-tuning stages followed by reinforcement learning, without dedicated mid-training, direct preference optimization (DPO), or on-policy distillation (OPD). The first SFT stage develops strong self-contained reasoning through model-aware data construction, where we synthesize challenging problems and adversarially strengthen them based on the base model's own successful solution strategies. The second stage extends these capabilities to tool-dependent reasoning through a scalable pipeline for constructing diverse and automatically verifiable tasks grounded in real-world data sources and deterministic computation. Finally, reinforcement learning further strengthens long-horizon reasoning and interaction with external tools and environments. Despite this compact training recipe, Axion 1.0 achieves strong performance across a broad suite of agentic benchmarks and is competitive with leading commercial models on several of them. Equally importantly, Axion 1.0 is open beyond model weights: we release the complete recipe, including data construction, generation, filtering, verification, prompts, and training code, enabling the entire development process to be reproduced and extended. Axion 1.0 demonstrates that strong agent foundation models can be both open and simple, offering a practical and reproducible path toward advancing open agentic intelligence.",
+      "abstract": "Foundation models in changing environments can encounter unfamiliar domain knowledge that their original training did not cover. However, new domains rarely provide large amounts of expert-created training data or reliable supervisory signals for further training. We introduce Recursa, a foundation model system that adapts to new domains by learning from its own experience without human experts or a stronger teacher model. Recursa uses a knowledge repository to store what it learns: domain-specific skills and instructions on when to apply them, along with memories of past task experiences and reflections on what to improve. Recursa bootstraps the repository from domain materials and then refines it through recursive self-improvement. It uses parallel learners to execute tasks and synthesize local improvements, then validates and merges the improvements into the knowledge repository. On Harvey LAB's Firm Knowledge benchmark, Recursa raises the all-pass rate on held-out test tasks from 30.0% to 55.0% with DeepSeek-V4.1-Flash and from 35.0% to 46.0% with Qwen3.8-Flash.",
       "categories": [
         "cs.AI"
       ],
-      "published": "2026-11-02T14:48:57Z",
-      "paper_url": "http://arxiv.org/abs/2611.03233v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.03233v1.pdf",
-      "score": 81,
+      "published": "2026-11-02T22:30:12Z",
+      "paper_url": "http://arxiv.org/abs/2611.04035v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.04035v1.pdf",
+      "score": 97,
       "score_reasons": [
         "分类：基座模型",
         "标题命中：foundation model",
-        "摘要命中：base model"
+        "摘要命中：qwen",
+        "摘要命中：deepseek"
       ],
       "category": "foundation-models",
       "category_label": "基座模型",
       "track": "foundation-models"
     },
     {
-      "arxiv_id": "2611.02769",
-      "title": "Unlocking the Potential of Vision Foundation Models for Multi-Task Dense Prediction via Mixture of Task Adapters",
+      "arxiv_id": "2611.03948",
+      "title": "Balancing Chain-of-Thought and Answer Supervision for Small Language Models on Medical Question Answering",
       "authors": [
-        "Yunzhi Zhuge",
-        "Xinzhuo Yu",
-        "Sitong Gong",
-        "Lu Zhang",
-        "Pingping Zhang",
-        "Huchuan Lu"
+        "Le Zhou",
+        "Xiao Luo",
+        "Chinmay Chandra",
+        "Zhan Zhang"
       ],
-      "abstract": "Multi-task dense prediction seeks a single, coherent representation that supports simultaneously discriminative semantic recognition and regularized geometric/structural inference. For vision foundation models, pretrained semantic invariances conflict with the frequency and smoothness biases of dense objectives; joint fine-tuning and single-route adapters therefore compress competing gradients into one update channel, causing negative transfer and unstable cross-task agreement. We frame this as two-level adaptation: task-generic alignment that preserves priors, and task-aware specialization that resolves late-stage conflicts. Based on this principle, we propose D2MoE , a Mixture of Task Adapters that explicitly factorizes these roles within a frozen DINOv3 backbone. D2MoE introduces Task-Generic Low-Rank Adaptation (TG-LoRA) in attention projections throughout the network to provide a stable, shared adaptation channel, and a Task-Adaptive Mixture of Experts (TA-MoE) injected only at the final attention block of each stage to enact sparse, task-conditioned perturbations of token mixing in a single forward pass. A Semantic Prior Injector further couples multi-level task features with frozen foundation priors to reinforce semantic coherence while preserving boundary and structural fidelity. Experiments across diverse benchmarks substantiate that this structured factorization yields robust multi-task improvements with a small trainable footprint, establishing a principled and scalable route to prior-preserving, foundation-centric multi-task dense perception.",
+      "abstract": "Small language models (<=9B parameters) can support local medical question answering (QA) while reducing privacy and latency concerns, but effective fine-tuning remains challenging. This paper compares two chain-of-thought (CoT) supervised fine-tuning methods: Uniform-across-Sequence (UaS), which applies equal loss weighting to the full CoT-and-answer sequence, and Segment-weighted (SwS), which separately weights CoT and answer losses. We evaluate six general- and medical-domain models on multiple-choice QA (MedQA and EMS-MCQA) and free-text QA (Med-O1). Results show that neither method is universally best: on multiple-choice QA (MedQA and EMS-MCQA), SwS generally performs better, with general-purpose models benefiting most; notably, Qwen3.5-4B improves by up to 44.8% over its zero-shot baseline on MedQA. In contrast, medical-domain models show smaller or even negative gains on MCQs. On free-text QA (Med-O1), UaS performs best for nearly all models and provides consistent improvements across both model types, with the 3B Llama-3.2 model approaching the performance of much larger 7B medical-domain models. We also find that excessively long CoT generation is associated with lower performance in some models on either multiple-choice or free-text QA tasks, suggesting that limiting the CoT length during training may benefit selected models. Overall, the results show that CoT loss weighting should be matched to the task format and the knowledge already encoded in the base model, rather than using a single fine-tuning strategy for all clinical QA tasks.",
       "categories": [
-        "cs.CV"
+        "cs.CL",
+        "cs.AI"
       ],
-      "published": "2026-11-02T08:47:07Z",
-      "paper_url": "http://arxiv.org/abs/2611.02769v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.02769v1.pdf",
+      "published": "2026-11-02T20:48:29Z",
+      "paper_url": "http://arxiv.org/abs/2611.03948v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.03948v1.pdf",
+      "score": 81,
+      "score_reasons": [
+        "分类：基座模型",
+        "摘要命中：base model",
+        "摘要命中：qwen",
+        "摘要命中：llama",
+        "cs.CL"
+      ],
+      "category": "foundation-models",
+      "category_label": "基座模型",
+      "track": "foundation-models"
+    },
+    {
+      "arxiv_id": "2611.03862",
+      "title": "Dr. No: Feature Steering for Abstention in Vision-Language Models",
+      "authors": [
+        "Farid Hasanov",
+        "Riccardo Renzulli",
+        "Bahram Zonooz",
+        "Mykola Pechenizkiy",
+        "Decebal Constantin Mocanu"
+      ],
+      "abstract": "Large foundation models often answer even when the available visual or textual evidence is insufficient to support a reliable conclusion. This failure to abstain makes them hard to trust in high-stakes or information-seeking settings, where a confident but unsupported answer can be worse than no answer at all. It also raises a natural question: can the internal mechanisms behind this behaviour be identified and controlled at inference time? We present Dr. No, a feature-steering approach that mines sparse autoencoder (SAE) features associated with abstention and commitment, then modulates a small set of them during the prefill pass, without retraining the base model. Dr. No is evaluated on LLaVA-1.6 Mistral 7B across multimodal abstention benchmarks, including UNK-VQA and MM-UPD, and additionally benchmarked on language reasoning tasks using Qwen3.5-2B on AbstentionBench subsets. Against multiple uncertainty-based abstention baselines, feature steering achieves a more favourable balance between correct answering and appropriate abstention than post-hoc rejection methods. The gains are strongest on UNK-VQA and on MM-UPD cases involving image--question or question--answer incompatibility, and transfer most clearly to mathematical reasoning subsets of AbstentionBench. However, performance is more limited on absent-answer detection and retrieval-heavy multi-hop QA, such as MuSiQue. These results suggest that sparse internal features provide lightweight control handles for shaping uncertainty-aware behaviour in foundation models, while also showing that abstention control is source-dependent rather than governed by a single universal signal.",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-11-02T19:34:06Z",
+      "paper_url": "http://arxiv.org/abs/2611.03862v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.03862v1.pdf",
+      "score": 77,
+      "score_reasons": [
+        "分类：基座模型",
+        "摘要命中：foundation model",
+        "摘要命中：base model",
+        "摘要命中：qwen"
+      ],
+      "category": "foundation-models",
+      "category_label": "基座模型",
+      "track": "foundation-models"
+    },
+    {
+      "arxiv_id": "2611.03947",
+      "title": "RFShape: An IQ-Pretrained Wireless Foundation Model for Heterogeneous IQ & CIR Representations",
+      "authors": [
+        "Mohammad Cheraghinia",
+        "Sebbe Van Der Smissen",
+        "Jaron Fontaine",
+        "Delia Rico",
+        "Eli De Poorter",
+        "Adnan Shahid"
+      ],
+      "abstract": "In wireless systems, foundation models have been proposed as alternative artificial intelligence models to replace task-specific models with a shared pretrained model that can be reused across many downstream applications (source separation, interference detection, localization, etc.). These wireless foundation models promise to reuse learned representations across diverse tasks, but choosing a foundation model also means choosing its input representation. For example, a model pretrained on spectrograms expects spectrograms, while one pretrained on in-phase/quadrature (IQ) samples expects IQ, limiting which pretrained model can be used for a given downstream problem. To remedy this, we present RFShape, a 7.4 M-parameter foundation model that breaks this coupling by adapting how a signal is presented to a shared pretrained encoder. RFShape is pretrained solely on synthetic IQ waveforms, without real captures, labels, or channel impulse responses (CIRs), and uses deterministic representation operators to support heterogeneous downstream inputs. Across ten tasks and nine datasets unseen during pretraining, the same encoder supports classification, ranging-error regression, and two-dimensional positioning. Representation selection alone increases 23-class radar recognition from 23.0% to 69.5% and short-range technology recognition from 70.8% to 97.1%. RFShape also outperforms CIR-pretrained ultra-wideband baselines by up to 12.7 percentage points for (N)LOS classification despite never observing CIRs during pretraining. These results show that foundation-model reuse need not be limited by the representation or modality seen during pretraining, and adapting how a signal is presented can extend a single pretrained encoder across heterogeneous wireless tasks.",
+      "categories": [
+        "eess.SP"
+      ],
+      "published": "2026-11-02T20:46:49Z",
+      "paper_url": "http://arxiv.org/abs/2611.03947v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.03947v1.pdf",
       "score": 72,
       "score_reasons": [
         "分类：基座模型",
         "标题命中：foundation model",
-        "摘要命中：mixture of experts"
+        "摘要命中：pretrained model"
       ],
       "category": "foundation-models",
       "category_label": "基座模型",
       "track": "foundation-models"
     },
     {
-      "arxiv_id": "2611.03592",
-      "title": "Evaluating Uncertainty Calibration in Probabilistic Time Series Foundation Models",
+      "arxiv_id": "2611.05141",
+      "title": "Beyond Foundation Models: PFN Priors Improve Tabular Hyperparameter Optimization",
       "authors": [
-        "Thomas Decker",
-        "Volker Tresp"
+        "Artem Chistyakov",
+        "Renat Sergazinov",
+        "Artem Babenko"
       ],
-      "abstract": "Time series foundation models (TSFMs) are increasingly used for probabilistic forecasting across diverse domains, yet the reliability of their uncertainty estimates remains poorly understood. In this work, we study uncertainty calibration in probabilistic TSFMs from a broader methodological and empirical perspective. We introduce a taxonomy of how TSFMs represent predictive uncertainty and develop a fine-grained evaluation framework for calibration in multi-horizon forecasting that distinguishes pooled, horizon-wise, and stronger conditional notions of calibration. Using this framework, we conduct a comprehensive empirical evaluation of popular TSFMs across diverse datasets and show that current models exhibit distinct and systematic patterns of miscalibration that standard metrics often obscure. We further analyze common post-hoc recalibration methods and characterize which forms of calibration they can improve and which tend to persist. Our results provide practical guidance for evaluating and improving uncertainty calibration in TSFMs and highlight important limitations of current practice.",
+      "abstract": "Synthetic priors have so far served one purpose: pretraining tabular foundation models. We ask whether the same priors can improve conventional tabular models, which are trained from scratch on each dataset. We propose PriorTune, a method that meta-tunes hyperparameter configurations on synthetic tasks alone. Offline, for a given model, we fit a pool of configurations on datasets sampled from a published PFN prior and greedily select the subset with the highest winrate over the random baseline. Online, a new dataset fits only the selected configurations, so the gain comes at no extra cost. Empirically, we observe that scaling both the number of configurations and synthetic datasets has an equal scaling effect on the performance of the final subset of configurations, which we also explain theoretically. On the full BeyondArena benchmark, LightGBM with TabPrep features with our configurations ranks above TabPFN-3 and RealMLP, while being much more efficient at inference. Overall, our results establish existing PFN priors as a scalable source of meta-training data for hyperparameter selection for non-foundational tabular models.",
       "categories": [
-        "cs.LG",
-        "cs.AI"
-      ],
-      "published": "2026-11-02T18:34:50Z",
-      "paper_url": "http://arxiv.org/abs/2611.03592v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.03592v1.pdf",
-      "score": 65,
-      "score_reasons": [
-        "分类：基座模型",
-        "标题命中：foundation model"
-      ],
-      "category": "foundation-models",
-      "category_label": "基座模型",
-      "track": "foundation-models"
-    },
-    {
-      "arxiv_id": "2611.03246",
-      "title": "A Common Language for Dynamic Graphs: Interaction Tokenization Enables Foundation Models",
-      "authors": [
-        "Fuyuan Ma",
-        "Yili Wang",
-        "Xin He",
-        "Xin Zhang",
-        "Ying Wang",
-        "Xin Wang"
-      ],
-      "abstract": "Dynamic graphs capture evolving interactions in Web systems, including online communication, user engagement, and recommendation. Graph foundation models aim to reuse predictive capabilities across networks, but extending this capability to dynamic graphs faces two challenges. First, node identities are graph-specific, and similar interaction patterns can appear at different temporal and activity scales, making histories difficult to represent consistently across networks. Second, the predictive roles of historical patterns vary across interaction dynamics, limiting transfer from a narrow range of training processes. In this paper, we show that a common interaction language, combined with learning across diverse interaction processes, offers a basis for dynamic graph foundation modeling. We propose CL-DGFM, a Common Language Dynamic Graph Foundation Model for temporal link prediction. Its Dynamic Interaction Tokenizer encodes interaction memory, historical connectivity, and ordered destination transitions into calibrated tabular inputs, making dynamic histories accessible to existing predictors without an additional trainable graph encoder. Its Dynamic Interaction Prior trains a pretrained tabular foundation predictor across diverse synthetic dynamics. Labeled historical context guides prediction, with a Contextual Value Adapter modulating attention values. The model transfers to real graphs without target-graph parameter updates. Experiments on TGB and TGB-Seq demonstrate competitive performance. Further comparisons show that the common language supports basic machine learning and neural models, and enables direct use of frozen tabular foundation models on dynamic graphs.",
-      "categories": [
-        "cs.LG",
-        "cs.SI"
-      ],
-      "published": "2026-11-02T14:57:24Z",
-      "paper_url": "http://arxiv.org/abs/2611.03246v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.03246v1.pdf",
-      "score": 65,
-      "score_reasons": [
-        "分类：基座模型",
-        "标题命中：foundation model"
-      ],
-      "category": "foundation-models",
-      "category_label": "基座模型",
-      "track": "foundation-models"
-    },
-    {
-      "arxiv_id": "2611.03178",
-      "title": "CoworkOS:Scaling Agent Coworkers for Real-world Automation",
-      "authors": [
-        "Jiajie Jin",
-        "Guanting Dong",
-        "Chengjun Pan",
-        "Xin Deng",
-        "Zhuohui Sheng",
-        "Guoqiang Wang",
-        "Tao Gui",
-        "Yutao Zhu",
-        "Yujia Chen",
-        "Shihong Yi",
-        "Binze Hu",
-        "Zhixiong Yang",
-        "Zhichao Sun",
-        "Rui Wang",
-        "Han Han",
-        "Mingyu Ma",
-        "Junhao Huang",
-        "Xiaotao Wang",
-        "Huicheng Jiang",
-        "Yuyang Hu",
-        "Xinyu Yang",
-        "Wanghan Xu",
-        "Yajie Yang",
-        "Zhecan Wang",
-        "Honglin Guo",
-        "Xiaoyu Xing",
-        "Xiaoqian Zhang",
-        "Yulun Zhu",
-        "Xiaoxi Li",
-        "Jiahang Lin",
-        "Shaofan Liu",
-        "Shihan Dou",
-        "Zhiheng Xi",
-        "Qi Zhang",
-        "Yu-Gang Jiang",
-        "See-Kiong Ng",
-        "Yang Zhang",
-        "Tat-Seng Chua",
-        "Ji-Rong Wen",
-        "Zhicheng Dou"
-      ],
-      "abstract": "Rapid advances in cowork agents are shifting human-AI collaboration toward real-world automation, delivering software, designs, and other artifacts. However, such productivity work demands both high-quality delivery on complex productivity tasks and continued monitoring and decision-making over long horizons, a combination that remains an open challenge. We introduce CoworkOS, a general-purpose harness for long-horizon work that separates task strategy from execution management: the model decides actions, delegation, and acceptance, while the runtime maintains state and feedback. Its three-layer architecture enables direct execution or delegation to Subagents, synchronously or asynchronously, under stable responsibilities. Through a shared application layer, humans and agents inspect and revise the same evolving documents, presentations, CAD models, and Blender scenes, so human-in-the-loop participation can enter both through conversation and through direct modification of the work itself. To sustain continuity across agents and sessions, CoworkOS further introduces hierarchical workspaces and persistent semantic memory, so working files, key decisions, and long-running Job logs remain shareable, reusable, and resumable after interruption. Across 12 benchmarks and 6 categories of real-world applications, CoworkOS proves highly competitive with frontier agent applications such as Codex and DeepSeek Harness. As a sustained-work case study, CoworkOS uses GLM-5.3 as its backbone to conduct RSI-driven automated post-training on Qwen3.6-35B-A3B. Over five rounds, the model's average score across eight benchmarks rose from 33.19 to 42.95 (+9.76). Looking ahead, we believe CoworkOS opens a meaningful path toward general cowork-agent intelligence.",
-      "categories": [
-        "cs.AI",
-        "cs.CL"
-      ],
-      "published": "2026-11-02T14:15:11Z",
-      "paper_url": "http://arxiv.org/abs/2611.03178v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.03178v1.pdf",
-      "score": 65,
-      "score_reasons": [
-        "分类：基座模型",
-        "摘要命中：qwen",
-        "摘要命中：deepseek",
-        "cs.CL"
-      ],
-      "category": "foundation-models",
-      "category_label": "基座模型",
-      "track": "foundation-models"
-    },
-    {
-      "arxiv_id": "2611.02936",
-      "title": "Why Tabular Foundation Models Excel on Relational Data They Have Never Seen",
-      "authors": [
-        "Linjie Xu",
-        "Yiqun Hu",
-        "Jixiang He",
-        "David Wipf"
-      ],
-      "abstract": "Given a relational database (RDB) storing heterogeneous tabular information, how can we predict missing (or future) values in some target column of interest? As candidate targets are numerous in enterprise settings, it is preferable to avoid learning a new model from scratch each time there is a new prediction task. Frozen foundation models (FMs) based on in-context learning (ICL) and RDB-specific pre-training provide a viable solution, but the ideal design still remains largely unresolved. Perhaps unexpectedly, preliminary evidence has recently shown that existing single-table FMs (aka TFMs), when combined with suitable parameter-free relational encoders, can be quite competitive in practice despite zero exposure to RDB pre-training or relational data of any kind. In this work we first empirically confirm this phenomenon with a more diverse array of experiments. We then turn to our main contribution, namely, surfacing multiple complementary explanations for why TFMs behave so effectively. These explanations ultimately hinge on innate synergies whereby parameter-free encoders map relational effects to fixed-length embeddings that loosely mimic distributions for which TFMs were originally designed; in so doing, desirable single-table properties transfer to relational settings (e.g., convergent posterior predictive distributions). Collectively, our analysis forges new pathways for improving RDB FMs, particularly when we prioritize interpretability and inevitable integration within agentic systems.",
-      "categories": [
-        "cs.AI",
-        "cs.DB",
         "cs.LG"
       ],
-      "published": "2026-11-02T11:02:57Z",
-      "paper_url": "http://arxiv.org/abs/2611.02936v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.02936v1.pdf",
+      "published": "2026-11-03T16:20:15Z",
+      "paper_url": "http://arxiv.org/abs/2611.05141v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.05141v1.pdf",
+      "score": 65,
+      "score_reasons": [
+        "分类：基座模型",
+        "标题命中：foundation model"
+      ],
+      "category": "foundation-models",
+      "category_label": "基座模型",
+      "track": "foundation-models"
+    },
+    {
+      "arxiv_id": "2611.05097",
+      "title": "The Platonic Brain: Representational Convergence in EEG Foundation Models",
+      "authors": [
+        "Nicolas Waehner",
+        "Enzo Tagliazucchi",
+        "Jacobo Sitt",
+        "Demian Wassermann",
+        "Giovanni Franco Gabriel Marraffini",
+        "Trinidad Borrell"
+      ],
+      "abstract": "The Platonic Representation Hypothesis (PRH) predicts that artificial neural networks converge on shared representations as scale and performance increase. We test whether these predictions hold for representations of the human brain with EEG foundation models. Using EEG recordings from six participants watching a television series, together with aligned visual and language content, we tested whether EEG foundation-model representations converge within and across modalities as their embeddings become better at decoding an informative set of EEG markers. We found that EEG models with greater decodability showed stronger cross-family alignment in both local neighbourhood similarity and global structure, not consistently increasing with model parameter count. Cross-modal convergence was modality and metric dependent: greater EEG decodability was associated with stronger global alignment to language, but not consistently to vision models, while local alignment showed no consistent association. This dissociation may reflect local sensitivity to low-level sensory features, whereas global geometry may capture weaker shared semantic structure.",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-11-03T15:53:13Z",
+      "paper_url": "http://arxiv.org/abs/2611.05097v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.05097v1.pdf",
       "score": 65,
       "score_reasons": [
         "分类：基座模型",
