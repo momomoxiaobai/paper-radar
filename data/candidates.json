@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-06T03:55:22.615648+00:00",
+  "generated_at": "2026-11-06T08:16:15.976977+00:00",
   "note": "Heuristic queues by editorial track. PDF research and article publication require a later verified generation stage.",
   "lanes": [
     {
@@ -8,33 +8,59 @@
       "cadence": "周一至周五",
       "candidates": [
         {
-          "arxiv_id": "2611.07948",
-          "title": "Circe: Training-Free LLM Self-Evaluation via Component Interaction Consistency",
+          "arxiv_id": "2611.08315",
+          "title": "Benchmarking Large Language Models on Heterogeneous Cognitive and Biomedical Knowledge Graphs: The Role of Graph Grounding in Multi-Hop Reasoning and Hallucination Mitigation",
           "authors": [
-            "Shuyi Miao",
-            "Zheng Li",
-            "Xu Xie",
-            "Linrui Xu",
-            "Fei Shen",
-            "Xiaoyu Du",
-            "Tat-Seng Chua"
+            "Ali Sarabadani",
+            "Kheirolah Rahsepar Fard",
+            "Tahereh Jeirani"
           ],
-          "abstract": "As large language models (LLMs) are increasingly deployed in real-world applications, evaluating the correctness of their responses is crucial for reliable use. However, such evaluation is challenging because reference answers are rarely available in practice. Existing reference-free methods mainly rely on output signals, which may assign high scores to incorrect responses and thus do not necessarily reflect correctness. This motivates exploring the model's internal computation for complementary correctness signals. Recent studies exploit internal states, but they mainly analyze hidden-state trajectories across layers, which record only the combined updates of attention and feed-forward networks (FFNs) and overlook how these components interact. We therefore propose Circe, a training-free self-evaluation method that assesses a response using both internal and external signals, without reference answers or repeated sampling. For internal signals, we first introduce component interaction consistency (CIC), which measures the directional alignment between attention updates in earlier layers and attention-induced FFN output changes in later layers. We further incorporate representation geometry (RG) to characterize normalized displacement and angular changes along layerwise hidden-state trajectories. For the external signal, we convert the mean negative log-likelihood of generated tokens into a bounded likelihood confidence (LC) score. Finally, we fuse CIC, RG, and LC into a unified correctness score. Experiments on five LLMs and six benchmarks across four domains show that our method distinguishes correct from incorrect responses more effectively than existing baselines, and generalizes to multilingual, multimodal, and open-world settings.",
+          "abstract": "Large language models (LLMs) are increasingly used in biomedical and cognitive neuroscience, but their ability to reason reliably over heterogeneous knowledge graphs (KGs) remains unclear. We benchmark five LLMs (GPT-5.1, Gemini 2.0 Pro, Llama 3, Qwen, and BioGPT) across five KGs: DrugBank, NeuroSynth, Cognitive Atlas, Brain Map, and GDPKG. We introduce a multitier query dataset to evaluate reasoning depth and factual accuracy under KG-aware (graph-grounded) and KG-agnostic conditions. Inter-annotator agreement was substantial, with Cohen's kappa of 0.781 (range: 0.753-0.807) and Fleiss' kappa of 0.77. Results show that general-purpose models, particularly GPT-5.1 and Gemini 2.0 Pro, generally outperform domain-specific models on multi-hop and high-level reasoning tasks, although performance declines as query complexity increases. KG grounding reduces hallucination rates across all evaluated models. Contrary to our initial hypothesis, domain-specific models do not consistently outperform general-purpose models on specialized tasks without graph grounding. These findings highlight the value of combining broad language-model capabilities with structured domain knowledge. We provide practical guidance for selecting LLM-KG integration strategies based on task complexity and computational constraints, and discuss hybrid neurosymbolic architectures for personalized medicine, cognitive disorder diagnosis, and explainable AI.",
           "categories": [
+            "cs.AI",
             "cs.CL",
-            "cs.AI"
+            "cs.LG"
           ],
-          "published": "2026-11-05T12:45:40Z",
-          "paper_url": "http://arxiv.org/abs/2611.07948v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.07948v1.pdf",
+          "published": "2026-11-05T17:12:58Z",
+          "paper_url": "http://arxiv.org/abs/2611.08315v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.08315v1.pdf",
           "score": 100,
           "score_reasons": [
             "分类：LLM",
-            "摘要命中：large language model",
-            "摘要命中：language model",
-            "摘要命中：alignment",
-            "摘要命中：benchmark",
-            "标题命中：evaluation"
+            "标题命中：large language model",
+            "标题命中：language model",
+            "标题命中：reasoning",
+            "标题命中：benchmark",
+            "cs.CL"
+          ],
+          "category": "llm",
+          "category_label": "LLM",
+          "track": "frontier"
+        },
+        {
+          "arxiv_id": "2611.08082",
+          "title": "DictLLM: Post-training Compression of Large Language Model with Dictionary Kernels",
+          "authors": [
+            "Jinho Park",
+            "Se Young Chun",
+            "Mingoo Seok"
+          ],
+          "abstract": "Efficient deployment of large language models (LLMs) on mobile devices requires balancing performance with compute and memory constraints. Post-training compression is an effective approach to managing this trade-off, while requiring much less computation than in-training counterparts. We propose DictLLM, a dictionary-based compression scheme in which weight matrices within grouped layers are decomposed into a shared dictionary and layer-specific sparse coefficients, directly obtained from a pre-trained model without further training. Specifically, we cast DictLLM as a four-step post-training optimization. First, we obtain shared dictionaries via singular value decomposition (SVD) of input-scaled weight matrices, amortizing rank across grouped layers; second, we sparsify the layer-specific coefficients to the target compression ratio using a dictionary-aware Hessian; and third, we refine the dictionaries given the resulting sparse coefficients. Finally, we aggressively quantize both components using factor-specific Hessian information: input covariance for the dictionaries and the dictionary-aware Hessian for the coefficients. The resulting representation reduces memory footprint by storing a single shared dictionary per layer group, along with sparse layer-specific coefficients. On language modeling and zero-shot reasoning benchmarks, DictLLM consistently outperforms existing post-training low-rank compression methods and pushes the Pareto frontier between model size and performance. DictLLM compresses the original LLaMA-7B model by 5.1x with only a 2.9-point increase in WikiText-2 perplexity, achieving a 3.6x higher compression ratio than the state-of-the-art low-rank method.",
+          "categories": [
+            "cs.AI",
+            "cs.LG"
+          ],
+          "published": "2026-11-05T14:31:12Z",
+          "paper_url": "http://arxiv.org/abs/2611.08082v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.08082v1.pdf",
+          "score": 100,
+          "score_reasons": [
+            "分类：LLM",
+            "标题命中：large language model",
+            "标题命中：language model",
+            "标题命中：post-training",
+            "摘要命中：reasoning",
+            "摘要命中：benchmark"
           ],
           "category": "llm",
           "category_label": "LLM",
@@ -65,6 +91,115 @@
             "标题命中：language model",
             "摘要命中：benchmark",
             "cs.CL"
+          ],
+          "category": "llm",
+          "category_label": "LLM",
+          "track": "frontier"
+        },
+        {
+          "arxiv_id": "2611.08453",
+          "title": "Unpacking the Compute Efficiency of Strong-to-Weak OPD against GRPO",
+          "authors": [
+            "Zeyu Leo Liu",
+            "Yang Li",
+            "Bo Pang",
+            "Emre Can Acikgoz",
+            "Xuan-Phi Nguyen",
+            "Anurag Koul",
+            "Srijan Bansal",
+            "Erik Nijkamp",
+            "Shafiq Joty",
+            "Semih Yavuz"
+          ],
+          "abstract": "On-policy distillation (OPD) trains a student on its own rollouts under a frozen teacher's per-token supervision. Does this dense signal reduce the training FLOPs needed to reach a target accuracy compared with reinforcement learning? We systematically compare vanilla reverse-KL OPD with Group Relative Policy Optimization (GRPO) across task difficulty, student and teacher size, domain, and optimization choices, measuring held-out accuracy against training FLOPs. With an external post-trained teacher, OPD generally loses to GRPO in accuracy per training FLOP at matched settings, even when the teacher is further trained with GRPO, and often suffers response-length inflation. Yet a different teacher changes the picture: when the teacher is the student's own GRPO checkpoint, OPD recovers that checkpoint's accuracy on math with $50\\times$ fewer distillation FLOPs than GRPO needs to reach the same accuracy. Following the same teacher setting, we consistently observe this high efficiency with a larger student, on code, and in a second model family. On a single domain, however, the GRPO checkpoint is already the desired model, so distilling it adds to total compute. Across domains, separate GRPO checkpoints hold different capabilities, and no single checkpoint serves every domain. Multi-teacher OPD (DeepSeek-AI, 2026) consolidates per-domain GRPO experts into a single student that matches each expert's accuracy, with the distillation stage costing only 5.2% (on 2 domains) and 8.0% (on 4 domains) of the specialist training FLOPs. Counting specialist training and distillation together, this pipeline reaches joint GRPO's performance on the 2-domain mix with 42.0% fewer total FLOPs.",
+          "categories": [
+            "cs.LG",
+            "cs.CL"
+          ],
+          "published": "2026-11-05T18:47:05Z",
+          "paper_url": "http://arxiv.org/abs/2611.08453v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.08453v1.pdf",
+          "score": 94,
+          "score_reasons": [
+            "分类：RL",
+            "摘要命中：reinforcement learning",
+            "摘要命中：policy optimization",
+            "标题命中：grpo",
+            "cs.CL"
+          ],
+          "category": "rl",
+          "category_label": "RL",
+          "track": "frontier"
+        },
+        {
+          "arxiv_id": "2611.08369",
+          "title": "NPCBench: A Clinical Apprenticeship Benchmark for Multimodal Care-Pathway Reasoning in Nasopharyngeal Carcinoma",
+          "authors": [
+            "Pengkai Wang",
+            "Wei-Wei Zhang",
+            "Yan Li",
+            "Min Tang",
+            "Zhitian Hou",
+            "Zeyu Liu",
+            "Guanghao Zhu",
+            "Yuanyi Wang",
+            "Yanggan Gu",
+            "Wenjun Wang",
+            "Minheng Ni",
+            "Congkai Xie",
+            "Zhijie Sang",
+            "Jianmin Wu",
+            "Ying Sun",
+            "Hongxia Yang"
+          ],
+          "abstract": "Current medical benchmarks typically break down clinical competence into isolated factual questions, single-image tasks, or static case vignettes. These tests score individual answers, but reveal less about whether a model can integrate subspecialty knowledge with multimodal evidence and track a patient's condition throughout a course of care. To close this gap, we introduce NPCBench, a clinical apprenticeship benchmark for nasopharyngeal carcinoma (NPC). NPCBench mirrors specialist training, from guideline and foundational knowledge to case planning, longitudinal review, CarePath integration, and open-ended consultation. It contains 4,777 component and consultation items and a 100-patient CarePath cohort with 417 scored diagnostic and care tasks. The episode-level evaluation tests whether diagnostic and care answers are jointly correct within a care pathway. By linking stepwise tasks to patient-level care trajectories, NPCBench evaluates whether models ground decisions in visual evidence, interpret changes in patient state, and meet clinical requirements in consultation. Across 30 evaluated models, we observe a composition gap: strong performance on individual tasks does not ensure jointly correct diagnostic and care answers for the same patient. Among 21 multimodal models, strict CarePath success reaches at most 23%. Paired controls and physician calibration further examine evidence grounding, longitudinal revision, and consultation judging. Overall, NPCBench broadens the evaluation of medical artificial intelligence beyond static question-answering paradigms to an apprenticeship-oriented assessment of clinical workflows, thereby offering a testbed for evidence-based and temporally coherent reasoning in oncology care.",
+          "categories": [
+            "cs.AI"
+          ],
+          "published": "2026-11-05T17:48:55Z",
+          "paper_url": "http://arxiv.org/abs/2611.08369v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.08369v1.pdf",
+          "score": 94,
+          "score_reasons": [
+            "分类：LLM",
+            "标题命中：reasoning",
+            "标题命中：benchmark",
+            "摘要命中：evaluation",
+            "标题命中：multimodal"
+          ],
+          "category": "llm",
+          "category_label": "LLM",
+          "track": "frontier"
+        },
+        {
+          "arxiv_id": "2611.08216",
+          "title": "ProQuant: Progressive Quantization-aware Training for Edge MLLMs",
+          "authors": [
+            "Yufei Xue",
+            "Yushi Huang",
+            "Jiawei Shao",
+            "Pingcheng Dong",
+            "Yonghao Tan",
+            "Shiyao Li",
+            "Kwang-Ting Cheng",
+            "Jun Zhang"
+          ],
+          "abstract": "Multi-modal large language models (MLLMs) with impressive perception and understanding capabilities will enable a range of downstream applications. However, their substantial computational and memory requirements hinder the real-world implementation, particularly for resource-constrained edge devices. Quantization has emerged as an effective solution for deploying large models. While post-training quantization (PTQ) successfully retains the performance at moderate bit-width (e.g., W8A8), it suffers from severe performance degradation under low-bit quantization (e.g., W4A8), especially for small-scale models that are more suitable for edge deployment. In this paper, we propose ProQuant, a novel weight-activation quantization-aware training (QAT) framework tailored for low-bit MLLMs. First, to align the limited finetuning dataset distribution with the pretrained dataset distribution, we propose a self-relabeling (SRL) scheme to resample the responses of the open-source multimodal dataset. Second, we are the first to take a decoupled view of multi-modal (MM) understanding and language modeling abilities. We propose a progressive block activation (PBA) mechanism to prioritize the MM understanding recovery. We also introduce a vision-sensitive factor $\\vecτ$ that effectively identifies the MM-critical layers. Extensive experiments across various benchmarks, covering models with 2B-8B parameters, show that ProQuant significantly outperforms existing methods. For example, our W4A8 Qwen3-VL-2B-Instruct improves average accuracy by impressively 6.6% and achieves performance comparable to full precision counterparts with only approximately 1% performance drop. Code is available at https://github.com/yufeixue-ai/ProQuant/.",
+          "categories": [
+            "cs.CV",
+            "cs.CL"
+          ],
+          "published": "2026-11-05T16:04:31Z",
+          "paper_url": "http://arxiv.org/abs/2611.08216v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.08216v1.pdf",
+          "score": 92,
+          "score_reasons": [
+            "分类：LLM",
+            "摘要命中：large language model",
+            "摘要命中：language model",
+            "摘要命中：post-training",
+            "摘要命中：benchmark",
+            "摘要命中：multimodal"
           ],
           "category": "llm",
           "category_label": "LLM",
@@ -137,112 +272,6 @@
           "category": "llm",
           "category_label": "LLM",
           "track": "frontier"
-        },
-        {
-          "arxiv_id": "2611.05263",
-          "title": "JHiMA-WebRL: A Joint Hierarchical Multi-Agent Reinforcement Learning Framework for Long-Horizon Web Tasks",
-          "authors": [
-            "Shanka Subhra Mondal",
-            "Jiayun Wang"
-          ],
-          "abstract": "Multimodal web agents have shown promising capabilities for interacting with websites through graphical user interfaces (GUIs), yet realistic web tasks often require long-horizon, multi-step planning that remains challenging for monolithic policies. Such agents must jointly infer high-level plans, navigate through intermediate states, track progress over extended interaction histories, and execute visually grounded actions. Although prior work has explored modular multi-agent systems with a separate planner, the planner is typically not updated jointly with the actor. We investigate whether explicitly separating and jointly training planning and execution provides a stronger inductive bias for long-horizon web navigation. We introduce JHiMA-WebRL, a joint hierarchical multi-agent reinforcement learning framework for web agents that couples a task decomposer with an actor. To train the decomposer, we use a strong teacher model to construct structured subtask supervision from multimodal GUI trajectories, and use these annotations to fine-tune both the decomposer and the subtask-conditioned actor. We then extend Group Relative Policy Optimization (GRPO) to jointly optimize the decomposer and actor in the interactive WebArena environment through hierarchical rollout grouping and role-specific advantages. On WebArena-Lite-v2, JHiMA-WebRL-14B, consisting of a 7B actor and a 7B decomposer, achieves an average success rate of 37.2%, compared with 24% for a ScaleCUA-32B agent that we fine-tune with RL on the same training tasks and evaluate under the same protocol. Ablations show that jointly updating the decomposer during RL outperforms updating the actor alone. These results suggest that jointly learned role factorization with smaller models can be a competitive alternative to scaling monolithic agents for long-horizon web tasks.",
-          "categories": [
-            "cs.AI"
-          ],
-          "published": "2026-11-03T17:49:14Z",
-          "paper_url": "http://arxiv.org/abs/2611.05263v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.05263v1.pdf",
-          "score": 90,
-          "score_reasons": [
-            "分类：RL",
-            "标题命中：reinforcement learning",
-            "摘要命中：policy optimization",
-            "摘要命中：grpo"
-          ],
-          "category": "rl",
-          "category_label": "RL",
-          "track": "frontier"
-        },
-        {
-          "arxiv_id": "2611.07283",
-          "title": "Encoding and Propagation of Grammatical Number in Large Language Models",
-          "authors": [
-            "Jacob Solinsky",
-            "Serguei Pakhomov"
-          ],
-          "abstract": "Sparse autoencoders (SAEs) have become an increasingly popular means of translating Large Language Model (LLM) hidden state vectors into a human-comprehensible list of features or symbols. As such, SAEs may provide insight into an LLM's knowledge representation and internal ``mental'' grammar - topics of pragmatic interest for mechanistic interpretation of AI behavior and of theoretical interest for the study of in silico representations of human language. Language models with fewer than 100M parameters, trained on small corpora, nonetheless exhibit strong grammatical competence and discourse coherence, despite producing content of limited reliability. We use SAEs that we trained on one such model (Pythia-70M) to conduct an in-depth examination of how a single grammatical phenomenon, number agreement, is represented and processed in an LLM. We demonstrate the mechanism and the methodology by which SAEs can be used to find and propagate ``plural noun'', ``plural matrix subject'', and ``generate a plural verb'' features which cause the LLM to produce plural verb forms such as ``are'', ``do'', or ``have'' instead of ``is'', ``does'', and ``has'' in response to prompts such as ``the men in the park''. We show that intervening to remove these features from the hidden states of plural subject noun tokens causes the model to produce singular verbs instead, and vice versa. We also show that corresponding ``singular noun'' and ``generate a singular verb'' features are not as effective for this task. This asymmetry suggests that Pythia-70m makes use of a privative representation of grammatical number in English. These findings replicated with larger LLMs Gemma-2-2b and Llama-3.1-8b yielded similar results. Our main contribution is a novel approach to the use of SAEs to understanding how LLMs encode human language that addresses a number of technical and methodological challenges.",
-          "categories": [
-            "cs.CL",
-            "cs.AI"
-          ],
-          "published": "2026-11-05T01:04:02Z",
-          "paper_url": "http://arxiv.org/abs/2611.07283v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.07283v1.pdf",
-          "score": 87,
-          "score_reasons": [
-            "分类：LLM",
-            "标题命中：large language model",
-            "标题命中：language model",
-            "cs.CL"
-          ],
-          "category": "agent",
-          "category_label": "Agent",
-          "track": "frontier"
-        },
-        {
-          "arxiv_id": "2611.06185",
-          "title": "Editing Large Language Models with Geometry-Aware Regularization",
-          "authors": [
-            "Bingqing Liu",
-            "Wei Liu",
-            "Jun Wang",
-            "Xiaobo Sun",
-            "Yuhua Li",
-            "Ruixuan Li"
-          ],
-          "abstract": "Knowledge editing has become a key technique for updating knowledge in large language models. However, existing methods neglect the geometric structure of the knowledge representation space, leading to two key limitations: they cannot distinguish which pre-trained knowledge should be preferentially preserved (core vs. non-core) nor which new edits are inherently difficult (hard vs. easy). To address this, we propose GEdit, a geometry-aware framework built on a Low-Rank Plus Diagonal (LR+D) factor model that captures the intrinsic low-rank structure of Transformer FFN hidden representations. GEdit features two complementary mechanisms. First, the low-rank regularization applies targeted protection on a low-rank core knowledge subspace. Second, the adaptive regularization dynamically adjusts the regularization strength based on each edit request's editability: relaxing constraints for hard edits to ensure success, and tightening them for easy edits to better preserve pretrained knowledge. Extensive experiments on GPT2-XL, GPT-J, and LLaMA-3-8B under large-scale editing scenarios, including both mini-batch and fully sequential editing settings with up to 10,000 continuous updates, show that GEdit consistently and significantly outperforms state-of-the-art baselines in both editing success and knowledge preservation.",
-          "categories": [
-            "cs.CL",
-            "cs.AI"
-          ],
-          "published": "2026-11-04T09:02:10Z",
-          "paper_url": "http://arxiv.org/abs/2611.06185v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.06185v1.pdf",
-          "score": 87,
-          "score_reasons": [
-            "分类：LLM",
-            "标题命中：large language model",
-            "标题命中：language model",
-            "cs.CL"
-          ],
-          "category": "llm",
-          "category_label": "LLM",
-          "track": "frontier"
-        },
-        {
-          "arxiv_id": "2611.06956",
-          "title": "Octopus: One Brain, Many Branches for Latent-KV Multi-Agent Reinforcement Learning",
-          "authors": [
-            "Tianming Sha"
-          ],
-          "abstract": "Multi-agent LLM systems explore in parallel by spawning sub-agents with isolated context windows, whereas single-agent systems append every search and verification step into one growing trajectory. However, existing multi-agent frameworks duplicate prefix KV caches across branches, exchange findings by re-prefilling text summaries, and flatten or drop cross-branch dependencies during reinforcement learning (RL). We introduce Octopus, a single-model multi-agent RL framework in which all threads share one backbone and coordinate over a GPU-resident directed acyclic graph (DAG) of KV states through five primitives (fork, read_thread, wait_threads, rewind, commit). Octopus combines three co-designed mechanisms: (1) Zero-Copy Radix Forking, which spawns branches as $\\mathcal{O}(1)$ cursor views over shared physical KV pages; (2) Attention-Only KV Mounting, which mounts a sibling thread's terminal KV blocks directly into full-attention layers while bypassing linear-recurrent states (Gated DeltaNet / Mamba-2), cutting off-task hijacking by $21\\times$ ($57.9\\% \\to 2.7\\%$) while retaining $92.2\\%$ of full-text mutual information at zero extra KV allocation; and (3) a Packed DAG-GRPO Trainer, which packs all episode branches into one block-sparse attention pass and assigns counterfactual branch credit via leave-one-branch-out marginal rewards. Trained end-to-end with GRPO on Qwen3.5-4B over a sparse BM25 corpus, Octopus reaches $49.6\\%$ accuracy on BrowseComp-Plus ($+17.5$ points over single-agent GRPO at 143K context and $+12.5$ points over text-summary multi-agent RL) and $51.2\\%$ on OpenResearcher, outperforming dense-retrieval agents up to $250\\times$ larger while increasing training throughput $3.3\\times$ and cutting peak KV memory $2.8\\times$.",
-          "categories": [
-            "cs.LG",
-            "cs.CL"
-          ],
-          "published": "2026-11-03T22:42:25Z",
-          "paper_url": "http://arxiv.org/abs/2611.06956v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.06956v1.pdf",
-          "score": 85,
-          "score_reasons": [
-            "分类：Agent",
-            "标题命中：multi-agent",
-            "标题命中：agent",
-            "cs.CL"
-          ],
-          "category": "agent",
-          "category_label": "Agent",
-          "track": "frontier"
         }
       ]
     },
@@ -251,56 +280,6 @@
       "label": "Agent 工程",
       "cadence": "周一至周五",
       "candidates": [
-        {
-          "arxiv_id": "2611.07442",
-          "title": "Req2Rust: A Requirements-Guided Agent Harness for Project-Level C++-to-Rust Migration",
-          "authors": [
-            "Shengbo Wang",
-            "Mingwei Liu",
-            "Yuwen Chen",
-            "Yanlin Wang"
-          ],
-          "abstract": "Memory-safety concerns make Rust an attractive target for modernizing legacy C/C++ systems, yet project-level C++ migration must balance semantic fidelity with Rust-oriented reconstruction. Source-structure-preserving migration can track low-level behavior, but it can also carry source-language organization, unsafe idioms, and project assumptions into Rust. Direct agent-based translation gives the model more freedom to construct a Rust project, but semantic coverage depends on the model identifying the source behaviors that must be preserved. This problem is especially acute for C++, where source behaviors are often hidden in object models, destructor-driven lifetime protocols, and other hard-to-localize C++ semantics. This paper presents Req2Rust, the first project-level LLM-based C++-to-Rust migration harness. Req2Rust first derives an evidence-grounded Migration Requirements Specification (MRS) that records the behaviors and constraints that must be preserved. It then synthesizes a Rust Design Specification (RDS) and realizes it as an initial Rust project. Because real projects contain implementation details and idioms that only become visible during build and validation, Req2Rust treats the initial Rust project as an executable refinement state. Compiler, semantic, and unsafe-reduction validators produce validation reports for improving buildability, behavioral alignment, and unsafe usage. We evaluate Req2Rust on general C++ projects and modules from the large-scale Openharmony codebase against a ClaudeCode baseline. Req2Rust produces buildable Rust crates in both settings and improves test pass rate from 69.5% to 91.9% on general projects and from 45.4% to 87.9% on Openharmony modules.",
-          "categories": [
-            "cs.SE"
-          ],
-          "published": "2026-11-05T04:40:17Z",
-          "paper_url": "http://arxiv.org/abs/2611.07442v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.07442v1.pdf",
-          "score": 80,
-          "score_reasons": [
-            "分类：Harness",
-            "标题命中：agent harness"
-          ],
-          "category": "harness",
-          "category_label": "Harness",
-          "track": "harness"
-        },
-        {
-          "arxiv_id": "2611.05088",
-          "title": "LatentTriad: Pre-Action Risk Representations for Malicious Agent Skill Detection",
-          "authors": [
-            "Zhe Yu",
-            "Yi Liu",
-            "Ying Zhang",
-            "Simin Chen"
-          ],
-          "abstract": "Large language model agents are increasingly extended with reusable skills, but untrusted skill content can induce operations outside the user's task. Detecting this contextual risk requires more than suspicious-pattern matching, while dynamic analysis incurs the cost of skill execution. We find that hidden states formed during prefill contain readable information about task-operation consistency, including across held-out expression forms in controlled evaluations. Matched Operation-state interventions also affect later Boundary states and shift fixed risk readouts toward the donor label. Based on these findings, we introduce LatentTriad, which combines contextual Boundary features, group-adjusted Operation directions, and departures from benign state relationships. All branches share one prefill: detection generates no output tokens, invokes no tools, and executes no skill code. Across 5,830 skill packages from five sources and seven backbones, LatentTriad achieves 99.0-99.2% pooled F1 and 93.0-94.6% source-macro F1. A separately measured compact implementation completes prefill and detection in a median of 259-284 ms. These results connect pre-action risk readability and functional influence to execution-free skill screening.",
-          "categories": [
-            "cs.AI"
-          ],
-          "published": "2026-11-03T15:46:12Z",
-          "paper_url": "http://arxiv.org/abs/2611.05088v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.05088v1.pdf",
-          "score": 65,
-          "score_reasons": [
-            "分类：Skill",
-            "标题命中：agent skill"
-          ],
-          "category": "skill",
-          "category_label": "Skill",
-          "track": "harness"
-        },
         {
           "arxiv_id": "2611.05828",
           "title": "Autonomy and Coordination in Intelligent Manufacturing: A Recursive Autonomous Agent Framework",
@@ -432,6 +411,71 @@
           "category": "harness",
           "category_label": "Harness",
           "track": "harness"
+        },
+        {
+          "arxiv_id": "2611.07624",
+          "title": "Beneath the Surface: What We Overlook When We Talk About Agent Evolution",
+          "authors": [
+            "Xiaobo Wang",
+            "Zimu Wang",
+            "Siyu Ye",
+            "Jiaqi Li",
+            "Min Tang",
+            "Jun Bai",
+            "Yuling Shi",
+            "Ruobing Wang",
+            "Jingjing Zhang",
+            "Chaofan Wang",
+            "Kai Wu",
+            "Mengnan Qi",
+            "Kai Cai",
+            "Xiaodong Gu",
+            "Qi Liu",
+            "Zilong Zheng"
+          ],
+          "abstract": "Agent harness evolution enables recursive self-improvement (RSI) without updating model weights. We examine whether higher benchmark scores yield reliable, efficient, and transferable improvement. We evaluate four methods across harnesses, general and coding tasks. Repeated evaluations, controlled agent expansion, component interventions, and admission replays reveal recurring patterns. All sixteen evolved agents gain previously uncovered tasks while losing previously covered ones. In one general-task case, reliability rises by 5.2 points despite losing ten previously covered tasks. Most reliability gains also increase deployment cost. Specific changes usually outperform generic reminders, but their benefits can change when combined. The highest-scoring agent does not yield the largest mean improvement in any of our four pools, and stricter admission can discard useful alternatives. Transfer selectively preserves gains: coverage usually falls on the general-task target across both harness types and paradigms, but rises on the coding target with the outer-layer-only harness. These findings motivate preservation-aware evaluation, tested decision rules, and explicit applicability conditions. As a constructive follow-up, EvoAudit turns these diagnostics into revisions of select, analyze, mutate, and gate, achieving the best performance.",
+          "categories": [
+            "cs.AI"
+          ],
+          "published": "2026-11-05T08:06:37Z",
+          "paper_url": "http://arxiv.org/abs/2611.07624v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.07624v1.pdf",
+          "score": 55,
+          "score_reasons": [
+            "分类：Harness",
+            "摘要命中：agent harness"
+          ],
+          "category": "harness",
+          "category_label": "Harness",
+          "track": "harness"
+        },
+        {
+          "arxiv_id": "2611.07595",
+          "title": "Evolver: Turning Agent Exploration into Evolving Capabilities",
+          "authors": [
+            "Haoyang Zhang",
+            "Qumeng Sun",
+            "Xiao Zhang",
+            "Xiang Liu",
+            "Zhidong Fan",
+            "Junjie Wang"
+          ],
+          "abstract": "Agent exploration produces valuable procedural knowledge, yet much of this experience remains confined to transient execution traces and is not systematically reused. We introduce Evolver, an experience-driven framework that transforms agent exploration into persistent, reusable capabilities without updating foundation model parameters. Built around structured Gene assets, Evolver integrates experience acquisition, retrieval, and feedback-guided evolution to support experience-conditioned execution across existing agent harnesses. We evaluate Evolver using Claude Code and Codex, two foundation model configurations, and four benchmarks: Terminal-Bench 2.1, SWE-bench Multilingual, SWE-rebench, and GAIA. On a selected diagnostic set of 320 paired executions, Evolver improves task success from 83.13% to 87.50% (+4.38 percentage points) while reducing recorded task-execution token consumption by 24.24%. Furthermore, among 265 pairs successful under both conditions, token consumption decreases by 17.57%, demonstrating efficiency benefits even when task success is preserved. These findings suggest that persistent procedural experience can improve both task effectiveness and execution efficiency, providing a practical foundation for transforming agent exploration into evolving capabilities.",
+          "categories": [
+            "cs.SE",
+            "cs.AI"
+          ],
+          "published": "2026-11-05T07:44:28Z",
+          "paper_url": "http://arxiv.org/abs/2611.07595v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.07595v1.pdf",
+          "score": 55,
+          "score_reasons": [
+            "分类：Harness",
+            "摘要命中：agent harness"
+          ],
+          "category": "harness",
+          "category_label": "Harness",
+          "track": "harness"
         }
       ]
     },
@@ -542,33 +586,6 @@
           "track": "classic-algorithms"
         },
         {
-          "arxiv_id": "2610.42085",
-          "title": "Cost-Aware Stopping for Freeze-Thaw Bayesian Optimization: When Does One-Step Lookahead Suffice?",
-          "authors": [
-            "Long Vu",
-            "Jongseong Brad Choi",
-            "Binoy Ravindran",
-            "Zhoulai Fu"
-          ],
-          "abstract": "Freeze-thaw Bayesian optimization (BO) evaluates candidates in resumable increments but usually stops at a budget or convergence test. We maximize a budget-free utility, the best observed score minus a cost per increment, with a one-step lookahead: advance the candidate with the largest expected improvement (EI) under a fixed surrogate, and stop once no EI exceeds the cost. This rule, EI stopping, never falls below stopping immediately in expected utility, yet it can stop too early. We construct a certificate, a lower bound on the value of two-step lookahead, that proves such a stop premature, and repeating this correction never lowers expected utility under the surrogate. Under the surrogate, EI stops are premature on average at low costs and lose little at high costs. On three hyperparameter optimization benchmarks, a pre-registered test finds EI stopping noninferior to the correction in most high-cost settings, while the correction gains at low costs on two of the three; more information sharing in the surrogate raises EI stopping's utility. On the surrogates of two published methods, EI stopping trades lower scores for fewer training increments. EI stopping is a simple cost-aware reference whose utility depends on the surrogate.",
-          "categories": [
-            "cs.LG",
-            "math.OC",
-            "stat.ML"
-          ],
-          "published": "2026-10-30T17:36:06Z",
-          "paper_url": "http://arxiv.org/abs/2610.42085v1",
-          "pdf_url": "http://arxiv.org/pdf/2610.42085v1.pdf",
-          "score": 53,
-          "score_reasons": [
-            "分类：经典算法",
-            "标题命中：bayesian optimization"
-          ],
-          "category": "classic-algorithms",
-          "category_label": "经典算法",
-          "track": "classic-algorithms"
-        },
-        {
           "arxiv_id": "2611.04719",
           "title": "Bayesian optimization enhanced magnetic field gradient detection based on spin-orbit coupled Bose-Einstein condensates",
           "authors": [
@@ -589,6 +606,35 @@
           "score_reasons": [
             "分类：经典算法",
             "标题命中：bayesian optimization"
+          ],
+          "category": "classic-algorithms",
+          "category_label": "经典算法",
+          "track": "classic-algorithms"
+        },
+        {
+          "arxiv_id": "2611.02678",
+          "title": "Reap: Uncovering Monte Carlo proof search with a lightweight model",
+          "authors": [
+            "Yutong Wang",
+            "Xuanzhi Ren",
+            "Tianyi Xu",
+            "Ruitong Liu",
+            "Jingda Xu",
+            "Peihao Wu",
+            "Bryan Dai",
+            "Bin Dong"
+          ],
+          "abstract": "We present Reap, an open framework for learning and analyzing formal proof search in Lean4. Reap implements policy-value-guided Monte Carlo Tree Search directly in Lean, sharing proof-state transitions, AND-OR search, and replay verification between inference and training rollouts. Structured action logs expose how neural predictions and tactic execution interact during search. Using this framework, we train Reaper-1, a 1.7B-parameter policy-value model, through continued pre-training, supervised tactic learning, and iterative search-based reinforcement learning. Using a separate premise selector, the final system solves 79.9% of miniF2F-test at pass@32, establishing state-of-the-art performance among open provers of comparable size while remaining competitive with substantially larger models. Beyond improved solve rates, our results suggest that RL strengthens the prover's ability to organize proofs around useful intermediate results, favoring substantial advances over repeated local adjustments. This more directed proof construction is accompanied by increasingly elaborate tactic programs: fewer explicit search decisions are needed, while more work is performed within each decision. The resulting trade-off between search effort and tactic execution cost provides insight into how learning changes the prover's problem-solving strategy.",
+          "categories": [
+            "cs.AI"
+          ],
+          "published": "2026-11-02T07:33:28Z",
+          "paper_url": "http://arxiv.org/abs/2611.02678v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.02678v1.pdf",
+          "score": 45,
+          "score_reasons": [
+            "分类：经典算法",
+            "摘要命中：monte carlo tree search"
           ],
           "category": "classic-algorithms",
           "category_label": "经典算法",
@@ -664,6 +710,57 @@
           "track": "foundation-models"
         },
         {
+          "arxiv_id": "2611.08199",
+          "title": "Do sEMG Foundation Models Improve Cross-Subject Generalisation?",
+          "authors": [
+            "William Raftery",
+            "Dario Farina"
+          ],
+          "abstract": "sEMG Foundation Models aim to learn general purpose representations over diverse subjects and recording conditions that boost performance on a variety of downstream tasks. However, existing evaluations make it difficult to discern whether pretraining alone is sufficient to combat the cross-subject overfitting which makes machine learning on sEMG so challenging. We conduct a systematic evaluation of three sEMG foundation models across three gesture classification datasets under both intra-session and inter-subject splits, using three fine-tuning strategies designed to isolate the contribution of pretraining. We find that pretraining boosts performance when train and test samples are drawn from the same recording session, but this benefit largely disappears under inter-subject evaluation. In low subject count datasets, pretraining provides little to no benefit and classical ML baselines match or exceed foundation model performance.",
+          "categories": [
+            "cs.LG",
+            "q-bio.NC"
+          ],
+          "published": "2026-11-05T15:53:37Z",
+          "paper_url": "http://arxiv.org/abs/2611.08199v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.08199v1.pdf",
+          "score": 65,
+          "score_reasons": [
+            "分类：基座模型",
+            "标题命中：foundation model"
+          ],
+          "category": "foundation-models",
+          "category_label": "基座模型",
+          "track": "foundation-models"
+        },
+        {
+          "arxiv_id": "2611.08153",
+          "title": "A Generative Foundation Model for Multimodal Tokamak Tasks",
+          "authors": [
+            "Yingshuai Ji",
+            "Haodong Feng",
+            "Guohong Deng",
+            "Gelin Bian",
+            "Yue Wang"
+          ],
+          "abstract": "Tokamak experiments record diverse measurements, including waveforms, profiles, fields, and scalars, which are used to reconstruct the plasma, forecast its evolution, recover associated control signals, and estimate disruption risk. Most models are built separately for one task and a fixed set of inputs and outputs, and each relies on a prescribed subset of diagnostics rather than structuring the full multimodal observation set to extract global, cross-signal information about the discharge. These limitations motivate a reusable foundation model that adapts to each task's input-output schema and models heterogeneous target signals jointly, rather than retraining a separate model for every configuration. In this work, we extend the TokaMark benchmark with two groups of tasks for actuator action inversion and disruption prediction, yielding 20 MAST tasks in six groups with explicit schemas and evaluation protocols. Then, we introduce GenToka, a generative tokamak foundation model that jointly generates schema-selected targets through a shared conditional diffusion Transformer, with signal-specific codecs preserving native time series, profiles, fields, and scalars; foundation pretraining and task-specific adaptation transfer cross-signal structure across all six groups. Evaluation on MAST measurements shows that GenToka reduces macro-average normalized root mean squared error relative to TokaMind by 4.7% on Groups 1-4 and by 17.7% on Group 5, and improves macro-average window-level F1 on Group 6 by 8.4% at a common validation-selected threshold. GenToka provides a reusable, generative, and multimodal pathway for experimental tokamaks, linking plasma-state reconstruction, actuator inference, and disruption warning from shared measurements to support more integrated, data-driven fusion plasma prediction and control research.",
+          "categories": [
+            "cs.AI",
+            "cs.CE"
+          ],
+          "published": "2026-11-05T15:13:48Z",
+          "paper_url": "http://arxiv.org/abs/2611.08153v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.08153v1.pdf",
+          "score": 65,
+          "score_reasons": [
+            "分类：基座模型",
+            "标题命中：foundation model"
+          ],
+          "category": "foundation-models",
+          "category_label": "基座模型",
+          "track": "foundation-models"
+        },
+        {
           "arxiv_id": "2611.07886",
           "title": "When, Where, How: Active In-Context Learning for Tabular Foundation Models",
           "authors": [
@@ -715,95 +812,65 @@
           "category": "foundation-models",
           "category_label": "基座模型",
           "track": "foundation-models"
-        },
-        {
-          "arxiv_id": "2611.07756",
-          "title": "Scaling Laws for SAE Training Data",
-          "authors": [
-            "Nikita Koriagin",
-            "Nikita Balagansky",
-            "Daniil Gavrilov"
-          ],
-          "abstract": "Activation storage is often a bottleneck in sparse autoencoder (SAE) training. We study how many unique activations an SAE needs when its total training budget is fixed. Quality improves rapidly as the buffer grows, then reaches a plateau where replaying the buffer is nearly as effective as using fresh activations throughout training. Beyond this point, additional unique activations bring little benefit to reconstruction or interpretability, so the buffer need not grow with the training budget. We describe this tradeoff between diversity and repetition with a scaling law for limited data. We validate it across dictionary sizes and token budgets, early, middle, and late layers of Llama-3.1, Qwen3 model sizes, and BatchTopK, TopK, and JumpReLU SAEs. Sweeps using mathematical text and Python code test the effect of changing the activation source. Evaluation covers explained variance (EV), reconstruction MSE, feature absorption, automated interpretability, and sparse probing. These results give a practical training rule: choose the smallest buffer that reaches the quality plateau and replay it for the remaining budget. In our experiments, this reduces activation storage by $8\\text{--}64\\times$ with negligible quality loss.",
-          "categories": [
-            "cs.LG",
-            "cs.AI",
-            "cs.CL"
-          ],
-          "published": "2026-11-05T10:00:55Z",
-          "paper_url": "http://arxiv.org/abs/2611.07756v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.07756v1.pdf",
-          "score": 65,
-          "score_reasons": [
-            "分类：基座模型",
-            "摘要命中：qwen",
-            "摘要命中：llama",
-            "cs.CL"
-          ],
-          "category": "foundation-models",
-          "category_label": "基座模型",
-          "track": "foundation-models"
-        },
-        {
-          "arxiv_id": "2611.07717",
-          "title": "Pediatric ECG foundation model via adult-to-pediatric fine-tuning: downstream tasks and clinical evaluation",
-          "authors": [
-            "Yu Cao",
-            "Haiyan Xu",
-            "Xiaohan Li",
-            "Jian Yang",
-            "Yuqing Feng",
-            "Wei Wang",
-            "Haomin Li"
-          ],
-          "abstract": "Pediatric electrocardiogram (ECG) interpretation is complicated by age-dependent electrophysiological changes that limit direct transfer of adult AI models. We asked whether an adult ECG foundation model could be adapted to pediatric ECGs. Using 339,563 12-lead ECGs from 238,189 children, we compared direct application, pediatric fine-tuning, and training from scratch under an identical architecture. Direct transfer was poor (mean AUC 0.8256). Fine-tuning reached 0.9695, above de novo training (0.9661), and attained 0.9079 using only 1% of training data. On 10,999 external ECGs, fine-tuning achieved a mean AUC of 0.9385 across 30 labels. It generalized to age regression (MAE 1.12 years) and congenital heart disease classification (AUC 0.9562). Across 17 clinicians and 100 cases, diagnostic accuracy rose from 56.8% to 65.4% (p < 0.001) and did not decline when AI erred. Adult ECG foundation models require pediatric adaptation; fine-tuning offers a data-efficient route to scalable pediatric ECG AI.",
-          "categories": [
-            "cs.LG"
-          ],
-          "published": "2026-11-05T09:36:44Z",
-          "paper_url": "http://arxiv.org/abs/2611.07717v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.07717v1.pdf",
-          "score": 65,
-          "score_reasons": [
-            "分类：基座模型",
-            "标题命中：foundation model"
-          ],
-          "category": "foundation-models",
-          "category_label": "基座模型",
-          "track": "foundation-models"
         }
       ]
     }
   ],
   "candidates": [
     {
-      "arxiv_id": "2611.07948",
-      "title": "Circe: Training-Free LLM Self-Evaluation via Component Interaction Consistency",
+      "arxiv_id": "2611.08315",
+      "title": "Benchmarking Large Language Models on Heterogeneous Cognitive and Biomedical Knowledge Graphs: The Role of Graph Grounding in Multi-Hop Reasoning and Hallucination Mitigation",
       "authors": [
-        "Shuyi Miao",
-        "Zheng Li",
-        "Xu Xie",
-        "Linrui Xu",
-        "Fei Shen",
-        "Xiaoyu Du",
-        "Tat-Seng Chua"
+        "Ali Sarabadani",
+        "Kheirolah Rahsepar Fard",
+        "Tahereh Jeirani"
       ],
-      "abstract": "As large language models (LLMs) are increasingly deployed in real-world applications, evaluating the correctness of their responses is crucial for reliable use. However, such evaluation is challenging because reference answers are rarely available in practice. Existing reference-free methods mainly rely on output signals, which may assign high scores to incorrect responses and thus do not necessarily reflect correctness. This motivates exploring the model's internal computation for complementary correctness signals. Recent studies exploit internal states, but they mainly analyze hidden-state trajectories across layers, which record only the combined updates of attention and feed-forward networks (FFNs) and overlook how these components interact. We therefore propose Circe, a training-free self-evaluation method that assesses a response using both internal and external signals, without reference answers or repeated sampling. For internal signals, we first introduce component interaction consistency (CIC), which measures the directional alignment between attention updates in earlier layers and attention-induced FFN output changes in later layers. We further incorporate representation geometry (RG) to characterize normalized displacement and angular changes along layerwise hidden-state trajectories. For the external signal, we convert the mean negative log-likelihood of generated tokens into a bounded likelihood confidence (LC) score. Finally, we fuse CIC, RG, and LC into a unified correctness score. Experiments on five LLMs and six benchmarks across four domains show that our method distinguishes correct from incorrect responses more effectively than existing baselines, and generalizes to multilingual, multimodal, and open-world settings.",
+      "abstract": "Large language models (LLMs) are increasingly used in biomedical and cognitive neuroscience, but their ability to reason reliably over heterogeneous knowledge graphs (KGs) remains unclear. We benchmark five LLMs (GPT-5.1, Gemini 2.0 Pro, Llama 3, Qwen, and BioGPT) across five KGs: DrugBank, NeuroSynth, Cognitive Atlas, Brain Map, and GDPKG. We introduce a multitier query dataset to evaluate reasoning depth and factual accuracy under KG-aware (graph-grounded) and KG-agnostic conditions. Inter-annotator agreement was substantial, with Cohen's kappa of 0.781 (range: 0.753-0.807) and Fleiss' kappa of 0.77. Results show that general-purpose models, particularly GPT-5.1 and Gemini 2.0 Pro, generally outperform domain-specific models on multi-hop and high-level reasoning tasks, although performance declines as query complexity increases. KG grounding reduces hallucination rates across all evaluated models. Contrary to our initial hypothesis, domain-specific models do not consistently outperform general-purpose models on specialized tasks without graph grounding. These findings highlight the value of combining broad language-model capabilities with structured domain knowledge. We provide practical guidance for selecting LLM-KG integration strategies based on task complexity and computational constraints, and discuss hybrid neurosymbolic architectures for personalized medicine, cognitive disorder diagnosis, and explainable AI.",
       "categories": [
+        "cs.AI",
         "cs.CL",
-        "cs.AI"
+        "cs.LG"
       ],
-      "published": "2026-11-05T12:45:40Z",
-      "paper_url": "http://arxiv.org/abs/2611.07948v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.07948v1.pdf",
+      "published": "2026-11-05T17:12:58Z",
+      "paper_url": "http://arxiv.org/abs/2611.08315v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.08315v1.pdf",
       "score": 100,
       "score_reasons": [
         "分类：LLM",
-        "摘要命中：large language model",
-        "摘要命中：language model",
-        "摘要命中：alignment",
-        "摘要命中：benchmark",
-        "标题命中：evaluation"
+        "标题命中：large language model",
+        "标题命中：language model",
+        "标题命中：reasoning",
+        "标题命中：benchmark",
+        "cs.CL"
+      ],
+      "category": "llm",
+      "category_label": "LLM",
+      "track": "frontier"
+    },
+    {
+      "arxiv_id": "2611.08082",
+      "title": "DictLLM: Post-training Compression of Large Language Model with Dictionary Kernels",
+      "authors": [
+        "Jinho Park",
+        "Se Young Chun",
+        "Mingoo Seok"
+      ],
+      "abstract": "Efficient deployment of large language models (LLMs) on mobile devices requires balancing performance with compute and memory constraints. Post-training compression is an effective approach to managing this trade-off, while requiring much less computation than in-training counterparts. We propose DictLLM, a dictionary-based compression scheme in which weight matrices within grouped layers are decomposed into a shared dictionary and layer-specific sparse coefficients, directly obtained from a pre-trained model without further training. Specifically, we cast DictLLM as a four-step post-training optimization. First, we obtain shared dictionaries via singular value decomposition (SVD) of input-scaled weight matrices, amortizing rank across grouped layers; second, we sparsify the layer-specific coefficients to the target compression ratio using a dictionary-aware Hessian; and third, we refine the dictionaries given the resulting sparse coefficients. Finally, we aggressively quantize both components using factor-specific Hessian information: input covariance for the dictionaries and the dictionary-aware Hessian for the coefficients. The resulting representation reduces memory footprint by storing a single shared dictionary per layer group, along with sparse layer-specific coefficients. On language modeling and zero-shot reasoning benchmarks, DictLLM consistently outperforms existing post-training low-rank compression methods and pushes the Pareto frontier between model size and performance. DictLLM compresses the original LLaMA-7B model by 5.1x with only a 2.9-point increase in WikiText-2 perplexity, achieving a 3.6x higher compression ratio than the state-of-the-art low-rank method.",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-11-05T14:31:12Z",
+      "paper_url": "http://arxiv.org/abs/2611.08082v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.08082v1.pdf",
+      "score": 100,
+      "score_reasons": [
+        "分类：LLM",
+        "标题命中：large language model",
+        "标题命中：language model",
+        "标题命中：post-training",
+        "摘要命中：reasoning",
+        "摘要命中：benchmark"
       ],
       "category": "llm",
       "category_label": "LLM",
@@ -834,6 +901,115 @@
         "标题命中：language model",
         "摘要命中：benchmark",
         "cs.CL"
+      ],
+      "category": "llm",
+      "category_label": "LLM",
+      "track": "frontier"
+    },
+    {
+      "arxiv_id": "2611.08453",
+      "title": "Unpacking the Compute Efficiency of Strong-to-Weak OPD against GRPO",
+      "authors": [
+        "Zeyu Leo Liu",
+        "Yang Li",
+        "Bo Pang",
+        "Emre Can Acikgoz",
+        "Xuan-Phi Nguyen",
+        "Anurag Koul",
+        "Srijan Bansal",
+        "Erik Nijkamp",
+        "Shafiq Joty",
+        "Semih Yavuz"
+      ],
+      "abstract": "On-policy distillation (OPD) trains a student on its own rollouts under a frozen teacher's per-token supervision. Does this dense signal reduce the training FLOPs needed to reach a target accuracy compared with reinforcement learning? We systematically compare vanilla reverse-KL OPD with Group Relative Policy Optimization (GRPO) across task difficulty, student and teacher size, domain, and optimization choices, measuring held-out accuracy against training FLOPs. With an external post-trained teacher, OPD generally loses to GRPO in accuracy per training FLOP at matched settings, even when the teacher is further trained with GRPO, and often suffers response-length inflation. Yet a different teacher changes the picture: when the teacher is the student's own GRPO checkpoint, OPD recovers that checkpoint's accuracy on math with $50\\times$ fewer distillation FLOPs than GRPO needs to reach the same accuracy. Following the same teacher setting, we consistently observe this high efficiency with a larger student, on code, and in a second model family. On a single domain, however, the GRPO checkpoint is already the desired model, so distilling it adds to total compute. Across domains, separate GRPO checkpoints hold different capabilities, and no single checkpoint serves every domain. Multi-teacher OPD (DeepSeek-AI, 2026) consolidates per-domain GRPO experts into a single student that matches each expert's accuracy, with the distillation stage costing only 5.2% (on 2 domains) and 8.0% (on 4 domains) of the specialist training FLOPs. Counting specialist training and distillation together, this pipeline reaches joint GRPO's performance on the 2-domain mix with 42.0% fewer total FLOPs.",
+      "categories": [
+        "cs.LG",
+        "cs.CL"
+      ],
+      "published": "2026-11-05T18:47:05Z",
+      "paper_url": "http://arxiv.org/abs/2611.08453v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.08453v1.pdf",
+      "score": 94,
+      "score_reasons": [
+        "分类：RL",
+        "摘要命中：reinforcement learning",
+        "摘要命中：policy optimization",
+        "标题命中：grpo",
+        "cs.CL"
+      ],
+      "category": "rl",
+      "category_label": "RL",
+      "track": "frontier"
+    },
+    {
+      "arxiv_id": "2611.08369",
+      "title": "NPCBench: A Clinical Apprenticeship Benchmark for Multimodal Care-Pathway Reasoning in Nasopharyngeal Carcinoma",
+      "authors": [
+        "Pengkai Wang",
+        "Wei-Wei Zhang",
+        "Yan Li",
+        "Min Tang",
+        "Zhitian Hou",
+        "Zeyu Liu",
+        "Guanghao Zhu",
+        "Yuanyi Wang",
+        "Yanggan Gu",
+        "Wenjun Wang",
+        "Minheng Ni",
+        "Congkai Xie",
+        "Zhijie Sang",
+        "Jianmin Wu",
+        "Ying Sun",
+        "Hongxia Yang"
+      ],
+      "abstract": "Current medical benchmarks typically break down clinical competence into isolated factual questions, single-image tasks, or static case vignettes. These tests score individual answers, but reveal less about whether a model can integrate subspecialty knowledge with multimodal evidence and track a patient's condition throughout a course of care. To close this gap, we introduce NPCBench, a clinical apprenticeship benchmark for nasopharyngeal carcinoma (NPC). NPCBench mirrors specialist training, from guideline and foundational knowledge to case planning, longitudinal review, CarePath integration, and open-ended consultation. It contains 4,777 component and consultation items and a 100-patient CarePath cohort with 417 scored diagnostic and care tasks. The episode-level evaluation tests whether diagnostic and care answers are jointly correct within a care pathway. By linking stepwise tasks to patient-level care trajectories, NPCBench evaluates whether models ground decisions in visual evidence, interpret changes in patient state, and meet clinical requirements in consultation. Across 30 evaluated models, we observe a composition gap: strong performance on individual tasks does not ensure jointly correct diagnostic and care answers for the same patient. Among 21 multimodal models, strict CarePath success reaches at most 23%. Paired controls and physician calibration further examine evidence grounding, longitudinal revision, and consultation judging. Overall, NPCBench broadens the evaluation of medical artificial intelligence beyond static question-answering paradigms to an apprenticeship-oriented assessment of clinical workflows, thereby offering a testbed for evidence-based and temporally coherent reasoning in oncology care.",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-11-05T17:48:55Z",
+      "paper_url": "http://arxiv.org/abs/2611.08369v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.08369v1.pdf",
+      "score": 94,
+      "score_reasons": [
+        "分类：LLM",
+        "标题命中：reasoning",
+        "标题命中：benchmark",
+        "摘要命中：evaluation",
+        "标题命中：multimodal"
+      ],
+      "category": "llm",
+      "category_label": "LLM",
+      "track": "frontier"
+    },
+    {
+      "arxiv_id": "2611.08216",
+      "title": "ProQuant: Progressive Quantization-aware Training for Edge MLLMs",
+      "authors": [
+        "Yufei Xue",
+        "Yushi Huang",
+        "Jiawei Shao",
+        "Pingcheng Dong",
+        "Yonghao Tan",
+        "Shiyao Li",
+        "Kwang-Ting Cheng",
+        "Jun Zhang"
+      ],
+      "abstract": "Multi-modal large language models (MLLMs) with impressive perception and understanding capabilities will enable a range of downstream applications. However, their substantial computational and memory requirements hinder the real-world implementation, particularly for resource-constrained edge devices. Quantization has emerged as an effective solution for deploying large models. While post-training quantization (PTQ) successfully retains the performance at moderate bit-width (e.g., W8A8), it suffers from severe performance degradation under low-bit quantization (e.g., W4A8), especially for small-scale models that are more suitable for edge deployment. In this paper, we propose ProQuant, a novel weight-activation quantization-aware training (QAT) framework tailored for low-bit MLLMs. First, to align the limited finetuning dataset distribution with the pretrained dataset distribution, we propose a self-relabeling (SRL) scheme to resample the responses of the open-source multimodal dataset. Second, we are the first to take a decoupled view of multi-modal (MM) understanding and language modeling abilities. We propose a progressive block activation (PBA) mechanism to prioritize the MM understanding recovery. We also introduce a vision-sensitive factor $\\vecτ$ that effectively identifies the MM-critical layers. Extensive experiments across various benchmarks, covering models with 2B-8B parameters, show that ProQuant significantly outperforms existing methods. For example, our W4A8 Qwen3-VL-2B-Instruct improves average accuracy by impressively 6.6% and achieves performance comparable to full precision counterparts with only approximately 1% performance drop. Code is available at https://github.com/yufeixue-ai/ProQuant/.",
+      "categories": [
+        "cs.CV",
+        "cs.CL"
+      ],
+      "published": "2026-11-05T16:04:31Z",
+      "paper_url": "http://arxiv.org/abs/2611.08216v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.08216v1.pdf",
+      "score": 92,
+      "score_reasons": [
+        "分类：LLM",
+        "摘要命中：large language model",
+        "摘要命中：language model",
+        "摘要命中：post-training",
+        "摘要命中：benchmark",
+        "摘要命中：multimodal"
       ],
       "category": "llm",
       "category_label": "LLM",
@@ -906,162 +1082,6 @@
       "category": "llm",
       "category_label": "LLM",
       "track": "frontier"
-    },
-    {
-      "arxiv_id": "2611.05263",
-      "title": "JHiMA-WebRL: A Joint Hierarchical Multi-Agent Reinforcement Learning Framework for Long-Horizon Web Tasks",
-      "authors": [
-        "Shanka Subhra Mondal",
-        "Jiayun Wang"
-      ],
-      "abstract": "Multimodal web agents have shown promising capabilities for interacting with websites through graphical user interfaces (GUIs), yet realistic web tasks often require long-horizon, multi-step planning that remains challenging for monolithic policies. Such agents must jointly infer high-level plans, navigate through intermediate states, track progress over extended interaction histories, and execute visually grounded actions. Although prior work has explored modular multi-agent systems with a separate planner, the planner is typically not updated jointly with the actor. We investigate whether explicitly separating and jointly training planning and execution provides a stronger inductive bias for long-horizon web navigation. We introduce JHiMA-WebRL, a joint hierarchical multi-agent reinforcement learning framework for web agents that couples a task decomposer with an actor. To train the decomposer, we use a strong teacher model to construct structured subtask supervision from multimodal GUI trajectories, and use these annotations to fine-tune both the decomposer and the subtask-conditioned actor. We then extend Group Relative Policy Optimization (GRPO) to jointly optimize the decomposer and actor in the interactive WebArena environment through hierarchical rollout grouping and role-specific advantages. On WebArena-Lite-v2, JHiMA-WebRL-14B, consisting of a 7B actor and a 7B decomposer, achieves an average success rate of 37.2%, compared with 24% for a ScaleCUA-32B agent that we fine-tune with RL on the same training tasks and evaluate under the same protocol. Ablations show that jointly updating the decomposer during RL outperforms updating the actor alone. These results suggest that jointly learned role factorization with smaller models can be a competitive alternative to scaling monolithic agents for long-horizon web tasks.",
-      "categories": [
-        "cs.AI"
-      ],
-      "published": "2026-11-03T17:49:14Z",
-      "paper_url": "http://arxiv.org/abs/2611.05263v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.05263v1.pdf",
-      "score": 90,
-      "score_reasons": [
-        "分类：RL",
-        "标题命中：reinforcement learning",
-        "摘要命中：policy optimization",
-        "摘要命中：grpo"
-      ],
-      "category": "rl",
-      "category_label": "RL",
-      "track": "frontier"
-    },
-    {
-      "arxiv_id": "2611.07283",
-      "title": "Encoding and Propagation of Grammatical Number in Large Language Models",
-      "authors": [
-        "Jacob Solinsky",
-        "Serguei Pakhomov"
-      ],
-      "abstract": "Sparse autoencoders (SAEs) have become an increasingly popular means of translating Large Language Model (LLM) hidden state vectors into a human-comprehensible list of features or symbols. As such, SAEs may provide insight into an LLM's knowledge representation and internal ``mental'' grammar - topics of pragmatic interest for mechanistic interpretation of AI behavior and of theoretical interest for the study of in silico representations of human language. Language models with fewer than 100M parameters, trained on small corpora, nonetheless exhibit strong grammatical competence and discourse coherence, despite producing content of limited reliability. We use SAEs that we trained on one such model (Pythia-70M) to conduct an in-depth examination of how a single grammatical phenomenon, number agreement, is represented and processed in an LLM. We demonstrate the mechanism and the methodology by which SAEs can be used to find and propagate ``plural noun'', ``plural matrix subject'', and ``generate a plural verb'' features which cause the LLM to produce plural verb forms such as ``are'', ``do'', or ``have'' instead of ``is'', ``does'', and ``has'' in response to prompts such as ``the men in the park''. We show that intervening to remove these features from the hidden states of plural subject noun tokens causes the model to produce singular verbs instead, and vice versa. We also show that corresponding ``singular noun'' and ``generate a singular verb'' features are not as effective for this task. This asymmetry suggests that Pythia-70m makes use of a privative representation of grammatical number in English. These findings replicated with larger LLMs Gemma-2-2b and Llama-3.1-8b yielded similar results. Our main contribution is a novel approach to the use of SAEs to understanding how LLMs encode human language that addresses a number of technical and methodological challenges.",
-      "categories": [
-        "cs.CL",
-        "cs.AI"
-      ],
-      "published": "2026-11-05T01:04:02Z",
-      "paper_url": "http://arxiv.org/abs/2611.07283v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.07283v1.pdf",
-      "score": 87,
-      "score_reasons": [
-        "分类：LLM",
-        "标题命中：large language model",
-        "标题命中：language model",
-        "cs.CL"
-      ],
-      "category": "agent",
-      "category_label": "Agent",
-      "track": "frontier"
-    },
-    {
-      "arxiv_id": "2611.06185",
-      "title": "Editing Large Language Models with Geometry-Aware Regularization",
-      "authors": [
-        "Bingqing Liu",
-        "Wei Liu",
-        "Jun Wang",
-        "Xiaobo Sun",
-        "Yuhua Li",
-        "Ruixuan Li"
-      ],
-      "abstract": "Knowledge editing has become a key technique for updating knowledge in large language models. However, existing methods neglect the geometric structure of the knowledge representation space, leading to two key limitations: they cannot distinguish which pre-trained knowledge should be preferentially preserved (core vs. non-core) nor which new edits are inherently difficult (hard vs. easy). To address this, we propose GEdit, a geometry-aware framework built on a Low-Rank Plus Diagonal (LR+D) factor model that captures the intrinsic low-rank structure of Transformer FFN hidden representations. GEdit features two complementary mechanisms. First, the low-rank regularization applies targeted protection on a low-rank core knowledge subspace. Second, the adaptive regularization dynamically adjusts the regularization strength based on each edit request's editability: relaxing constraints for hard edits to ensure success, and tightening them for easy edits to better preserve pretrained knowledge. Extensive experiments on GPT2-XL, GPT-J, and LLaMA-3-8B under large-scale editing scenarios, including both mini-batch and fully sequential editing settings with up to 10,000 continuous updates, show that GEdit consistently and significantly outperforms state-of-the-art baselines in both editing success and knowledge preservation.",
-      "categories": [
-        "cs.CL",
-        "cs.AI"
-      ],
-      "published": "2026-11-04T09:02:10Z",
-      "paper_url": "http://arxiv.org/abs/2611.06185v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.06185v1.pdf",
-      "score": 87,
-      "score_reasons": [
-        "分类：LLM",
-        "标题命中：large language model",
-        "标题命中：language model",
-        "cs.CL"
-      ],
-      "category": "llm",
-      "category_label": "LLM",
-      "track": "frontier"
-    },
-    {
-      "arxiv_id": "2611.06956",
-      "title": "Octopus: One Brain, Many Branches for Latent-KV Multi-Agent Reinforcement Learning",
-      "authors": [
-        "Tianming Sha"
-      ],
-      "abstract": "Multi-agent LLM systems explore in parallel by spawning sub-agents with isolated context windows, whereas single-agent systems append every search and verification step into one growing trajectory. However, existing multi-agent frameworks duplicate prefix KV caches across branches, exchange findings by re-prefilling text summaries, and flatten or drop cross-branch dependencies during reinforcement learning (RL). We introduce Octopus, a single-model multi-agent RL framework in which all threads share one backbone and coordinate over a GPU-resident directed acyclic graph (DAG) of KV states through five primitives (fork, read_thread, wait_threads, rewind, commit). Octopus combines three co-designed mechanisms: (1) Zero-Copy Radix Forking, which spawns branches as $\\mathcal{O}(1)$ cursor views over shared physical KV pages; (2) Attention-Only KV Mounting, which mounts a sibling thread's terminal KV blocks directly into full-attention layers while bypassing linear-recurrent states (Gated DeltaNet / Mamba-2), cutting off-task hijacking by $21\\times$ ($57.9\\% \\to 2.7\\%$) while retaining $92.2\\%$ of full-text mutual information at zero extra KV allocation; and (3) a Packed DAG-GRPO Trainer, which packs all episode branches into one block-sparse attention pass and assigns counterfactual branch credit via leave-one-branch-out marginal rewards. Trained end-to-end with GRPO on Qwen3.5-4B over a sparse BM25 corpus, Octopus reaches $49.6\\%$ accuracy on BrowseComp-Plus ($+17.5$ points over single-agent GRPO at 143K context and $+12.5$ points over text-summary multi-agent RL) and $51.2\\%$ on OpenResearcher, outperforming dense-retrieval agents up to $250\\times$ larger while increasing training throughput $3.3\\times$ and cutting peak KV memory $2.8\\times$.",
-      "categories": [
-        "cs.LG",
-        "cs.CL"
-      ],
-      "published": "2026-11-03T22:42:25Z",
-      "paper_url": "http://arxiv.org/abs/2611.06956v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.06956v1.pdf",
-      "score": 85,
-      "score_reasons": [
-        "分类：Agent",
-        "标题命中：multi-agent",
-        "标题命中：agent",
-        "cs.CL"
-      ],
-      "category": "agent",
-      "category_label": "Agent",
-      "track": "frontier"
-    },
-    {
-      "arxiv_id": "2611.07442",
-      "title": "Req2Rust: A Requirements-Guided Agent Harness for Project-Level C++-to-Rust Migration",
-      "authors": [
-        "Shengbo Wang",
-        "Mingwei Liu",
-        "Yuwen Chen",
-        "Yanlin Wang"
-      ],
-      "abstract": "Memory-safety concerns make Rust an attractive target for modernizing legacy C/C++ systems, yet project-level C++ migration must balance semantic fidelity with Rust-oriented reconstruction. Source-structure-preserving migration can track low-level behavior, but it can also carry source-language organization, unsafe idioms, and project assumptions into Rust. Direct agent-based translation gives the model more freedom to construct a Rust project, but semantic coverage depends on the model identifying the source behaviors that must be preserved. This problem is especially acute for C++, where source behaviors are often hidden in object models, destructor-driven lifetime protocols, and other hard-to-localize C++ semantics. This paper presents Req2Rust, the first project-level LLM-based C++-to-Rust migration harness. Req2Rust first derives an evidence-grounded Migration Requirements Specification (MRS) that records the behaviors and constraints that must be preserved. It then synthesizes a Rust Design Specification (RDS) and realizes it as an initial Rust project. Because real projects contain implementation details and idioms that only become visible during build and validation, Req2Rust treats the initial Rust project as an executable refinement state. Compiler, semantic, and unsafe-reduction validators produce validation reports for improving buildability, behavioral alignment, and unsafe usage. We evaluate Req2Rust on general C++ projects and modules from the large-scale Openharmony codebase against a ClaudeCode baseline. Req2Rust produces buildable Rust crates in both settings and improves test pass rate from 69.5% to 91.9% on general projects and from 45.4% to 87.9% on Openharmony modules.",
-      "categories": [
-        "cs.SE"
-      ],
-      "published": "2026-11-05T04:40:17Z",
-      "paper_url": "http://arxiv.org/abs/2611.07442v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.07442v1.pdf",
-      "score": 80,
-      "score_reasons": [
-        "分类：Harness",
-        "标题命中：agent harness"
-      ],
-      "category": "harness",
-      "category_label": "Harness",
-      "track": "harness"
-    },
-    {
-      "arxiv_id": "2611.05088",
-      "title": "LatentTriad: Pre-Action Risk Representations for Malicious Agent Skill Detection",
-      "authors": [
-        "Zhe Yu",
-        "Yi Liu",
-        "Ying Zhang",
-        "Simin Chen"
-      ],
-      "abstract": "Large language model agents are increasingly extended with reusable skills, but untrusted skill content can induce operations outside the user's task. Detecting this contextual risk requires more than suspicious-pattern matching, while dynamic analysis incurs the cost of skill execution. We find that hidden states formed during prefill contain readable information about task-operation consistency, including across held-out expression forms in controlled evaluations. Matched Operation-state interventions also affect later Boundary states and shift fixed risk readouts toward the donor label. Based on these findings, we introduce LatentTriad, which combines contextual Boundary features, group-adjusted Operation directions, and departures from benign state relationships. All branches share one prefill: detection generates no output tokens, invokes no tools, and executes no skill code. Across 5,830 skill packages from five sources and seven backbones, LatentTriad achieves 99.0-99.2% pooled F1 and 93.0-94.6% source-macro F1. A separately measured compact implementation completes prefill and detection in a median of 259-284 ms. These results connect pre-action risk readability and functional influence to execution-free skill screening.",
-      "categories": [
-        "cs.AI"
-      ],
-      "published": "2026-11-03T15:46:12Z",
-      "paper_url": "http://arxiv.org/abs/2611.05088v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.05088v1.pdf",
-      "score": 65,
-      "score_reasons": [
-        "分类：Skill",
-        "标题命中：agent skill"
-      ],
-      "category": "skill",
-      "category_label": "Skill",
-      "track": "harness"
     },
     {
       "arxiv_id": "2611.05828",
@@ -1196,6 +1216,71 @@
       "track": "harness"
     },
     {
+      "arxiv_id": "2611.07624",
+      "title": "Beneath the Surface: What We Overlook When We Talk About Agent Evolution",
+      "authors": [
+        "Xiaobo Wang",
+        "Zimu Wang",
+        "Siyu Ye",
+        "Jiaqi Li",
+        "Min Tang",
+        "Jun Bai",
+        "Yuling Shi",
+        "Ruobing Wang",
+        "Jingjing Zhang",
+        "Chaofan Wang",
+        "Kai Wu",
+        "Mengnan Qi",
+        "Kai Cai",
+        "Xiaodong Gu",
+        "Qi Liu",
+        "Zilong Zheng"
+      ],
+      "abstract": "Agent harness evolution enables recursive self-improvement (RSI) without updating model weights. We examine whether higher benchmark scores yield reliable, efficient, and transferable improvement. We evaluate four methods across harnesses, general and coding tasks. Repeated evaluations, controlled agent expansion, component interventions, and admission replays reveal recurring patterns. All sixteen evolved agents gain previously uncovered tasks while losing previously covered ones. In one general-task case, reliability rises by 5.2 points despite losing ten previously covered tasks. Most reliability gains also increase deployment cost. Specific changes usually outperform generic reminders, but their benefits can change when combined. The highest-scoring agent does not yield the largest mean improvement in any of our four pools, and stricter admission can discard useful alternatives. Transfer selectively preserves gains: coverage usually falls on the general-task target across both harness types and paradigms, but rises on the coding target with the outer-layer-only harness. These findings motivate preservation-aware evaluation, tested decision rules, and explicit applicability conditions. As a constructive follow-up, EvoAudit turns these diagnostics into revisions of select, analyze, mutate, and gate, achieving the best performance.",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-11-05T08:06:37Z",
+      "paper_url": "http://arxiv.org/abs/2611.07624v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.07624v1.pdf",
+      "score": 55,
+      "score_reasons": [
+        "分类：Harness",
+        "摘要命中：agent harness"
+      ],
+      "category": "harness",
+      "category_label": "Harness",
+      "track": "harness"
+    },
+    {
+      "arxiv_id": "2611.07595",
+      "title": "Evolver: Turning Agent Exploration into Evolving Capabilities",
+      "authors": [
+        "Haoyang Zhang",
+        "Qumeng Sun",
+        "Xiao Zhang",
+        "Xiang Liu",
+        "Zhidong Fan",
+        "Junjie Wang"
+      ],
+      "abstract": "Agent exploration produces valuable procedural knowledge, yet much of this experience remains confined to transient execution traces and is not systematically reused. We introduce Evolver, an experience-driven framework that transforms agent exploration into persistent, reusable capabilities without updating foundation model parameters. Built around structured Gene assets, Evolver integrates experience acquisition, retrieval, and feedback-guided evolution to support experience-conditioned execution across existing agent harnesses. We evaluate Evolver using Claude Code and Codex, two foundation model configurations, and four benchmarks: Terminal-Bench 2.1, SWE-bench Multilingual, SWE-rebench, and GAIA. On a selected diagnostic set of 320 paired executions, Evolver improves task success from 83.13% to 87.50% (+4.38 percentage points) while reducing recorded task-execution token consumption by 24.24%. Furthermore, among 265 pairs successful under both conditions, token consumption decreases by 17.57%, demonstrating efficiency benefits even when task success is preserved. These findings suggest that persistent procedural experience can improve both task effectiveness and execution efficiency, providing a practical foundation for transforming agent exploration into evolving capabilities.",
+      "categories": [
+        "cs.SE",
+        "cs.AI"
+      ],
+      "published": "2026-11-05T07:44:28Z",
+      "paper_url": "http://arxiv.org/abs/2611.07595v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.07595v1.pdf",
+      "score": 55,
+      "score_reasons": [
+        "分类：Harness",
+        "摘要命中：agent harness"
+      ],
+      "category": "harness",
+      "category_label": "Harness",
+      "track": "harness"
+    },
+    {
       "arxiv_id": "2611.00535",
       "title": "Dynamic programming principle for controlled systems driven by fractional Brownian motions and related backward stochastic Riccati equations",
       "authors": [
@@ -1297,33 +1382,6 @@
       "track": "classic-algorithms"
     },
     {
-      "arxiv_id": "2610.42085",
-      "title": "Cost-Aware Stopping for Freeze-Thaw Bayesian Optimization: When Does One-Step Lookahead Suffice?",
-      "authors": [
-        "Long Vu",
-        "Jongseong Brad Choi",
-        "Binoy Ravindran",
-        "Zhoulai Fu"
-      ],
-      "abstract": "Freeze-thaw Bayesian optimization (BO) evaluates candidates in resumable increments but usually stops at a budget or convergence test. We maximize a budget-free utility, the best observed score minus a cost per increment, with a one-step lookahead: advance the candidate with the largest expected improvement (EI) under a fixed surrogate, and stop once no EI exceeds the cost. This rule, EI stopping, never falls below stopping immediately in expected utility, yet it can stop too early. We construct a certificate, a lower bound on the value of two-step lookahead, that proves such a stop premature, and repeating this correction never lowers expected utility under the surrogate. Under the surrogate, EI stops are premature on average at low costs and lose little at high costs. On three hyperparameter optimization benchmarks, a pre-registered test finds EI stopping noninferior to the correction in most high-cost settings, while the correction gains at low costs on two of the three; more information sharing in the surrogate raises EI stopping's utility. On the surrogates of two published methods, EI stopping trades lower scores for fewer training increments. EI stopping is a simple cost-aware reference whose utility depends on the surrogate.",
-      "categories": [
-        "cs.LG",
-        "math.OC",
-        "stat.ML"
-      ],
-      "published": "2026-10-30T17:36:06Z",
-      "paper_url": "http://arxiv.org/abs/2610.42085v1",
-      "pdf_url": "http://arxiv.org/pdf/2610.42085v1.pdf",
-      "score": 53,
-      "score_reasons": [
-        "分类：经典算法",
-        "标题命中：bayesian optimization"
-      ],
-      "category": "classic-algorithms",
-      "category_label": "经典算法",
-      "track": "classic-algorithms"
-    },
-    {
       "arxiv_id": "2611.04719",
       "title": "Bayesian optimization enhanced magnetic field gradient detection based on spin-orbit coupled Bose-Einstein condensates",
       "authors": [
@@ -1344,6 +1402,35 @@
       "score_reasons": [
         "分类：经典算法",
         "标题命中：bayesian optimization"
+      ],
+      "category": "classic-algorithms",
+      "category_label": "经典算法",
+      "track": "classic-algorithms"
+    },
+    {
+      "arxiv_id": "2611.02678",
+      "title": "Reap: Uncovering Monte Carlo proof search with a lightweight model",
+      "authors": [
+        "Yutong Wang",
+        "Xuanzhi Ren",
+        "Tianyi Xu",
+        "Ruitong Liu",
+        "Jingda Xu",
+        "Peihao Wu",
+        "Bryan Dai",
+        "Bin Dong"
+      ],
+      "abstract": "We present Reap, an open framework for learning and analyzing formal proof search in Lean4. Reap implements policy-value-guided Monte Carlo Tree Search directly in Lean, sharing proof-state transitions, AND-OR search, and replay verification between inference and training rollouts. Structured action logs expose how neural predictions and tactic execution interact during search. Using this framework, we train Reaper-1, a 1.7B-parameter policy-value model, through continued pre-training, supervised tactic learning, and iterative search-based reinforcement learning. Using a separate premise selector, the final system solves 79.9% of miniF2F-test at pass@32, establishing state-of-the-art performance among open provers of comparable size while remaining competitive with substantially larger models. Beyond improved solve rates, our results suggest that RL strengthens the prover's ability to organize proofs around useful intermediate results, favoring substantial advances over repeated local adjustments. This more directed proof construction is accompanied by increasingly elaborate tactic programs: fewer explicit search decisions are needed, while more work is performed within each decision. The resulting trade-off between search effort and tactic execution cost provides insight into how learning changes the prover's problem-solving strategy.",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-11-02T07:33:28Z",
+      "paper_url": "http://arxiv.org/abs/2611.02678v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.02678v1.pdf",
+      "score": 45,
+      "score_reasons": [
+        "分类：经典算法",
+        "摘要命中：monte carlo tree search"
       ],
       "category": "classic-algorithms",
       "category_label": "经典算法",
@@ -1412,6 +1499,57 @@
       "track": "foundation-models"
     },
     {
+      "arxiv_id": "2611.08199",
+      "title": "Do sEMG Foundation Models Improve Cross-Subject Generalisation?",
+      "authors": [
+        "William Raftery",
+        "Dario Farina"
+      ],
+      "abstract": "sEMG Foundation Models aim to learn general purpose representations over diverse subjects and recording conditions that boost performance on a variety of downstream tasks. However, existing evaluations make it difficult to discern whether pretraining alone is sufficient to combat the cross-subject overfitting which makes machine learning on sEMG so challenging. We conduct a systematic evaluation of three sEMG foundation models across three gesture classification datasets under both intra-session and inter-subject splits, using three fine-tuning strategies designed to isolate the contribution of pretraining. We find that pretraining boosts performance when train and test samples are drawn from the same recording session, but this benefit largely disappears under inter-subject evaluation. In low subject count datasets, pretraining provides little to no benefit and classical ML baselines match or exceed foundation model performance.",
+      "categories": [
+        "cs.LG",
+        "q-bio.NC"
+      ],
+      "published": "2026-11-05T15:53:37Z",
+      "paper_url": "http://arxiv.org/abs/2611.08199v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.08199v1.pdf",
+      "score": 65,
+      "score_reasons": [
+        "分类：基座模型",
+        "标题命中：foundation model"
+      ],
+      "category": "foundation-models",
+      "category_label": "基座模型",
+      "track": "foundation-models"
+    },
+    {
+      "arxiv_id": "2611.08153",
+      "title": "A Generative Foundation Model for Multimodal Tokamak Tasks",
+      "authors": [
+        "Yingshuai Ji",
+        "Haodong Feng",
+        "Guohong Deng",
+        "Gelin Bian",
+        "Yue Wang"
+      ],
+      "abstract": "Tokamak experiments record diverse measurements, including waveforms, profiles, fields, and scalars, which are used to reconstruct the plasma, forecast its evolution, recover associated control signals, and estimate disruption risk. Most models are built separately for one task and a fixed set of inputs and outputs, and each relies on a prescribed subset of diagnostics rather than structuring the full multimodal observation set to extract global, cross-signal information about the discharge. These limitations motivate a reusable foundation model that adapts to each task's input-output schema and models heterogeneous target signals jointly, rather than retraining a separate model for every configuration. In this work, we extend the TokaMark benchmark with two groups of tasks for actuator action inversion and disruption prediction, yielding 20 MAST tasks in six groups with explicit schemas and evaluation protocols. Then, we introduce GenToka, a generative tokamak foundation model that jointly generates schema-selected targets through a shared conditional diffusion Transformer, with signal-specific codecs preserving native time series, profiles, fields, and scalars; foundation pretraining and task-specific adaptation transfer cross-signal structure across all six groups. Evaluation on MAST measurements shows that GenToka reduces macro-average normalized root mean squared error relative to TokaMind by 4.7% on Groups 1-4 and by 17.7% on Group 5, and improves macro-average window-level F1 on Group 6 by 8.4% at a common validation-selected threshold. GenToka provides a reusable, generative, and multimodal pathway for experimental tokamaks, linking plasma-state reconstruction, actuator inference, and disruption warning from shared measurements to support more integrated, data-driven fusion plasma prediction and control research.",
+      "categories": [
+        "cs.AI",
+        "cs.CE"
+      ],
+      "published": "2026-11-05T15:13:48Z",
+      "paper_url": "http://arxiv.org/abs/2611.08153v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.08153v1.pdf",
+      "score": 65,
+      "score_reasons": [
+        "分类：基座模型",
+        "标题命中：foundation model"
+      ],
+      "category": "foundation-models",
+      "category_label": "基座模型",
+      "track": "foundation-models"
+    },
+    {
       "arxiv_id": "2611.07886",
       "title": "When, Where, How: Active In-Context Learning for Tabular Foundation Models",
       "authors": [
@@ -1455,62 +1593,6 @@
       "published": "2026-11-05T12:03:01Z",
       "paper_url": "http://arxiv.org/abs/2611.07883v1",
       "pdf_url": "http://arxiv.org/pdf/2611.07883v1.pdf",
-      "score": 65,
-      "score_reasons": [
-        "分类：基座模型",
-        "标题命中：foundation model"
-      ],
-      "category": "foundation-models",
-      "category_label": "基座模型",
-      "track": "foundation-models"
-    },
-    {
-      "arxiv_id": "2611.07756",
-      "title": "Scaling Laws for SAE Training Data",
-      "authors": [
-        "Nikita Koriagin",
-        "Nikita Balagansky",
-        "Daniil Gavrilov"
-      ],
-      "abstract": "Activation storage is often a bottleneck in sparse autoencoder (SAE) training. We study how many unique activations an SAE needs when its total training budget is fixed. Quality improves rapidly as the buffer grows, then reaches a plateau where replaying the buffer is nearly as effective as using fresh activations throughout training. Beyond this point, additional unique activations bring little benefit to reconstruction or interpretability, so the buffer need not grow with the training budget. We describe this tradeoff between diversity and repetition with a scaling law for limited data. We validate it across dictionary sizes and token budgets, early, middle, and late layers of Llama-3.1, Qwen3 model sizes, and BatchTopK, TopK, and JumpReLU SAEs. Sweeps using mathematical text and Python code test the effect of changing the activation source. Evaluation covers explained variance (EV), reconstruction MSE, feature absorption, automated interpretability, and sparse probing. These results give a practical training rule: choose the smallest buffer that reaches the quality plateau and replay it for the remaining budget. In our experiments, this reduces activation storage by $8\\text{--}64\\times$ with negligible quality loss.",
-      "categories": [
-        "cs.LG",
-        "cs.AI",
-        "cs.CL"
-      ],
-      "published": "2026-11-05T10:00:55Z",
-      "paper_url": "http://arxiv.org/abs/2611.07756v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.07756v1.pdf",
-      "score": 65,
-      "score_reasons": [
-        "分类：基座模型",
-        "摘要命中：qwen",
-        "摘要命中：llama",
-        "cs.CL"
-      ],
-      "category": "foundation-models",
-      "category_label": "基座模型",
-      "track": "foundation-models"
-    },
-    {
-      "arxiv_id": "2611.07717",
-      "title": "Pediatric ECG foundation model via adult-to-pediatric fine-tuning: downstream tasks and clinical evaluation",
-      "authors": [
-        "Yu Cao",
-        "Haiyan Xu",
-        "Xiaohan Li",
-        "Jian Yang",
-        "Yuqing Feng",
-        "Wei Wang",
-        "Haomin Li"
-      ],
-      "abstract": "Pediatric electrocardiogram (ECG) interpretation is complicated by age-dependent electrophysiological changes that limit direct transfer of adult AI models. We asked whether an adult ECG foundation model could be adapted to pediatric ECGs. Using 339,563 12-lead ECGs from 238,189 children, we compared direct application, pediatric fine-tuning, and training from scratch under an identical architecture. Direct transfer was poor (mean AUC 0.8256). Fine-tuning reached 0.9695, above de novo training (0.9661), and attained 0.9079 using only 1% of training data. On 10,999 external ECGs, fine-tuning achieved a mean AUC of 0.9385 across 30 labels. It generalized to age regression (MAE 1.12 years) and congenital heart disease classification (AUC 0.9562). Across 17 clinicians and 100 cases, diagnostic accuracy rose from 56.8% to 65.4% (p < 0.001) and did not decline when AI erred. Adult ECG foundation models require pediatric adaptation; fine-tuning offers a data-efficient route to scalable pediatric ECG AI.",
-      "categories": [
-        "cs.LG"
-      ],
-      "published": "2026-11-05T09:36:44Z",
-      "paper_url": "http://arxiv.org/abs/2611.07717v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.07717v1.pdf",
       "score": 65,
       "score_reasons": [
         "分类：基座模型",
