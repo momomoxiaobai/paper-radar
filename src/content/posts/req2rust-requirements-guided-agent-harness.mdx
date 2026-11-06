@@ -1,0 +1,209 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-06T11:40:00+08:00
+title: "Req2Rust 论文解读：用需求规格和三重验证约束 C++ 到 Rust 的项目级迁移"
+featured: true
+category: harness
+tags:
+  - agent-harness
+  - code-migration
+  - rust
+  - requirements-engineering
+  - program-validation
+description: "详细拆解 Req2Rust 如何把需求恢复、Rust 设计、增量实现和编译/语义/unsafe 三重验证组织成项目级迁移 Harness，并审视 91.9% 测试通过率背后的基线与证据边界。"
+paper:
+  title: "Req2Rust: A Requirements-Guided Agent Harness for Project-Level C++-to-Rust Migration"
+  venue: "arXiv preprint, 2026"
+  paperUrl: "https://arxiv.org/abs/2611.07442"
+  pdfUrl: "https://arxiv.org/pdf/2611.07442"
+  codeUrl: "https://anonymous.4open.science/r/Req2Rust-8FB1"
+  score: 90
+  scoreNote: "推荐理由：把代码迁移从一次性翻译改造成由需求规格、目标设计和可执行验证共同约束的状态机，消融清楚说明 semantic validator 的必要性；扣分在于主要比较对象只有一个通用 coding agent，模型、预算和重复运行方差交代不足，测试通过也不能覆盖未进入测试的语义。"
+---
+
+> [!NOTE]
+> 论文于 **2026 年 11 月 5 日**公开。这里的 Harness 不是一个更长的 prompt，而是把 Agent 的可见状态、产物、允许动作和退出条件组织成闭环。读实验时必须区分 **能编译、通过测试、减少 unsafe** 三件不同的事。
+
+## 一句话结论
+
+**Req2Rust 先让 Agent 从 C++ 工程恢复一份可核查的迁移需求规格 MRS，再生成 Rust 设计规格 RDS，把目标仓库当作持续演化的 refinement state，最后由 compiler、semantic validator 和 unsafe-reduction validator 反复给出可执行反馈。它在 7 个通用项目上得到 91.9% 测试通过率、在 5 个 OpenHarmony 模块上得到 87.9%，显著高于同模型驱动的 ClaudeCode；真正的贡献不是“会写 Rust”，而是把语义约束从聊天上下文变成跨阶段、可追踪的工程工件。**
+
+<figure><img src="/paper-radar/images/req2rust/pipeline.svg" alt="Req2Rust 从迁移需求规格到 Rust 设计、增量实现和三重验证的工作流" width="1600" height="900" loading="eager"/><figcaption>图 1：根据论文 Figures 2–3 重绘。MRS 与 RDS 是 Harness 的外部记忆；三个 validator 把“看起来完成”变成不同层级的退出条件。</figcaption></figure>
+
+## 问题背景：语法翻译不是项目迁移
+
+把一个短 C++ 函数翻成 Rust，模型通常能给出可读代码；项目级迁移却同时牵涉：
+
+- 多文件 symbol、build graph、第三方库和平台 API；
+- ownership、lifetime、错误处理和并发语义；
+- 文件、socket、锁、指针等带状态资源；
+- C ABI / FFI 边界和不得不用的 `unsafe`；
+- 原项目未写进注释、只由测试和调用关系体现的行为。
+
+一次性“读仓库然后重写”的失败往往不是模型不会某个语法，而是约束在长上下文里逐渐丢失。更危险的是，Rust 项目可以编译，却悄悄漏了 corner case；也可以测试通过，却靠大量 `unsafe` 绕过语言保证。Req2Rust 因此把迁移定义为一个 **requirements-guided refinement** 问题。
+
+## 先读懂三个层级：源代码、规格、实现状态
+
+设原 C++ 项目为 $P_C$，恢复出的迁移需求为 $M$，目标 Rust 设计为 $D$，第 $t$ 轮 Rust 工程为 $P_R^{(t)}$。Harness 追求的不是表面 token 相似，而是：
+
+$$
+P_C \models M,
+\qquad
+D \text{ covers } M,
+\qquad
+P_R^{(t)} \models D \land M.
+$$
+
+这里的 $\models$ 可以读成“满足”。论文没有提供形式化证明器，因此最后一项实际上由编译、测试、语义检查与人工可读的 coverage relation 近似。这个写法也提醒我们：验证器只覆盖它观察到的性质，不能把测试通过误写成完整语义等价。
+
+## Stage 1：MRS 把“原工程做什么”写成迁移义务
+
+MRS（Migration Requirements Specification）是 source-facing 的行为说明，回答以下问题：
+
+1. 哪些功能和外部可见行为必须保留？
+2. 模块、symbol、数据结构之间怎样依赖？
+3. 哪些状态或资源会被读写、创建、释放？
+4. 哪些接口必须保持 ABI / API 兼容？
+5. 哪些错误路径、边界条件和平台约束不能漏？
+
+MRS 的价值在于把“读过源代码”变成一个持久工件。后续 Agent 不必依赖早期对话记忆，而可以逐项问：这个 requirement 被哪个 Rust module、symbol 和 test 覆盖？
+
+这一步仍可能错。若 C++ 中的隐式行为没有测试、调用点或文档证据，Agent 可能恢复不出来。因此 MRS 不是 ground truth，而是可审查、可修订的中间假设。
+
+## Stage 2：RDS 把行为义务落到 Rust 结构
+
+RDS（Rust Design Specification）是 target-facing 的设计说明，包含：
+
+- 目标文件与 module tree；
+- struct、trait、function 等核心 symbol；
+- 模块依赖和 implementation unit；
+- ownership / resource-management 选择；
+- 每个设计单元覆盖哪些 MRS requirement。
+
+可以把 coverage 写成一个二部映射：
+
+$$
+\Gamma: M_i \longrightarrow \{D_{j_1},D_{j_2},\ldots\}.
+$$
+
+若某个 $M_i$ 没有出边，它还没有设计承载点；若一个 $D_j$ 承担太多互不相关的需求，它可能是过大的迁移单元。论文的核心洞察之一正是：**先把行为分配到目标结构，再生成代码，比边读边译更容易保持全局一致性。**
+
+## Stage 3：把 Rust 仓库视为 refinement state
+
+初始 Rust project 不是最终答案，而是状态 $P_R^{(0)}$。Agent 按 RDS 的 implementation unit 逐步实现，并在每轮接收 validator feedback：
+
+$$
+P_R^{(t+1)}
+=\operatorname{Agent}
+\left(P_R^{(t)}, M, D, V\!\left(P_R^{(t)}\right)\right).
+$$
+
+这种表示比“失败后重新生成整仓库”稳定：已经通过验证的代码留在状态中，错误有具体文件和阶段，Agent 的动作空间也被缩小。它更接近编译器驱动开发，而不是聊天式代码补全。
+
+## 三个 validator 分别守什么
+
+### 1. Compiler validator：结构和类型底线
+
+它检查 Cargo project 能否构建，捕获缺 symbol、类型不匹配、borrow/lifetime 错误和依赖问题。编译成功只说明程序属于 Rust 类型系统接受的集合：
+
+$$
+\operatorname{compile}(P_R)=\text{true}
+\centernot\implies
+\operatorname{behavior}(P_R)=\operatorname{behavior}(P_C).
+$$
+
+### 2. Semantic validator：行为是否被保留
+
+它结合需求、实现和 tests 检查功能完整性，驱动 Agent 修复“能编译但做错事”的代码。论文消融中，删掉该 validator 后项目仍 7/7 可构建，但测试通过率从 91.9% 跌至 28.1%；这几乎是整篇最重要的证据。
+
+### 3. Unsafe-reduction validator：把逃生舱限制在边界
+
+Rust 的 `unsafe` 允许解引用裸指针、调用 unsafe function、访问 mutable static 等操作。它不是自动的 defect：FFI、内存映射或底层系统接口可能必须使用。但 unsafe block 会把一部分正确性义务从编译器转回开发者，所以 Harness 会定位并要求减少不必要范围。
+
+好的目标不是 $\operatorname{unsafe}=0$，而是：
+
+$$
+\min \operatorname{surface}(\texttt{unsafe})
+\quad
+\text{s.t. required FFI / systems behavior is preserved}.
+$$
+
+也就是把 unavoidable unsafe 封装在窄、可审查、带 invariant 的边界里，而不是为了数字清零破坏功能。
+
+## 实验设置：比较到底公平到什么程度
+
+论文在两组任务上评估：
+
+- 7 个通用 C++ project；
+- 5 个 OpenHarmony module，更贴近实际系统组件。
+
+Req2Rust 与 ClaudeCode 都使用 DeepSeek-V4-Pro。主要指标为 build success、test pass rate 和 unsafe ratio。这个设定控制了底层模型，但没有完全说明两套系统的 token budget、tool-call 次数、wall-clock、重试策略和随机种子；也没有展示多次独立运行的均值/方差。因此结果支持“该 Harness 在这组配置更有效”，还不足以分离每个资源因素。
+
+## 关键结果
+
+<figure><img src="/paper-radar/images/req2rust/results.svg" alt="Req2Rust 与 ClaudeCode 的测试通过率和验证器消融结果" width="1600" height="900" loading="lazy"/><figcaption>图 2：根据论文 Tables 2–4 重绘。可构建率和测试通过率必须分开看；semantic validator 消融正好显示二者差异。</figcaption></figure>
+
+在 7 个通用项目上，Req2Rust 测试通过率为 **91.9%**，ClaudeCode 为 **69.5%**；二者最终都达到 100% 可构建。在 5 个 OpenHarmony 模块上，二者分别为 **87.9%** 与 **45.4%**。这说明优势主要来自功能完成度，而不是只修编译错误。
+
+消融更能说明机制：
+
+| 配置 | 构建成功 | 测试通过率 | unsafe ratio |
+|---|---:|---:|---:|
+| 完整 Req2Rust | 7 / 7 | 91.90% | 1.7757% |
+| 去掉 semantic validator | 7 / 7 | 28.10% | — |
+| 去掉 unsafe-reduction validator | 7 / 7 | 91.90% | 4.9950% |
+| 只使用初始实现 | 0 / 7 | — | — |
+
+这组数字形成清楚的因果线索：compiler loop 让项目从 0/7 走到可构建；semantic loop 决定构建后的行为质量；unsafe loop 不改变测试通过率，却把 unsafe ratio 从约 5.00% 降至 1.78%。三个 validator 不是重复投票，而是约束不同的失败面。
+
+不过，test pass rate 的分母、测试覆盖强度和迁移后新增 tests 的独立性决定了它能代表多少语义。若测试本身从同一套不完整 requirement 生成，规格遗漏可能同时躲过生成与验证。
+
+## 为什么这是一篇 Harness 论文，而不是迁移 prompt 论文
+
+一个 prompt 主要改变单次模型调用的上下文；Harness 则定义了长程执行协议：
+
+- **状态**：MRS、RDS、当前 Rust tree、validator report；
+- **动作**：读取源文件、修改特定 implementation unit、构建、测试、审查 unsafe；
+- **反馈**：结构化而非自由文本的 failure evidence；
+- **不变量**：requirement coverage、可构建、测试、unsafe boundary；
+- **退出条件**：不同验证层级都达到门槛。
+
+这套分解也能迁移到 Java→Kotlin、Python 2→3、framework upgrade 或 monolith 拆分：先恢复行为义务，再设计目标结构，最后让验证器控制 refinement。
+
+## 局限与风险
+
+1. **基线窄。** 只有一个通用 coding agent，缺少其他 migration-specific system 和强人工流程。
+2. **运行统计不足。** Agent 有随机性，单次成功率不能替代重复运行及置信区间。
+3. **规格错误会级联。** MRS 遗漏后，RDS 和 validator 可能一致地忽略同一行为。
+4. **测试不是证明。** 未覆盖输入、性能、并发时序、UB 和平台差异仍可能出错。
+5. **成本不透明。** 项目级多轮 build/test 可能非常昂贵；论文没有把 token、时间和 CI 资源纳入主结果。
+6. **unsafe ratio 需语境。** 一个窄而关键的 FFI unsafe block 可能完全合理；简单追求比例会诱导错误优化。
+
+## 工程启示
+
+- 在 Agent 写代码前，先产出可 diff 的 requirement ledger；每条需求必须有来源证据和目标实现映射。
+- 把 compiler、tests、static analysis、security scan 看成不同 validator，不要把“CI 绿了”压成一个布尔值。
+- 要让修复 loop 读取结构化错误、受限修改范围和当前通过项，避免每轮大面积重写。
+- 对迁移任务记录 resource budget、重试次数和每个 validator 的增量收益，否则难以比较 Harness。
+- 对 FFI 使用 safety comment 写出 caller/callee invariant，并把 unsafe 封装进小 API；比例只是审查线索。
+- 最终验收应加入 differential testing、property-based testing、performance regression 和人工架构审查。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么 100% 可构建仍可能只有 28.1% 测试通过率？</summary><div class="thought-answer">类型系统只排除一类结构和内存安全错误，不知道业务期望。一个函数可以拥有正确签名、ownership 和返回类型，却遗漏状态更新、边界条件或错误码。消融结果正说明 compiler validator 与 semantic validator 的约束空间不同。</div></details>
+
+<details class="thought-question"><summary>2. MRS 为什么不能直接由测试替代？</summary><div class="thought-answer">测试给出有限输入上的 oracle，MRS 还要表达依赖、资源影响、API 边界和未被测试覆盖的行为义务。反过来 MRS 也不能替代测试：自然语言规格可能含糊或遗漏，需要执行证据纠错。二者应互相约束。</div></details>
+
+<details class="thought-question"><summary>3. 如果 semantic validator 使用同一个 LLM，它会不会和生成器犯同一种错？</summary><div class="thought-answer">会。共享模型和共享上下文会制造 correlated failure。可降低风险的方法是优先使用可执行测试、differential oracle、静态分析与独立模型，并保存 requirement 的源代码证据，让 validator 不只做一次“再看一遍”。</div></details>
+
+<details class="thought-question"><summary>4. unsafe ratio 从 4.9950% 降到 1.7757% 是否足以证明更安全？</summary><div class="thought-answer">不足。安全性取决于每个 unsafe block 的 invariant、可达性和封装边界，不只取决于代码行比例。一个很小但错误的裸指针操作仍可造成严重问题；该指标应触发审查，而不是充当安全证明。</div></details>
+
+<details class="thought-question"><summary>5. 怎样做一个更强的公平基线实验？</summary><div class="thought-answer">固定底层模型、最大 token/tool budget、容器和时间上限；每个任务重复多次并报告均值、方差和成功率；让系统使用同一测试集合，同时增加隐藏 differential tests；再分开报告成本、构建、行为、性能与人工审查结果。</div></details>
+
+<details class="thought-question"><summary>6. 这套 Harness 最容易迁移到哪类非 Rust 任务？</summary><div class="thought-answer">最适合有明确旧系统、可恢复行为义务和可执行验证器的改造，例如 API 版本迁移、数据库驱动替换、framework upgrade。若任务主要是开放式产品设计、缺少 oracle，MRS/RDS 仍有用，但 semantic loop 的证据会弱很多。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2611.07442)
+- [PDF](https://arxiv.org/pdf/2611.07442)
+- [作者提供的匿名代码与数据仓库](https://anonymous.4open.science/r/Req2Rust-8FB1)

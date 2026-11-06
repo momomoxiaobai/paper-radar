@@ -1,0 +1,276 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-06T11:50:00+08:00
+title: "算法重访｜ID3 决策树：从熵、信息增益到 C4.5、CART 与现代树模型"
+featured: true
+category: classic-algorithms
+tags:
+  - decision-tree
+  - id3
+  - information-gain
+  - entropy
+  - c4-5
+  - cart
+description: "面向初学者重读 Quinlan 1986 年 ID3 论文：从分类、熵和信息增益逐步手算天气例子，再解释递归建树、噪声、缺失值、高基数偏差，以及它如何演化为 C4.5、CART、随机森林与 GBDT。"
+paper:
+  title: "Induction of Decision Trees"
+  venue: "Machine Learning 1, 81–106 (1986)"
+  paperUrl: "https://doi.org/10.1007/BF00116251"
+  pdfUrl: "https://link.springer.com/content/pdf/10.1007/BF00116251.pdf"
+  score: 97
+  scoreNote: "推荐理由：ID3 把信息论准则、递归分治和可读规则组合成了机器学习史上最有影响力的算法模板之一；论文还认真处理噪声、缺失值和偏置。扣分只因原始离散属性版本会偏好高基数特征、容易过拟合，连续特征、剪枝和更稳健的 split criterion 要到后续 C4.5/CART 才成熟。"
+---
+
+> [!NOTE]
+> J. R. Quinlan 的论文发表于 **1986 年 3 月**，不是今天的新论文；它属于「算法重访」。本文先按第一次接触机器学习的读者来讲，再把原论文中的噪声与缺失值方案接到 C4.5、CART、Random Forest 和 GBDT。公式不需要先学微积分。
+
+## 阅读建议：我应该先会什么？
+
+### 最低先修知识
+
+读懂前半篇，只需要知道：
+
+- 分类是“根据特征预测离散标签”；
+- 概率在 0 到 1 之间，类别占比之和等于 1；
+- $\log_2 8=3$，表示 8 种等可能结果需要 3 个二进制问题区分；
+- 加权平均，例如两个子组大小不同，不能直接平均它们的纯度。
+
+如果这些概念仍陌生，建议先读：**监督学习与训练集 → 概率和条件概率 → 对数的直觉 → 过拟合与训练/测试划分**。不用先学线性代数、梯度下降或神经网络。
+
+### 按目标选择路线
+
+| 你的目标 | 建议阅读 |
+|---|---|
+| 第一次学决策树 | 读到“手算第一层分裂”，再回看递归伪代码 |
+| 准备面试 | 重点看 entropy、information gain、高基数偏差、ID3/C4.5/CART 区别 |
+| 实际使用树模型 | 继续读剪枝、缺失值、Random Forest 与 GBDT；不要直接部署原始 ID3 |
+| 研究 Agent/LLM | 关注“局部贪心 + 可执行反馈 + 停止条件”这一通用算法结构 |
+
+## 一句话结论
+
+**ID3 在每个节点选择“让标签不确定性下降最多”的属性，把样本递归分组，直到子集足够纯或没有有用属性。它简单、可解释、无需梯度，却不是寻找全局最小树：information gain 会偏好取值很多的属性，噪声会让树不断长，连续特征、缺失值和剪枝需要更完整的后继算法。理解 ID3 的最好方法不是背公式，而是亲手计算一次“分裂前还有多少混乱、分裂后平均还剩多少混乱”。**
+
+<figure><img src="/paper-radar/images/id3-decision-tree/split.svg" alt="ID3 用信息增益选择决策树根节点的天气数据示例" width="1600" height="900" loading="eager"/><figcaption>图 1：天气示例的根节点计算。Outlook 把 14 个样本分为 Sunny、Overcast、Rain，条件熵最低，因此信息增益最高。</figcaption></figure>
+
+## 1. 决策树在解决什么问题
+
+假设我们收集 14 天记录，每天有：
+
+- `outlook`：sunny / overcast / rain；
+- `temperature`：hot / mild / cool；
+- `humidity`：high / normal；
+- `windy`：true / false；
+- 标签 `play`：yes / no。
+
+目标是从前四项预测当天是否适合活动。一棵树可以写成嵌套问题：
+
+```text
+outlook?
+├─ overcast → yes
+├─ sunny    → 再问 humidity
+└─ rain     → 再问 windy
+```
+
+每个内部节点是一个属性测试，每条边是测试结果，每个叶子是预测。训练的核心就是：**下一问应该问哪个属性？**
+
+## 2. “纯度”是什么：先从概率理解熵
+
+设节点中的标签随机变量为 $Y$，共有 $K$ 类，第 $k$ 类占比为 $p_k$。Shannon entropy 为：
+
+$$
+H(Y)=-\sum_{k=1}^{K}p_k\log_2 p_k.
+$$
+
+约定 $0\log 0=0$。二分类时：
+
+- 全是 yes：$p=(1,0)$，$H=0$，完全确定；
+- yes/no 各半：$p=(0.5,0.5)$，$H=1$ bit，最不确定；
+- 9 个 yes、5 个 no：不确定性介于二者之间。
+
+天气数据根节点的 entropy：
+
+$$
+\begin{aligned}
+H(Y)
+&=-\frac9{14}\log_2\frac9{14}
+-\frac5{14}\log_2\frac5{14}\\
+&\approx 0.940.
+\end{aligned}
+$$
+
+熵不是“错误率”。若直接预测多数类 yes，训练错误率为 $5/14\approx0.357$；entropy 0.940 衡量的是完整标签分布还含多少信息。正因为它对概率变化更敏感，才适合作为 split criterion。
+
+## 3. 分裂后的不确定性：必须按子节点大小加权
+
+选择属性 $A$ 后，数据会按它的取值 $v\in\mathcal V(A)$ 分成子集。分裂后的条件熵为：
+
+$$
+H(Y\mid A)
+=\sum_{v\in\mathcal V(A)}
+\frac{|S_v|}{|S|}H(Y\mid A=v).
+$$
+
+权重 $|S_v|/|S|$ 很关键：一个只有 1 个样本的纯叶子，不应与一个有 1000 个样本的混乱分支等权。
+
+以 `outlook` 为例：
+
+- sunny：5 天，2 yes / 3 no，entropy 0.971；
+- overcast：4 天，4 yes / 0 no，entropy 0；
+- rain：5 天，3 yes / 2 no，entropy 0.971。
+
+所以：
+
+$$
+H(Y\mid \text{outlook})
+=\frac5{14}(0.971)+\frac4{14}(0)+\frac5{14}(0.971)
+\approx0.694.
+$$
+
+## 4. 信息增益：问完这个属性，少了多少不确定性
+
+$$
+\operatorname{Gain}(S,A)
+=H(Y)-H(Y\mid A).
+$$
+
+对 `outlook`：
+
+$$
+\operatorname{Gain}(S,\text{outlook})
+=0.940-0.694=0.246.
+$$
+
+其余属性在根节点的 gain：
+
+| 属性 | 分裂后条件熵 | 信息增益 |
+|---|---:|---:|
+| outlook | 0.694 | **0.246** |
+| humidity | 0.789 | 0.151 |
+| windy | 0.892 | 0.048 |
+| temperature | 0.911 | 0.029 |
+
+因此 ID3 选 `outlook`。信息论里，$H(Y)-H(Y\mid A)$ 也就是 mutual information $I(Y;A)$：知道该属性后，平均减少了多少标签不确定性。
+
+## 5. 递归：第一问以后做什么
+
+对每个非纯子集，删除已经使用的离散属性，再重复同一个选择过程：
+
+```text
+ID3(samples S, attributes A):
+  if S 的标签全部相同: 返回该标签叶子
+  if A 为空或没有可靠分裂: 返回 S 的多数类叶子
+  a* = argmax_a Gain(S, a)
+  创建测试 a* 的节点
+  for a* 的每个取值 v:
+    Sv = 满足 a*=v 的样本
+    if Sv 为空: 接多数类叶子
+    else: 接 ID3(Sv, A - {a*})
+```
+
+在 sunny 子集中，`humidity` 能把样本完全分开；在 rain 子集中，`windy` 能分开；overcast 已全是 yes。最终树对这 14 个训练样本零错误。
+
+若在一个节点要对 $|A|$ 个候选属性扫描 $|S|$ 个样本，单节点计算大致为 $O(|S||A|)$。整棵树会重复处理子集，实际成本取决于深度、实现是否缓存计数以及属性类型。
+
+## 6. 贪心不等于全局最优
+
+ID3 每一步都选当前 gain 最大的属性，却不会回退比较所有可能树。寻找满足数据的最小决策树一般是组合爆炸问题，局部最优 split 可能导致后续需要更多节点。
+
+因此它的归纳偏置是：优先选择高 mutual information 的短规则。这种偏置常常有效，但没有定理保证得到最小、泛化最好的树。两个属性单独 gain 很低、组合起来很强的 XOR 问题就是典型陷阱。
+
+## 7. 噪声：为什么把训练集分到全纯会过拟合
+
+真实数据里会有测量错误、错标签和偶然相关。若继续分裂到每个叶子全纯，树可能用一个无意义属性记住单个异常样本。
+
+Quinlan 在原论文讨论用卡方检验判断观察到的 class–attribute association 是否可能来自随机波动。直观上比较：
+
+$$
+\chi^2=\sum_{i,j}\frac{(O_{ij}-E_{ij})^2}{E_{ij}},
+$$
+
+其中 $O_{ij}$ 是属性值 $i$、类别 $j$ 的实际计数，$E_{ij}$ 是独立假设下的期望计数。若证据不足，就停止分裂并预测多数类。
+
+现代实现更常结合：最大深度、最小叶子样本数、最小 impurity decrease，以及 post-pruning。核心思想相同：**训练 purity 的小幅改善不一定值得增加树的复杂度。**
+
+## 8. 缺失值：不能粗暴地把 unknown 当普通类别
+
+若缺失只是“没有记录”，把 unknown 当新取值会让树学到数据收集流程，而非真实机制。Quinlan 的后续策略可这样理解：
+
+- 训练时，把缺失样本按已知样本在各分支中的频率分配 fractional weight；
+- 预测时，让样本沿多个分支传播，并按分支频率合并各叶子的投票。
+
+若已知样本中 sunny / overcast / rain 比例为 $5:4:5$，一个 outlook 缺失且权重为 1 的样本会以 $5/14,4/14,5/14$ 的权重进入三支。这样保留不确定性，而不是凭空创造“missing means no”。
+
+当然，若缺失本身确有业务含义，例如“拒绝填写收入”与风险相关，则 missing indicator 可以成为信息；关键是先区分 missing mechanism。
+
+## 9. Information gain 的高基数偏差
+
+假设有一个 `user_id`，每个样本取值都不同。按它分裂后，每个叶子只有一个样本，条件熵为 0，information gain 达到父节点 entropy；算法会认为 ID 是完美属性，但它对新用户没有预测价值。
+
+C4.5 引入 gain ratio。先定义 split information：
+
+$$
+\operatorname{IV}(A)
+=-\sum_v\frac{|S_v|}{|S|}\log_2\frac{|S_v|}{|S|},
+$$
+
+再计算：
+
+$$
+\operatorname{GainRatio}(A)
+=\frac{\operatorname{Gain}(A)}{\operatorname{IV}(A)}.
+$$
+
+取值越碎，$\operatorname{IV}$ 越大，gain ratio 会惩罚这种分裂。直接做比值也可能偏爱很不平衡、IV 很小的属性，所以 C4.5 先保留 gain 至少达到候选平均水平的属性，再比较 ratio。这个 safeguard 常被简化教程漏掉。
+
+## 10. 从 ID3 到现代树模型
+
+<figure><img src="/paper-radar/images/id3-decision-tree/evolution.svg" alt="从 ID3 到 C4.5、CART、随机森林和梯度提升树的演化关系" width="1600" height="900" loading="lazy"/><figcaption>图 2：决策树家族不是一条单线升级。C4.5 扩展 ID3；CART 建立二叉分类/回归树；Random Forest 与 GBDT 则以不同方式组合许多树。</figcaption></figure>
+
+| 方法 | 典型分裂 | 树结构 | 主要新增能力 |
+|---|---|---|---|
+| ID3 | information gain | 离散属性可多叉 | 递归归纳分类规则 |
+| C4.5 | gain ratio | 可多叉 | 连续值、缺失值、剪枝 |
+| CART | Gini / squared error | 二叉 | 统一分类与回归、cost-complexity pruning |
+| Random Forest | 多棵 CART 风格树 | bagging | bootstrap + 特征随机化，降低方差 |
+| GBDT / XGBoost / LightGBM | 优化残差/梯度 | boosting | 顺序加树，优化可微目标与正则化 |
+
+CART 分类常用 Gini impurity：
+
+$$
+G(Y)=1-\sum_{k=1}^{K}p_k^2.
+$$
+
+它和 entropy 都在纯节点取 0、混合时变大，但计算更简单。实践中二者经常选出相近 split；模型性能更多受数据、剪枝/正则化和集成方式影响。
+
+Random Forest 让多棵高方差树独立犯不同错误再平均；GBDT 则让后一棵树专门拟合前面集成的残差。它们仍继承树的优点：对非线性、feature interaction 和数值尺度不敏感，但解释对象从“一棵规则树”变成一个大型 ensemble。
+
+## 11. 今天应该怎样用决策树
+
+- 学习：手写一次 ID3，真正理解 entropy、weighted split 和 greedy induction。
+- 小型规则问题：浅树可作为可解释 baseline，但要用 validation 选深度和叶子大小。
+- 通用表格任务：先试 scikit-learn 的 CART、Random Forest、HistGradientBoosting，或 XGBoost/LightGBM/CatBoost；不要把原始 ID3 当默认生产模型。
+- 类别高基数：避免直接 one-hot ID；使用合理 encoding、target leakage 防护和时间/主体隔离的 validation。
+- 解释：树的 feature importance 可能偏爱连续或高基数特征，配合 permutation importance、SHAP 和稳定性分析。
+
+## 12. 局限与风险
+
+ID3 的原始版本主要处理离散属性；连续特征需要枚举阈值并防止重复切分。它容易过拟合、对小数据扰动不稳定，缺失值与 label noise 需要专门策略。information gain 不是因果贡献：一个 proxy attribute 可以高 gain，却在环境变化后失效或引入歧视。树路径可读也不等于模型公平，尤其当属性组合重建了敏感信息时。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 父节点 9 个 yes、5 个 no，为什么 entropy 不是错误率 5/14？</summary><div class="thought-answer">错误率只看多数类预测会错多少，忽略少数类概率如何变化；entropy 衡量整个分布的不确定性。它在 50/50 附近变化敏感，能更平滑地比较候选分裂，并具有编码长度和 mutual information 解释。</div></details>
+
+<details class="thought-question"><summary>2. 为什么子节点 entropy 不能直接做算术平均？</summary><div class="thought-answer">子节点承载的样本量不同。若一个纯节点只有 1 个样本、另一个混乱节点有 999 个样本，直接平均会夸大小节点影响。条件熵按到达每个分支的概率，也就是样本占比加权。</div></details>
+
+<details class="thought-question"><summary>3. user_id 为什么 information gain 极高却泛化很差？</summary><div class="thought-answer">它能把训练样本逐个隔离，所以训练条件熵为零；但新用户取值从未出现，没有可复用规律。这揭示了纯度准则只评估训练分割，必须用归纳偏置、gain ratio、最小叶子规模和独立验证限制记忆。</div></details>
+
+<details class="thought-question"><summary>4. 如果两个属性单独 gain 都为 0，它们组合后还能完美分类吗？</summary><div class="thought-answer">可以，XOR 就是例子：任一单独 bit 与标签独立，但两个 bit 的异或完全决定标签。纯 greedy ID3 在“无正 gain 即停止”的规则下看不到这种 interaction；这说明局部准则不能保证发现所有组合规律。</div></details>
+
+<details class="thought-question"><summary>5. 为什么 Random Forest 不只是“把 ID3 跑很多次”？</summary><div class="thought-answer">它通常用可处理连续特征的 CART 风格二叉树，对样本做 bootstrap，并在每个节点只看随机特征子集。这些随机性有意降低树之间的相关性，平均后减少方差；只对相同数据反复运行确定性的 ID3 不会产生这种收益。</div></details>
+
+<details class="thought-question"><summary>6. 一棵浅树很容易解释，为什么仍可能造成不公平决策？</summary><div class="thought-answer">透明只表示路径可见，不代表规则合理。邮编、设备或消费模式可能成为敏感属性的 proxy；高 information gain 会奖励预测力而不理解伦理或因果。需要群体/个体公平指标、数据审计和决策损失一起约束。</div></details>
+
+## 原始资料
+
+- [J. R. Quinlan, Induction of Decision Trees](https://doi.org/10.1007/BF00116251)
+- [Springer PDF](https://link.springer.com/content/pdf/10.1007/BF00116251.pdf)

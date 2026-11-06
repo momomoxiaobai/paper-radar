@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-05T08:12:23.225491+00:00",
+  "generated_at": "2026-11-06T03:55:22.615648+00:00",
   "note": "Heuristic queues by editorial track. PDF research and article publication require a later verified generation stage.",
   "lanes": [
     {
@@ -8,26 +8,62 @@
       "cadence": "周一至周五",
       "candidates": [
         {
-          "arxiv_id": "2611.05771",
-          "title": "How Well Can Large Language Models Impersonate Individual Authors? A Comparative Evaluation",
+          "arxiv_id": "2611.07948",
+          "title": "Circe: Training-Free LLM Self-Evaluation via Component Interaction Consistency",
           "authors": [
-            "Harshit Gupta",
-            "Shunichi Ishihara"
+            "Shuyi Miao",
+            "Zheng Li",
+            "Xu Xie",
+            "Linrui Xu",
+            "Fei Shen",
+            "Xiaoyu Du",
+            "Tat-Seng Chua"
           ],
-          "abstract": "This study investigates the authorship impersonation capacity of six widely used large language models (LLMs): Gemini 3 Pro, Claude Opus, GPT 5.2, GPT 5.2 Pro, DeepSeek 3.2, and Grok 4.1 Fast. The evaluation was conducted using short product review texts selected to ensure high within author consistency in individual writing style. Two types of in context prompt were designed: a simple prompt with minimal instruction and a complex prompt incorporating explicit stylometric guidance for mimicry. Authorship mimicry was evaluated using a cosine distance based distance to training metric, supplemented by visual analyses of embedding distributions. The results indicate that authorship impersonation remained challenging for most LLMs, with Gemini 3 Pro showing the strongest apparent mimicry performance. However, subsequent overlap analysis revealed that Gemini 3 Pro extensively copied and reused sentences and phrases from the training texts, at levels far exceeding those observed among human authors. Follow up factor analyses showed that training set consistency was the most robust predictor of mimicry success across models, whereas author distinctiveness did not generalise as a reliable predictor. Global embedding visualisations further revealed a consistent macro level pattern: for most models, generated texts occupied regions of the embedding space that were largely separated from the corresponding human training clusters. This indicates limited convergence towards target author style and suggests the presence of model specific lexical and phraseological preferences. The findings highlight the importance of distinguishing genuine stylistic imitation from direct textual reuse and have implications for the forensic analysis of textual evidence involving potential LLM enabled impersonation.",
+          "abstract": "As large language models (LLMs) are increasingly deployed in real-world applications, evaluating the correctness of their responses is crucial for reliable use. However, such evaluation is challenging because reference answers are rarely available in practice. Existing reference-free methods mainly rely on output signals, which may assign high scores to incorrect responses and thus do not necessarily reflect correctness. This motivates exploring the model's internal computation for complementary correctness signals. Recent studies exploit internal states, but they mainly analyze hidden-state trajectories across layers, which record only the combined updates of attention and feed-forward networks (FFNs) and overlook how these components interact. We therefore propose Circe, a training-free self-evaluation method that assesses a response using both internal and external signals, without reference answers or repeated sampling. For internal signals, we first introduce component interaction consistency (CIC), which measures the directional alignment between attention updates in earlier layers and attention-induced FFN output changes in later layers. We further incorporate representation geometry (RG) to characterize normalized displacement and angular changes along layerwise hidden-state trajectories. For the external signal, we convert the mean negative log-likelihood of generated tokens into a bounded likelihood confidence (LC) score. Finally, we fuse CIC, RG, and LC into a unified correctness score. Experiments on five LLMs and six benchmarks across four domains show that our method distinguishes correct from incorrect responses more effectively than existing baselines, and generalizes to multilingual, multimodal, and open-world settings.",
           "categories": [
             "cs.CL",
             "cs.AI"
           ],
-          "published": "2026-11-04T00:22:54Z",
-          "paper_url": "http://arxiv.org/abs/2611.05771v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.05771v1.pdf",
+          "published": "2026-11-05T12:45:40Z",
+          "paper_url": "http://arxiv.org/abs/2611.07948v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.07948v1.pdf",
           "score": 100,
+          "score_reasons": [
+            "分类：LLM",
+            "摘要命中：large language model",
+            "摘要命中：language model",
+            "摘要命中：alignment",
+            "摘要命中：benchmark",
+            "标题命中：evaluation"
+          ],
+          "category": "llm",
+          "category_label": "LLM",
+          "track": "frontier"
+        },
+        {
+          "arxiv_id": "2611.07558",
+          "title": "SKIM: Pruning Large Language Model Agents via Selective Knowledge Informed Masking",
+          "authors": [
+            "Moonseok Choi",
+            "Jongwon Jeong",
+            "Minki Kang",
+            "Giung Nam",
+            "Juho Lee"
+          ],
+          "abstract": "Large Language Model (LLM) agents are increasingly deployed under structured generation, where grammar constraints enforce output format at inference time. Whereas existing compression methods target unconstrained generation, we first identify a fundamental mismatch: under structured generation, grammar constraints reduce the model's output distribution to valid tokens, and the logits matter most at the small set of positions that decide the agent's action. Motivated by this finding, we propose SKIM (Selective Knowledge-Informed Masking), the first pruning and distillation framework for LLM agents under structured generation, with both stages guided by token role. SKIM partitions token positions into context, decision, and format categories, and this partition drives two complementary axes: (1) category-aware pruning saliency scores that preserve parameters most relevant for decision positions; and (2) an on-policy distillation objective that aligns student and teacher on valid tokens, paired with category-aware feature matching. We evaluate SKIM on tool-calling benchmarks and within multi-step agent loops, across multiple model scales and sparsity levels. SKIM consistently improves accuracy over baselines, with its superiority becoming most striking in high-sparsity regimes where conventional methods struggle, demonstrating the potential of category-aware compression for deployment-time grammar-constrained agents.",
+          "categories": [
+            "cs.CL",
+            "cs.AI"
+          ],
+          "published": "2026-11-05T07:04:45Z",
+          "paper_url": "http://arxiv.org/abs/2611.07558v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.07558v1.pdf",
+          "score": 97,
           "score_reasons": [
             "分类：LLM",
             "标题命中：large language model",
             "标题命中：language model",
-            "标题命中：evaluation",
+            "摘要命中：benchmark",
             "cs.CL"
           ],
           "category": "llm",
@@ -35,105 +71,68 @@
           "track": "frontier"
         },
         {
-          "arxiv_id": "2611.06631",
-          "title": "Trick-or-Treat: Adversarial Evaluation of Multimodal Medical Reasoning with Synthetic Images",
+          "arxiv_id": "2611.07689",
+          "title": "MCPHallu: Benchmarking Reasoning, Execution, and Memory Hallucinations in MCP Agents",
           "authors": [
-            "Oishi Banerjee",
-            "Eujin Lee",
-            "Sung Eun Kim",
-            "Alexandra N. Willauer",
-            "Christine Y. Zhou",
-            "Zhizhou Yang",
-            "Pranav Rajpurkar"
+            "Yizhen Jiang",
+            "Haowei Guo",
+            "Tianyi Bai",
+            "Zengjie Hu",
+            "Lu Ma",
+            "Zhengyang Zhao",
+            "Haoze Sun",
+            "Peng Pei",
+            "Wentao Zhang"
           ],
-          "abstract": "We used medical image synthesis to create a challenging multimodal evaluation framework that exposes hallucination behaviors in frontier models. Evaluating multimodal reasoning has historically been difficult because existing medical datasets rarely pair different image modalities, such as radiographs and external clinical photographs. To address this gap, we introduce Trick-or-Treat, an adversarial multimodal medical benchmark that pairs real chest radiographs with synthetic clinical photographs to challenge models' cross-modal reasoning. For each of a wide range of conditions, we created two pairs of images, where the pairs share a single chest radiograph but contain different external photographs. In matched pairs, the chest radiograph and photograph both contain findings suggesting the same disease (e.g., varicella pneumonia suggested by lung opacities and crusted skin lesions seen in chickenpox). In mismatched pairs, the photograph depicts an alternative clinical finding that would not lead to the same unifying diagnosis (e.g. replacing crusted skin lesions with ordinary acne). Synthetic photograph generation allows clinical findings to be varied while the person's features and photographic setting stay consistent, reducing confounding. In an investigation of three frontier models, we found that models hallucinated clinically significant photograph findings in 45-57.5% of mismatched pairs, up from 25-37.5% for the same photographs shown alone. When faced with mismatched pairs, models tended to ignore mismatches and instead hallucinated findings that better matched the radiograph (e.g. misreading acne as crusted skin lesions to justify diagnosing chickenpox). Trick-or-Treat both demonstrates concerning error pattern in frontier models' medical reasoning and provides a proof of concept for the use of synthetic images in adversarial multimodal evaluation.",
-          "categories": [
-            "cs.CV",
-            "cs.AI"
-          ],
-          "published": "2026-11-04T15:13:35Z",
-          "paper_url": "http://arxiv.org/abs/2611.06631v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.06631v1.pdf",
-          "score": 93,
-          "score_reasons": [
-            "分类：LLM",
-            "标题命中：reasoning",
-            "摘要命中：benchmark",
-            "标题命中：evaluation",
-            "标题命中：multimodal"
-          ],
-          "category": "llm",
-          "category_label": "LLM",
-          "track": "frontier"
-        },
-        {
-          "arxiv_id": "2611.06911",
-          "title": "BEAKER: An Expert-Curated Benchmark for Embodied Brains in Self-Driving Chemical Laboratories",
-          "authors": [
-            "Fei Lin",
-            "Tengchao Zhang",
-            "Ziyang Gong",
-            "Xiaotong Yu",
-            "Bohan Zhang",
-            "Yifan Zhou",
-            "Qihao Yang",
-            "Ji Dai",
-            "Dong Li",
-            "Yining Jiang",
-            "Qinghua Ni",
-            "Jun Huang",
-            "Qiang Zhang",
-            "Yue Zhou",
-            "Zhihang Zhong",
-            "Yonglin Tian",
-            "Fei-Yue Wang",
-            "Xue Yang"
-          ],
-          "abstract": "Self-Driving Chemical Laboratories (SDCLs) are moving chemical experimentation toward embodied automation, where machines must perceive laboratory scenes, reason about experimental states, and act under physical, procedural, and safety constraints. Although Multimodal Large Language Models (MLLMs) are increasingly considered as embodied brains for such systems, existing laboratory benchmarks mainly focus on safety, anomaly detection, or general scientific understanding, leaving their execution-oriented embodied capabilities underexplored. To fill this gap, we introduce BEAKER, a Benchmark for evaluating Embodied Actionability, Knowledge, Experimentation, and Reasoning in SDCLs. BEAKER contains 1,000 expert-curated question-answer samples across 11 image and video task types, covering key judgments required for chemical laboratory execution, including affordance grounding, trajectory planning, equipment, state, and safety recognition, apparatus setup, operation and step reasoning, and temporal procedure reasoning. All questions and annotations are manually created and reviewed by chemistry and embodied Artificial Intelligence (AI) experts, without AI-assisted generation or annotation. We evaluate 28 general-purpose, science-oriented, chemistry-specialized, and embodied MLLMs in an offline, single-turn setting. Results show that current models can follow coarse experimental procedures in videos, but still struggle to ground actions into operable regions and feasible trajectories, to recognize fine-grained laboratory apparatus, states, and safety norms, and to order steps in mid-length procedures. BEAKER thus reveals a clear gap between coarse procedural understanding and the precise, action-grounded perception required for laboratory execution, providing a diagnostic benchmark for future MLLMs in SDCLs.",
+          "abstract": "Large language model agents are increasingly deployed through the Model Context Protocol (MCP), which allows them to discover and invoke tools across multiple servers at runtime. Existing MCP benchmarks primarily measure task completion; where they diagnose failures, they do so after execution rather than building specific reasoning, execution, and memory failure risks into task construction. We introduce MCPHallu, a benchmark for diagnosing hallucination-prone agent failures in MCP environments along three axes: reasoning, execution, and memory. MCPHallu contains 358 tasks across five capability domains and runs on 36 production MCP servers in isolated containers. Each task is designed with a structural trigger that makes one of four subtypes the dominant failure risk: Branch Collapse, Unreachable Goal, Tool Misuse, or Context Forgetting. This design enables subtype-level analysis rather than aggregate task success alone. We evaluate fourteen frontier LLM agents from eight vendors on 5{,}012 trajectories. Current MCP agents remain vulnerable to hallucination-inducing tool environments, achieving an average score of 0.642 on a $[0,1]$ scale (higher is better). Failures concentrate on Unreachable Goal tasks, where the average score drops to 0.458 and 23.2\\% of runs pass, indicating that agents often continue issuing tool calls or claim successful completion rather than recognizing infeasible goals. Subtype rankings diverge sharply: a model's rank shifts by 6.9 of 13 positions on average across subtypes, and Branch Collapse is uncorrelated with Unreachable Goal across models ($r = -0.12$). MCPHallu is released at https://github.com/J1zz/mcp_hallu.",
           "categories": [
             "cs.AI"
           ],
-          "published": "2026-11-04T18:57:17Z",
-          "paper_url": "http://arxiv.org/abs/2611.06911v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.06911v1.pdf",
+          "published": "2026-11-05T09:14:26Z",
+          "paper_url": "http://arxiv.org/abs/2611.07689v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.07689v1.pdf",
           "score": 92,
           "score_reasons": [
             "分类：LLM",
             "摘要命中：large language model",
             "摘要命中：language model",
-            "摘要命中：reasoning",
-            "标题命中：benchmark",
-            "摘要命中：multimodal"
+            "标题命中：reasoning",
+            "标题命中：benchmark"
           ],
           "category": "llm",
           "category_label": "LLM",
           "track": "frontier"
         },
         {
-          "arxiv_id": "2611.05515",
-          "title": "TSFM Meets LLM: Context as Covariates",
+          "arxiv_id": "2611.07408",
+          "title": "PSGAgent: Enhancing MLLMs' Dynamic Visual Perception for Panoptic Scene Graph Generation via Agentic Reasoning",
           "authors": [
-            "Hemanth Ram",
-            "Sai Shankar Narasimhan",
-            "Shubhankar Agarwal",
-            "Sandeep Chinchali"
+            "Qingyun Liu",
+            "Yuankun Liu",
+            "Jiaye Feng",
+            "Jie Huang",
+            "Zonghong Dai",
+            "Haochen Li",
+            "Jingkun Wang",
+            "Weiping Li",
+            "Tong Mo"
           ],
-          "abstract": "Textual information is ubiquitous in real-world time series datasets, appearing as news, reports, and annotations that hold key predictive signals not deducible from numerical history alone. Large Language Models (LLMs) interpret text but lack numerical precision, while Time Series Foundation Models (TSFMs) are quantitatively accurate but cannot reason about the effects of text. Moreover, the lack of large-scale paired multimodal datasets limits progress in bridging this gap. In this work, we address this challenge by providing a scalable approach for generating realistic multimodal datasets by annotating real-world time series with LLMs. Building on this, we propose Context as Covariates (CoCo), a forecasting framework in which an LLM distills its textual reasoning into numerically grounded forecast and confidence covariates that guide a TSFM backbone, thereby exploiting the strengths of both LLMs and TSFMs. We align the two models in stages, first fine-tuning the LLM via Group Relative Policy Optimization (GRPO) with a reward tied to covariate-induced improvement in forecasting performance, and then fine-tuning the TSFM on covariates generated by the aligned LLM. Our experiments show that models trained on our synthetic multimodal corpus generalize to real benchmarks spanning finance, economics, weather, traffic, and security. Notably, CoCo with Qwen3-4B-Instruct-2507 as the LLM and Chronos2 as the TSFM achieves up to 12% MAE improvement over state-of-the-art TSFMs and LLM forecasters, such as GPT-4o. Code, checkpoints, and the evaluation datasets are publicly available.",
+          "abstract": "Panoptic Scene Graph generation (PSG) requires holistic yet fine-grained reasoning over complex relations among objects. However, current Multimodal Large Language Models (MLLMs) applied to PSG suffer from a perception bottleneck: they function as static observers limited by fixed-resolution views. As a result, models often overlook critical relations involving small or peripheral objects and struggle to differentiate ambiguous predicates in complex scenes. To address these limitations, we propose PSGAgent, an agentic framework that enhances visual perception for PSG through a think-act-observe loop. PSGAgent allows MLLMs to dynamically refine their visual perception using two tools: a Region Zoom-In Tool for local exploration of small or boundary relations and a Visual Highlight Tool for relation-focused segmentation that filters out irrelevant contextual noise. To optimize decision-making, we construct a two-stage training pipeline. First, we create a high-quality, error-aware Multimodal Chain-of-Thought (M-CoT) dataset that provides robust supervision for cold-start learning. Then, we design a novel hierarchical reward mechanism integrated with Group Sequence Policy Optimization (GSPO) to enable strategic and adaptive tool usage. Extensive experiments on the PSG benchmark show that PSGAgent achieves SOTA performance, demonstrating strong capability in both holistic and fine-grained scene understanding.",
           "categories": [
-            "cs.LG",
+            "cs.CV",
             "cs.AI"
           ],
-          "published": "2026-11-03T19:13:19Z",
-          "paper_url": "http://arxiv.org/abs/2611.05515v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.05515v1.pdf",
-          "score": 91,
+          "published": "2026-11-05T04:02:16Z",
+          "paper_url": "http://arxiv.org/abs/2611.07408v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.07408v1.pdf",
+          "score": 92,
           "score_reasons": [
             "分类：LLM",
             "摘要命中：large language model",
             "摘要命中：language model",
-            "摘要命中：reasoning",
+            "标题命中：reasoning",
             "摘要命中：benchmark",
-            "摘要命中：evaluation"
+            "摘要命中：multimodal"
           ],
           "category": "llm",
           "category_label": "LLM",
@@ -162,6 +161,32 @@
           ],
           "category": "rl",
           "category_label": "RL",
+          "track": "frontier"
+        },
+        {
+          "arxiv_id": "2611.07283",
+          "title": "Encoding and Propagation of Grammatical Number in Large Language Models",
+          "authors": [
+            "Jacob Solinsky",
+            "Serguei Pakhomov"
+          ],
+          "abstract": "Sparse autoencoders (SAEs) have become an increasingly popular means of translating Large Language Model (LLM) hidden state vectors into a human-comprehensible list of features or symbols. As such, SAEs may provide insight into an LLM's knowledge representation and internal ``mental'' grammar - topics of pragmatic interest for mechanistic interpretation of AI behavior and of theoretical interest for the study of in silico representations of human language. Language models with fewer than 100M parameters, trained on small corpora, nonetheless exhibit strong grammatical competence and discourse coherence, despite producing content of limited reliability. We use SAEs that we trained on one such model (Pythia-70M) to conduct an in-depth examination of how a single grammatical phenomenon, number agreement, is represented and processed in an LLM. We demonstrate the mechanism and the methodology by which SAEs can be used to find and propagate ``plural noun'', ``plural matrix subject'', and ``generate a plural verb'' features which cause the LLM to produce plural verb forms such as ``are'', ``do'', or ``have'' instead of ``is'', ``does'', and ``has'' in response to prompts such as ``the men in the park''. We show that intervening to remove these features from the hidden states of plural subject noun tokens causes the model to produce singular verbs instead, and vice versa. We also show that corresponding ``singular noun'' and ``generate a singular verb'' features are not as effective for this task. This asymmetry suggests that Pythia-70m makes use of a privative representation of grammatical number in English. These findings replicated with larger LLMs Gemma-2-2b and Llama-3.1-8b yielded similar results. Our main contribution is a novel approach to the use of SAEs to understanding how LLMs encode human language that addresses a number of technical and methodological challenges.",
+          "categories": [
+            "cs.CL",
+            "cs.AI"
+          ],
+          "published": "2026-11-05T01:04:02Z",
+          "paper_url": "http://arxiv.org/abs/2611.07283v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.07283v1.pdf",
+          "score": 87,
+          "score_reasons": [
+            "分类：LLM",
+            "标题命中：large language model",
+            "标题命中：language model",
+            "cs.CL"
+          ],
+          "category": "agent",
+          "category_label": "Agent",
           "track": "frontier"
         },
         {
@@ -195,57 +220,25 @@
           "track": "frontier"
         },
         {
-          "arxiv_id": "2611.04960",
-          "title": "An Agentic Framework for Quality-Aware and Scenario-Adaptive Image Compression",
+          "arxiv_id": "2611.06956",
+          "title": "Octopus: One Brain, Many Branches for Latent-KV Multi-Agent Reinforcement Learning",
           "authors": [
-            "Zhenghao Chen",
-            "Lebin Zhou",
-            "Zicong Chen",
-            "Naifu Xue",
-            "Jiahao Li",
-            "Bin Li",
-            "Dong Xu",
-            "Yan Lu"
+            "Tianming Sha"
           ],
-          "abstract": "Despite decades of progress, image codecs remain difficult to adapt to diverse real-world compression scenarios for two main reasons. First, most image codecs are optimized for a specific objective and require substantial redevelopment when the compression goal changes. Second, they typically assume clean inputs, whereas sensor-captured images often contain degradations that alter rate-quality behavior. To address these challenges, we propose Practical Image Coding Agents (PICA), a multi-agent framework that adapts existing codecs to diverse user requirements and potentially degraded inputs. PICA consists of four collaborative agents: a Perception agent that interprets user intent and analyzes image content, an Improvement agent that jointly considers bitrate and reconstruction quality to guide pre-coding restoration, a Coding agent that refines quality-control settings from global to regional levels, and an After-coding improvement agent that addresses residual degradations and compression-induced artifacts through restoration guided solely by image quality. To enable codec-agnostic regional adaptation, we introduce Agentic ROI Coding (AROIC), which treats the codec as a black box and allows the agent to automatically schedule, execute, evaluate, and reflect ROI coding plans without architectural modifications or codec-specific retraining. We integrate these four agents with a Scenario-Guided Quality-Rate (SGQR) evaluation strategy to enable more effective scenario-adaptive compression across heterogeneous codecs. Comprehensive experiments on clean, noisy, and blurred images across standard, perceptual, and machine-vision compression scenarios demonstrate that PICA consistently enhances the compression performance of both the conventional H.266/VVC codec and the neural Cheng2020 codec, outperforming competing compression methods on the Kodak, CLIC2020, and HEVC datasets.",
+          "abstract": "Multi-agent LLM systems explore in parallel by spawning sub-agents with isolated context windows, whereas single-agent systems append every search and verification step into one growing trajectory. However, existing multi-agent frameworks duplicate prefix KV caches across branches, exchange findings by re-prefilling text summaries, and flatten or drop cross-branch dependencies during reinforcement learning (RL). We introduce Octopus, a single-model multi-agent RL framework in which all threads share one backbone and coordinate over a GPU-resident directed acyclic graph (DAG) of KV states through five primitives (fork, read_thread, wait_threads, rewind, commit). Octopus combines three co-designed mechanisms: (1) Zero-Copy Radix Forking, which spawns branches as $\\mathcal{O}(1)$ cursor views over shared physical KV pages; (2) Attention-Only KV Mounting, which mounts a sibling thread's terminal KV blocks directly into full-attention layers while bypassing linear-recurrent states (Gated DeltaNet / Mamba-2), cutting off-task hijacking by $21\\times$ ($57.9\\% \\to 2.7\\%$) while retaining $92.2\\%$ of full-text mutual information at zero extra KV allocation; and (3) a Packed DAG-GRPO Trainer, which packs all episode branches into one block-sparse attention pass and assigns counterfactual branch credit via leave-one-branch-out marginal rewards. Trained end-to-end with GRPO on Qwen3.5-4B over a sparse BM25 corpus, Octopus reaches $49.6\\%$ accuracy on BrowseComp-Plus ($+17.5$ points over single-agent GRPO at 143K context and $+12.5$ points over text-summary multi-agent RL) and $51.2\\%$ on OpenResearcher, outperforming dense-retrieval agents up to $250\\times$ larger while increasing training throughput $3.3\\times$ and cutting peak KV memory $2.8\\times$.",
           "categories": [
-            "cs.CV"
+            "cs.LG",
+            "cs.CL"
           ],
-          "published": "2026-11-03T14:19:39Z",
-          "paper_url": "http://arxiv.org/abs/2611.04960v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.04960v1.pdf",
+          "published": "2026-11-03T22:42:25Z",
+          "paper_url": "http://arxiv.org/abs/2611.06956v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.06956v1.pdf",
           "score": 85,
           "score_reasons": [
             "分类：Agent",
-            "摘要命中：multi-agent",
-            "标题命中：agentic",
-            "标题命中：agent"
-          ],
-          "category": "agent",
-          "category_label": "Agent",
-          "track": "frontier"
-        },
-        {
-          "arxiv_id": "2611.05179",
-          "title": "OperAItor: An Agentic Framework for Fault-Tolerant Operation of Chemical Processes",
-          "authors": [
-            "Javal Vyas",
-            "Mehmet Mercang{ö}z"
-          ],
-          "abstract": "OperAItor, an open-source framework for developing and evaluating large language model agents for supervisory fault management in chemical processes. The framework is demonstrated on a dynamic reactor-distillation process representing isopropanol dehydrogenation, with physically based thermodynamics and modified reaction kinetics to permit liquid-phase operation. The process is represented by a 113-variable differential-algebraic model and operates at a nominal feed rate of 100kmol/h, producing approximately 4t/h of acetone. The simulated plant includes 8 PI control loops, 22 process alarms, 5 duty-standby pump trains, and 11 independent safety instrumented functions. The agent architecture integrates multivariate statistical process monitoring, fault diagnosis, knowledge-graph retrieval, action planning, and supervisory action generation. Five action-validation configurations are investigated, comprising operation without validation, an LLM-based judge, digital-twin simulation, and deterministic admissibility checks with and without consequence projection. The framework is evaluated using four LLMs across 20 scenarios involving single and multiple simultaneous faults. Without agent intervention, 18 scenarios result in plant stops, corresponding to an economic loss of $399,000 relative to fault-free operation under the assumed benchmark economics. For GPT-5 nano, Qwen3 8B, and Mistral 7B, validated agent configurations reduce the number of stops to 5-8 and recover $265,000 of the loss. The study provides a reproducible benchmark for comparing agent architectures, language models, and action-validation methods for supervisory fault management in chemical processes.",
-          "categories": [
-            "eess.SY",
-            "cs.AI"
-          ],
-          "published": "2026-11-03T16:40:46Z",
-          "paper_url": "http://arxiv.org/abs/2611.05179v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.05179v1.pdf",
-          "score": 84,
-          "score_reasons": [
-            "分类：Agent",
-            "标题命中：agentic",
+            "标题命中：multi-agent",
             "标题命中：agent",
-            "摘要命中：planning"
+            "cs.CL"
           ],
           "category": "agent",
           "category_label": "Agent",
@@ -259,21 +252,21 @@
       "cadence": "周一至周五",
       "candidates": [
         {
-          "arxiv_id": "2611.04579",
-          "title": "FreeForm Harness: A Mobile-Native Agent Harness for Open and Composable Extensions",
+          "arxiv_id": "2611.07442",
+          "title": "Req2Rust: A Requirements-Guided Agent Harness for Project-Level C++-to-Rust Migration",
           "authors": [
-            "Bo Zhang",
-            "Pengbo Zhang",
-            "Jiaxin Jiao",
-            "Yue Liu"
+            "Shengbo Wang",
+            "Mingwei Liu",
+            "Yuwen Chen",
+            "Yanlin Wang"
           ],
-          "abstract": "Mobile phones support many everyday agent tasks, but current mobile agents bundle capabilities into monolithic pipelines with no open recombination point. Users and third parties cannot publish, install, and compose new behaviors, leaving personalized daily-life requests underserved. We argue that the missing piece is a substrate: although phones are the Web's dominant access point, open publication and composition under decentralized authorship stop at the agent harness. We present FreeForm Harness (FFH), a mobile-native agent harness for open, composable extensions. A frozen base and a permanence-aware required layer handle mobile constraints, including location, proactive triggering, and scarce channels. A uniform plugin contract makes independently authored extensions composable, checkable, and replaceable over a frozen socket set. FFH also supports end-user authorship through a tiered commissioned-authoring path. When no existing extension matches a user's intent, a Web coding agent generates a candidate artifact, which is validated and admitted on device under the same contract as other extensions. An Android prototype spans device, market, and cloud. Evaluation shows that architectural boundaries are enforced at runtime; realistic daily-life requests fit the declared composition space without widening it; and user intent reaches on-device execution through retrieval or commissioned authoring, with final trust decisions remaining device-local. FFH advances the agentic Web from \"everything is a plugin\" toward \"everyone is a developer\" on mobile.",
+          "abstract": "Memory-safety concerns make Rust an attractive target for modernizing legacy C/C++ systems, yet project-level C++ migration must balance semantic fidelity with Rust-oriented reconstruction. Source-structure-preserving migration can track low-level behavior, but it can also carry source-language organization, unsafe idioms, and project assumptions into Rust. Direct agent-based translation gives the model more freedom to construct a Rust project, but semantic coverage depends on the model identifying the source behaviors that must be preserved. This problem is especially acute for C++, where source behaviors are often hidden in object models, destructor-driven lifetime protocols, and other hard-to-localize C++ semantics. This paper presents Req2Rust, the first project-level LLM-based C++-to-Rust migration harness. Req2Rust first derives an evidence-grounded Migration Requirements Specification (MRS) that records the behaviors and constraints that must be preserved. It then synthesizes a Rust Design Specification (RDS) and realizes it as an initial Rust project. Because real projects contain implementation details and idioms that only become visible during build and validation, Req2Rust treats the initial Rust project as an executable refinement state. Compiler, semantic, and unsafe-reduction validators produce validation reports for improving buildability, behavioral alignment, and unsafe usage. We evaluate Req2Rust on general C++ projects and modules from the large-scale Openharmony codebase against a ClaudeCode baseline. Req2Rust produces buildable Rust crates in both settings and improves test pass rate from 69.5% to 91.9% on general projects and from 45.4% to 87.9% on Openharmony modules.",
           "categories": [
             "cs.SE"
           ],
-          "published": "2026-11-03T09:39:21Z",
-          "paper_url": "http://arxiv.org/abs/2611.04579v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.04579v1.pdf",
+          "published": "2026-11-05T04:40:17Z",
+          "paper_url": "http://arxiv.org/abs/2611.07442v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.07442v1.pdf",
           "score": 80,
           "score_reasons": [
             "分类：Harness",
@@ -366,30 +359,36 @@
           "track": "harness"
         },
         {
-          "arxiv_id": "2611.04456",
-          "title": "How Agent Skills Evolve: A Large-Scale Empirical Study of Skills on GitHub",
+          "arxiv_id": "2611.07238",
+          "title": "How Do AI Agents Waste Your Money?",
           "authors": [
-            "Jinjun Huang",
-            "Jialun Cao",
-            "Junxiao Han",
-            "Zhonghao Jiang",
-            "Shing-Chi Cheung",
-            "Zhongxin Liu"
+            "Huimin Zeng",
+            "Yuxuan Lu",
+            "Jesse Cai",
+            "Eric Hanchen Jiang",
+            "Di Wu",
+            "Po-Nien Kung",
+            "Wenbo Hu",
+            "Ziyi Wang",
+            "Dakuo Wang",
+            "Jiaxin Pei",
+            "Kai-Wei Chang"
           ],
-          "abstract": "Large language model-based agents increasingly rely on external skills to reuse task-specific knowledge without retraining the model. As skills become common for extending agent capabilities, understanding creation and evolution is critical for reliable agent systems. However, existing studies mainly examine agent skills from a static perspective, leaving their evolution in real-world repositories largely unexplored. This limits our understanding of the patterns and motivations behind skill changes. To fill this gap, we present a large-scale empirical study of agent skills, capturing 84,200 skills and 750,898 commits from GitHub. We manually construct taxonomies of skill components, change patterns, and evolution motivations, and build an automated annotation pipeline to label changes at scale. Based on the taxonomy, we conduct quantitative analyses of skill composition and post-creation evolution frequency, together with qualitative assessments of modified components, change patterns, and motivations. Our findings reveal five implications: (i) reliability receives less attention in skill composition and change, motivating execution-contract skill design that incorporates verification and recovery mechanisms; (ii) evolution changes concentrate in project-coupled skills, calling for automated just-in-time skill updating mechanisms; (iii) change patterns are dominated by incremental enrichment and refinement, motivating pattern-guided skill enhancers that diagnose and improve incomplete skill components; (iv) redundancy is a practical maintenance issue, highlighting the need for context-efficient skill representation; (v) security-motivated changes show limited risk reduction, suggesting skill regression testing methods that objectively verify skill functionality and security. Beyond these insights, our dataset provides a basis for future studies on automated skill techniques.",
+          "abstract": "AI agents may consume massive tokens across a wide range of tasks, but how many of those tokens are really necessary? Although prior work has shown that agents can incur unexpectedly high token costs, we still lack a systematic way to identify and measure token waste. In this work, we introduce a unified framework for measuring token waste across heterogeneous agent systems. Our framework records and normalizes complete agent trajectories, identifies removable spans using an LLM-as-a-Judge (LLMaJ), and maps the identified text spans back to the original trajectory for token-level measurement. We validate the identified waste through direct interventions by removing marked spans, resuming agent execution, and measuring changes in task outcomes and subsequent actions. In online pruning experiments, we remove 41-46% of the model's reasoning while largely preserving task performance across two distinct agent benchmarks. Using this framework, we analyze agents across multiple settings. Our analysis shows that token waste has a system-level structure that aggregate token usage alone cannot reveal. First, waste varies more across tasks and agent settings than across models. Second, reasoning and visible execution can exhibit different waste patterns. Third, different harnesses can introduce distinct sources of inefficiency even under the same model and task. Overall, our framework transforms token waste into an actionable optimization signal, enabling researchers and practitioners to train more efficient models, design better reasoning strategies, and optimize agent harnesses toward reducing unnecessary computation rather than merely reducing token usage.",
           "categories": [
-            "cs.SE"
+            "cs.CL"
           ],
-          "published": "2026-11-03T07:46:48Z",
-          "paper_url": "http://arxiv.org/abs/2611.04456v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.04456v1.pdf",
-          "score": 60,
+          "published": "2026-11-04T23:43:03Z",
+          "paper_url": "http://arxiv.org/abs/2611.07238v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.07238v1.pdf",
+          "score": 58,
           "score_reasons": [
-            "分类：Skill",
-            "标题命中：agent skill"
+            "分类：Harness",
+            "摘要命中：agent harness",
+            "cs.CL"
           ],
-          "category": "skill",
-          "category_label": "Skill",
+          "category": "harness",
+          "category_label": "Harness",
           "track": "harness"
         },
         {
@@ -603,6 +602,35 @@
       "cadence": "按价值收录",
       "candidates": [
         {
+          "arxiv_id": "2611.07478",
+          "title": "Localization Does Not Imply Steerability: A Mechanistic Study of Sign Errors in LLM Mathematics",
+          "authors": [
+            "Shradha Agarwal",
+            "Tariq J.",
+            "Deepak Rajbhar"
+          ],
+          "abstract": "When large language models do multi-step mathematics, a characteristic failure recurs: the model writes one wrong sign token mid-computation -- a cofactor sign, the minus of a recursive integration-by-parts step -- then executes the rest of the arithmetic correctly, and the answer comes out wrong. We ask where inside the network that sign is written. Across six open models spanning 14B to 675B parameters, a per-layer readout shows the wrong sign is committed late -- by MLP layers in the last quarter of the network (70-100% per model and task), a pattern present, where tested (Qwen), in the base model before instruction tuning. The mechanism varies: some models carry fixed \"minus-stamp\" layers that push a minus regardless of the right answer, others carry amplifiers of whichever sign was already chosen, and Qwen adds a downstream rescue layer that opposes the stamp. The circuit is causal: subtracting a single sign direction from the residual stream flips 13 of 14 held-out minus-written integration-by-parts errors on Llama-3.3-70B, with flips replicating on Qwen, Gemma, and Mistral-Small (24-70% per cell), and with representation-level specificity -- the same dose breaks correctly-minus answers while sparing correct-plus answers where the direction is surgical (0/72 on Llama), and matched random-direction and control-layer interventions are null. Core claims were preregistered with pass criteria frozen in git before held-out data was seen: 23 of 29 checks passed, all misses reported. But causality is not uniform: Phi-4 implements an equally well-localized circuit at the same late depth, yet the identical intervention flips almost nothing -- the sign is written redundantly across ~15 layers with margins several times larger (median 17.8 logits). Localization, we conclude, does not imply steerability: two models can share a circuit location yet differ enormously in how overturnable it is.",
+          "categories": [
+            "cs.LG",
+            "cs.AI",
+            "cs.CL"
+          ],
+          "published": "2026-11-05T05:36:28Z",
+          "paper_url": "http://arxiv.org/abs/2611.07478v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.07478v1.pdf",
+          "score": 81,
+          "score_reasons": [
+            "分类：基座模型",
+            "摘要命中：base model",
+            "摘要命中：qwen",
+            "摘要命中：llama",
+            "cs.CL"
+          ],
+          "category": "foundation-models",
+          "category_label": "基座模型",
+          "track": "foundation-models"
+        },
+        {
           "arxiv_id": "2611.06741",
           "title": "TailSteer: Trajectory-Tail Steering for Drift-Resistant Multi-turn Image Editing",
           "authors": [
@@ -636,23 +664,19 @@
           "track": "foundation-models"
         },
         {
-          "arxiv_id": "2611.06546",
-          "title": "Adapting Sleep Foundation Models for Dense Sleep Spindle Localization",
+          "arxiv_id": "2611.07886",
+          "title": "When, Where, How: Active In-Context Learning for Tabular Foundation Models",
           "authors": [
-            "Alexis Bollengier",
-            "Abel Díaz Berenguer",
-            "Olivier Pallanca",
-            "André Anjos",
-            "Hichem Sahli"
+            "Christian M. M. Frey"
           ],
-          "abstract": "Adapting sleep foundation models to dense electroencephalography (EEG) event localization is challenging because multi-second representations may not preserve sufficient temporal detail for precise boundary recovery. We address sleep spindle localization by adapting a frozen SleepFM encoder with a local time-frequency pathway that preserves spindle-relevant spectral content and intra-token position. The local representation drives localization, while residual cross-attention incorporates SleepFM temporal context. Dense predictions are obtained through localized token-to-sample reconstruction and temporal refinement. Tested on the Massive Online Data Annotation (MODA), the proposed model achieves an event-level $F_1$ of $0.8080 \\pm 0.0040$ at IoU 0.2 across six folds. Ablations show that localization primarily depends on local spectral and sub-token temporal information, while the pretrained representation provides complementary context. These results indicate that dense adaptation benefits from preserving information below the pretrained token scale. Code will be released upon acceptance.",
+          "abstract": "Tabular Foundation Models (TFMs) adapt to a new task only through the labeled rows in their context. However, labels are expensive to acquire in real-world scenarios due to the need for highly specific domain knowledge to ensure high-quality data. Active in-context learning transfers classical acquisition rules to this setting, in which the model that guides acquisition changes with every label added. We ask how the value of diversity, predictive uncertainty and target-aware information gain changes as a frozen TFM acquires more context. For that, we study Target-Aware Nearest Neighbor (TANN) acquisition and the Expected Predictive Information Gain in Context (EPIC) and evaluate them against classical rules. Our study across twenty benchmarks with two well-established TFMs and classical GBDTs highlights three findings: (i) When: diversity-based acquisition is best during the first acquisition iterations; (ii) Where: labeling pool rows that serve the target inputs via a simple target-aware nearest-neighbor rule matters substantially; (iii) How: EPIC yields the best models at the label budget, retains on average 80--87% of the chance-corrected full-data performance with only 5-10% of the pool labeled on the eight benchmarks with the largest pools, and selects labels that also improve the predictive performance of gradient-boosted decision trees.",
           "categories": [
-            "eess.SP",
-            "cs.LG"
+            "cs.LG",
+            "cs.AI"
           ],
-          "published": "2026-11-04T14:12:33Z",
-          "paper_url": "http://arxiv.org/abs/2611.06546v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.06546v1.pdf",
+          "published": "2026-11-05T12:04:48Z",
+          "paper_url": "http://arxiv.org/abs/2611.07886v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.07886v1.pdf",
           "score": 65,
           "score_reasons": [
             "分类：基座模型",
@@ -663,23 +687,26 @@
           "track": "foundation-models"
         },
         {
-          "arxiv_id": "2611.06441",
-          "title": "Graph Foundation Models Can Become Effective Multivariate Time Series Anomaly Detectors",
+          "arxiv_id": "2611.07883",
+          "title": "InnerLogic-Surg: An Open Surgical Foundation Model via Continual Pretraining",
           "authors": [
-            "Zhuangyan Hu",
-            "Zhuoxuan Liang",
-            "Wei Li",
-            "Xiaohua Jia",
-            "Moustafa Youssef",
-            "Sumi Helal"
+            "Kun Yuan",
+            "Hao Ding",
+            "Yiqing Shen",
+            "Gasper Podobnik",
+            "Benjamin Killeen",
+            "Tito Porras",
+            "Axel Krieger",
+            "Mathias Unberath"
           ],
-          "abstract": "Multivariate time series anomaly detection (MTSAD) relies on modeling both temporal dynamics and inter-sensor dependencies to identify complex system faults. Although graph-based detectors explicitly model sensor topologies, they train task-specific networks from scratch on limited target-domain data, remaining vulnerable to spurious correlations and unable to reuse transferable priors. While pretrained Graph Foundation Models (GFMs) offer transferable topological priors and anomaly discriminability, directly adapting them to MTSAD is hindered by cross-modal feature-topology mismatch, unreliable pseudo-anomaly supervision, and decision distortion during node-to-window aggregation. To fill these gaps, we propose a novel adaptation framework, Gfm4Mtsad, which unleashes pretrained GFMs for MTSAD. We introduce the Structure-and-Information Contract Alignment (SICA) module to bridge continuous time series and the pretrained GFM space. This module harmonizes principal subspace token projection, normal-prior-guided graph construction, and residual recovery to suppress spurious edges while retaining fine-grained temporal details. We propose a Mechanism-Aligned Pseudo-Anomaly Screening strategy (MAPS) to steer unsupervised learning. It applies localized dependency breaks while preserving empirical residuals, selecting hard negatives near the normal boundary for targeted supervision. We develop a Tail-Gated Evidence Calibration mechanism (TGEC) to eliminate node-to-window aggregation distortion. It calibrates multi-granular graph responses against normal operational references, strictly preserving benign score rankings while selectively refining extreme anomaly candidates in the tail distribution for reliable window detection and interpretable sensor evidence. Extensive evaluations with two GFM backbones demonstrate that Gfm4Mtsad achieves superior detection performance over existing baselines.",
+          "abstract": "Vision foundation models are the backbone of modern surgical image analysis, yet most surgical systems still rely on encoders pretrained on natural images or on specialist models trained from scratch on comparatively small datasets. Pretraining encoders on large amounts of surgery-specific data has the potential to generally enhance the performance of surgical image analysis methods simply by providing stronger backbones. Here we present InnerLogic-Surg, an open family of surgical vision encoders (21M--300M parameters) obtained by continually pretraining a transformer-based image encoder on millions of surgical images curated from 11,965 internet-sourced surgical videos spanning ~2,900 hours and more than fifteen procedure types. Our training recipe inherits DINOv3's pretraining stage to preserve representation ability after surgical adaptation, and additionally applies a learned feature-upsampling module for high-resolution dense prediction at low token cost. Across a benchmark covering workflow, instrument and anatomy recognition, segmentation, detection, and monocular depth, under the same architecture, the largest InnerLogic-Surg model achieves the best linear-probe performance in all 20 surgical tasks. We demonstrate that surgical continual pretraining yields transferable representations that generalize across procedures, anatomical regions, and task types, showing our surgical image encoders as a promising and scalable alternative to the procedure-specific representation learning approaches that have traditionally dominated surgical computer vision.",
           "categories": [
-            "cs.LG"
+            "cs.CV",
+            "cs.AI"
           ],
-          "published": "2026-11-04T12:43:16Z",
-          "paper_url": "http://arxiv.org/abs/2611.06441v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.06441v1.pdf",
+          "published": "2026-11-05T12:03:01Z",
+          "paper_url": "http://arxiv.org/abs/2611.07883v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.07883v1.pdf",
           "score": 65,
           "score_reasons": [
             "分类：基座模型",
@@ -690,75 +717,52 @@
           "track": "foundation-models"
         },
         {
-          "arxiv_id": "2611.06356",
-          "title": "EEGDash Corpus: A Training-Ready Public Corpus for EEG Foundation Models",
+          "arxiv_id": "2611.07756",
+          "title": "Scaling Laws for SAE Training Data",
           "authors": [
-            "Kuber Shahi",
-            "Bruno Aristimunha",
-            "Arnaud Delorme"
+            "Nikita Koriagin",
+            "Nikita Balagansky",
+            "Daniil Gavrilov"
           ],
-          "abstract": "Foundation models for electroencephalography (EEG) are pretrained on tens of thousands of hours of recordings, and their accuracy grows with that amount. Such data is hard to assemble. The largest sources are clinical archives that cannot be redistributed, and the public sources are spread over several archives, file formats, and licences. We release eegdash-corpus-v0, a training-ready corpus of 77 public EEG datasets, as the gated Hugging Face dataset EEGDash/eegdash-corpus-v0 with the SHA-256 of every file. REVE, the largest published EEG foundation model, names 89 datasets as its pretraining corpus. Twelve cannot be redistributed: four clinical archives that hold 82% of its hours, and eight under no-derivatives licences. The corpus holds the 76 others that REVE's sampling rate allows and one more from REVE's release card: 77 datasets, 14,075 hours from 7,272 subjects, 5.0 million 10-second samples and 6.21 billion tokens per epoch. Every dataset is fetched through EEGDash, converted once with REVE's recipe, and stored in its own buckets of a chunked Zarr store with its licence recorded beside it, so a model can train on the whole store or on any subset of datasets. To test that the store pretrains a model, we retrain REVE-Base from scratch twice with the authors' code, changed only in how it reads data, and score it on seven public OpenEEGBench tasks. It reaches 0.331 under linear probing and 0.273 after fine-tuning, against 0.333 and 0.325 for the released model and 0.200 and 0.205 for an untrained encoder. The converter, the conversion reports, and the loader changes are released with the corpus.",
+          "abstract": "Activation storage is often a bottleneck in sparse autoencoder (SAE) training. We study how many unique activations an SAE needs when its total training budget is fixed. Quality improves rapidly as the buffer grows, then reaches a plateau where replaying the buffer is nearly as effective as using fresh activations throughout training. Beyond this point, additional unique activations bring little benefit to reconstruction or interpretability, so the buffer need not grow with the training budget. We describe this tradeoff between diversity and repetition with a scaling law for limited data. We validate it across dictionary sizes and token budgets, early, middle, and late layers of Llama-3.1, Qwen3 model sizes, and BatchTopK, TopK, and JumpReLU SAEs. Sweeps using mathematical text and Python code test the effect of changing the activation source. Evaluation covers explained variance (EV), reconstruction MSE, feature absorption, automated interpretability, and sparse probing. These results give a practical training rule: choose the smallest buffer that reaches the quality plateau and replay it for the remaining budget. In our experiments, this reduces activation storage by $8\\text{--}64\\times$ with negligible quality loss.",
           "categories": [
-            "cs.LG"
-          ],
-          "published": "2026-11-04T11:17:56Z",
-          "paper_url": "http://arxiv.org/abs/2611.06356v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.06356v1.pdf",
-          "score": 65,
-          "score_reasons": [
-            "分类：基座模型",
-            "标题命中：foundation model"
-          ],
-          "category": "foundation-models",
-          "category_label": "基座模型",
-          "track": "foundation-models"
-        },
-        {
-          "arxiv_id": "2611.05993",
-          "title": "Decouple to Reuse: Fine-Grained Knowledge Augmentation for Time Series Foundation Models",
-          "authors": [
-            "Yuqian Wu",
-            "Qingxiang Liu",
-            "Yuxin Guo",
-            "Weifeng Su",
-            "Jian Li",
-            "Pengfei Xu",
-            "Xi Chen",
-            "Yutao Yue",
-            "Yuxuan Liang"
-          ],
-          "abstract": "Time series forecasting is critical for demand prediction and resource management in modern Web services, yet applying pretrained Time Series Foundation Models (TSFMs) to downstream tasks remains challenging due to domain shifts. Existing retrieval-augmented approaches typically retrieve coarse-grained window contexts and may introduce context-specific noise. To address this problem, we argue that temporal patterns should be reused at a decomposition level, as effective trend and seasonal dynamics may originate from different contexts. We propose \\method, a two-stage \\underline{F}ine-grained \\underline{K}nowledge \\underline{A}ugmentation framework that decouples and consolidates pre-training knowledge into compact, task-shared residual codebooks to enhance frozen TSFMs. Specifically, Stage I constructs dual-branch residual codebooks for decoupled trend and seasonal signals, while Stage II dynamically retrieves and merges these fine-grained patterns into target representations via task-adaptive aggregation and gate fusion. Extensive experiments across eight real-world benchmarks with four representative TSFM backbones demonstrate the superior effectiveness and computational efficiency of \\method, while further validating the strong transferability of the residual codebooks across different backbones. The source code is available at the anonymous repository: https://github.com/yuppielqx/TSFM-Component-Token-Adapter",
-          "categories": [
-            "cs.LG"
-          ],
-          "published": "2026-11-04T05:37:24Z",
-          "paper_url": "http://arxiv.org/abs/2611.05993v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.05993v1.pdf",
-          "score": 65,
-          "score_reasons": [
-            "分类：基座模型",
-            "标题命中：foundation model"
-          ],
-          "category": "foundation-models",
-          "category_label": "基座模型",
-          "track": "foundation-models"
-        },
-        {
-          "arxiv_id": "2611.05652",
-          "title": "Quantifying Trait-State Hierarchy in EEG Foundation Model and Signal Processing Embeddings",
-          "authors": [
-            "Anusha Madapura",
-            "Aditya Kommineni",
-            "Shrikanth Narayanan"
-          ],
-          "abstract": "Electroencephalography (EEG) measures brain activity through recording electrical potentials of the scalp. EEG recordings capture two distinct sets of characteristics in the signal: (1) \\emph{Traits} -- information that remains relatively constant over the course of a recording session, such as subject identity, age, and sex; (2) \\emph{States} -- signatures that encode responses to external stimuli, including visual, auditory, and motor information. There is limited understanding of how different EEG modeling features (signal processing and foundation models) encode state and trait characteristics. In this work, we quantify state- and trait-level features captured by EEG embeddings using a hierarchy metric and kNN purity on Brain-Computer Interface dataset trials, and find that a majority of EEG features form a macro-trait hierarchy (embeddings form trait-level clusters with micro-states within). Our linear probe results indicate that this hierarchy structure leads to suboptimal state distinguishability, negatively impacting BCI performance of EEG foundation models. To mitigate this, we explore normalization techniques that reduce trait-specific information in embeddings and provide a $\\sim$ 10\\% improvement in balanced accuracy for state classification. Additionally, we observe that when fine-tuning models for downstream state decoding, embedding spaces transform from macro-trait to macro-state hierarchies, which in turn lead to better state decoding.",
-          "categories": [
+            "cs.LG",
             "cs.AI",
+            "cs.CL"
+          ],
+          "published": "2026-11-05T10:00:55Z",
+          "paper_url": "http://arxiv.org/abs/2611.07756v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.07756v1.pdf",
+          "score": 65,
+          "score_reasons": [
+            "分类：基座模型",
+            "摘要命中：qwen",
+            "摘要命中：llama",
+            "cs.CL"
+          ],
+          "category": "foundation-models",
+          "category_label": "基座模型",
+          "track": "foundation-models"
+        },
+        {
+          "arxiv_id": "2611.07717",
+          "title": "Pediatric ECG foundation model via adult-to-pediatric fine-tuning: downstream tasks and clinical evaluation",
+          "authors": [
+            "Yu Cao",
+            "Haiyan Xu",
+            "Xiaohan Li",
+            "Jian Yang",
+            "Yuqing Feng",
+            "Wei Wang",
+            "Haomin Li"
+          ],
+          "abstract": "Pediatric electrocardiogram (ECG) interpretation is complicated by age-dependent electrophysiological changes that limit direct transfer of adult AI models. We asked whether an adult ECG foundation model could be adapted to pediatric ECGs. Using 339,563 12-lead ECGs from 238,189 children, we compared direct application, pediatric fine-tuning, and training from scratch under an identical architecture. Direct transfer was poor (mean AUC 0.8256). Fine-tuning reached 0.9695, above de novo training (0.9661), and attained 0.9079 using only 1% of training data. On 10,999 external ECGs, fine-tuning achieved a mean AUC of 0.9385 across 30 labels. It generalized to age regression (MAE 1.12 years) and congenital heart disease classification (AUC 0.9562). Across 17 clinicians and 100 cases, diagnostic accuracy rose from 56.8% to 65.4% (p < 0.001) and did not decline when AI erred. Adult ECG foundation models require pediatric adaptation; fine-tuning offers a data-efficient route to scalable pediatric ECG AI.",
+          "categories": [
             "cs.LG"
           ],
-          "published": "2026-11-03T21:37:52Z",
-          "paper_url": "http://arxiv.org/abs/2611.05652v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.05652v1.pdf",
+          "published": "2026-11-05T09:36:44Z",
+          "paper_url": "http://arxiv.org/abs/2611.07717v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.07717v1.pdf",
           "score": 65,
           "score_reasons": [
             "分类：基座模型",
@@ -773,26 +777,62 @@
   ],
   "candidates": [
     {
-      "arxiv_id": "2611.05771",
-      "title": "How Well Can Large Language Models Impersonate Individual Authors? A Comparative Evaluation",
+      "arxiv_id": "2611.07948",
+      "title": "Circe: Training-Free LLM Self-Evaluation via Component Interaction Consistency",
       "authors": [
-        "Harshit Gupta",
-        "Shunichi Ishihara"
+        "Shuyi Miao",
+        "Zheng Li",
+        "Xu Xie",
+        "Linrui Xu",
+        "Fei Shen",
+        "Xiaoyu Du",
+        "Tat-Seng Chua"
       ],
-      "abstract": "This study investigates the authorship impersonation capacity of six widely used large language models (LLMs): Gemini 3 Pro, Claude Opus, GPT 5.2, GPT 5.2 Pro, DeepSeek 3.2, and Grok 4.1 Fast. The evaluation was conducted using short product review texts selected to ensure high within author consistency in individual writing style. Two types of in context prompt were designed: a simple prompt with minimal instruction and a complex prompt incorporating explicit stylometric guidance for mimicry. Authorship mimicry was evaluated using a cosine distance based distance to training metric, supplemented by visual analyses of embedding distributions. The results indicate that authorship impersonation remained challenging for most LLMs, with Gemini 3 Pro showing the strongest apparent mimicry performance. However, subsequent overlap analysis revealed that Gemini 3 Pro extensively copied and reused sentences and phrases from the training texts, at levels far exceeding those observed among human authors. Follow up factor analyses showed that training set consistency was the most robust predictor of mimicry success across models, whereas author distinctiveness did not generalise as a reliable predictor. Global embedding visualisations further revealed a consistent macro level pattern: for most models, generated texts occupied regions of the embedding space that were largely separated from the corresponding human training clusters. This indicates limited convergence towards target author style and suggests the presence of model specific lexical and phraseological preferences. The findings highlight the importance of distinguishing genuine stylistic imitation from direct textual reuse and have implications for the forensic analysis of textual evidence involving potential LLM enabled impersonation.",
+      "abstract": "As large language models (LLMs) are increasingly deployed in real-world applications, evaluating the correctness of their responses is crucial for reliable use. However, such evaluation is challenging because reference answers are rarely available in practice. Existing reference-free methods mainly rely on output signals, which may assign high scores to incorrect responses and thus do not necessarily reflect correctness. This motivates exploring the model's internal computation for complementary correctness signals. Recent studies exploit internal states, but they mainly analyze hidden-state trajectories across layers, which record only the combined updates of attention and feed-forward networks (FFNs) and overlook how these components interact. We therefore propose Circe, a training-free self-evaluation method that assesses a response using both internal and external signals, without reference answers or repeated sampling. For internal signals, we first introduce component interaction consistency (CIC), which measures the directional alignment between attention updates in earlier layers and attention-induced FFN output changes in later layers. We further incorporate representation geometry (RG) to characterize normalized displacement and angular changes along layerwise hidden-state trajectories. For the external signal, we convert the mean negative log-likelihood of generated tokens into a bounded likelihood confidence (LC) score. Finally, we fuse CIC, RG, and LC into a unified correctness score. Experiments on five LLMs and six benchmarks across four domains show that our method distinguishes correct from incorrect responses more effectively than existing baselines, and generalizes to multilingual, multimodal, and open-world settings.",
       "categories": [
         "cs.CL",
         "cs.AI"
       ],
-      "published": "2026-11-04T00:22:54Z",
-      "paper_url": "http://arxiv.org/abs/2611.05771v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.05771v1.pdf",
+      "published": "2026-11-05T12:45:40Z",
+      "paper_url": "http://arxiv.org/abs/2611.07948v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.07948v1.pdf",
       "score": 100,
+      "score_reasons": [
+        "分类：LLM",
+        "摘要命中：large language model",
+        "摘要命中：language model",
+        "摘要命中：alignment",
+        "摘要命中：benchmark",
+        "标题命中：evaluation"
+      ],
+      "category": "llm",
+      "category_label": "LLM",
+      "track": "frontier"
+    },
+    {
+      "arxiv_id": "2611.07558",
+      "title": "SKIM: Pruning Large Language Model Agents via Selective Knowledge Informed Masking",
+      "authors": [
+        "Moonseok Choi",
+        "Jongwon Jeong",
+        "Minki Kang",
+        "Giung Nam",
+        "Juho Lee"
+      ],
+      "abstract": "Large Language Model (LLM) agents are increasingly deployed under structured generation, where grammar constraints enforce output format at inference time. Whereas existing compression methods target unconstrained generation, we first identify a fundamental mismatch: under structured generation, grammar constraints reduce the model's output distribution to valid tokens, and the logits matter most at the small set of positions that decide the agent's action. Motivated by this finding, we propose SKIM (Selective Knowledge-Informed Masking), the first pruning and distillation framework for LLM agents under structured generation, with both stages guided by token role. SKIM partitions token positions into context, decision, and format categories, and this partition drives two complementary axes: (1) category-aware pruning saliency scores that preserve parameters most relevant for decision positions; and (2) an on-policy distillation objective that aligns student and teacher on valid tokens, paired with category-aware feature matching. We evaluate SKIM on tool-calling benchmarks and within multi-step agent loops, across multiple model scales and sparsity levels. SKIM consistently improves accuracy over baselines, with its superiority becoming most striking in high-sparsity regimes where conventional methods struggle, demonstrating the potential of category-aware compression for deployment-time grammar-constrained agents.",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-11-05T07:04:45Z",
+      "paper_url": "http://arxiv.org/abs/2611.07558v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.07558v1.pdf",
+      "score": 97,
       "score_reasons": [
         "分类：LLM",
         "标题命中：large language model",
         "标题命中：language model",
-        "标题命中：evaluation",
+        "摘要命中：benchmark",
         "cs.CL"
       ],
       "category": "llm",
@@ -800,105 +840,68 @@
       "track": "frontier"
     },
     {
-      "arxiv_id": "2611.06631",
-      "title": "Trick-or-Treat: Adversarial Evaluation of Multimodal Medical Reasoning with Synthetic Images",
+      "arxiv_id": "2611.07689",
+      "title": "MCPHallu: Benchmarking Reasoning, Execution, and Memory Hallucinations in MCP Agents",
       "authors": [
-        "Oishi Banerjee",
-        "Eujin Lee",
-        "Sung Eun Kim",
-        "Alexandra N. Willauer",
-        "Christine Y. Zhou",
-        "Zhizhou Yang",
-        "Pranav Rajpurkar"
+        "Yizhen Jiang",
+        "Haowei Guo",
+        "Tianyi Bai",
+        "Zengjie Hu",
+        "Lu Ma",
+        "Zhengyang Zhao",
+        "Haoze Sun",
+        "Peng Pei",
+        "Wentao Zhang"
       ],
-      "abstract": "We used medical image synthesis to create a challenging multimodal evaluation framework that exposes hallucination behaviors in frontier models. Evaluating multimodal reasoning has historically been difficult because existing medical datasets rarely pair different image modalities, such as radiographs and external clinical photographs. To address this gap, we introduce Trick-or-Treat, an adversarial multimodal medical benchmark that pairs real chest radiographs with synthetic clinical photographs to challenge models' cross-modal reasoning. For each of a wide range of conditions, we created two pairs of images, where the pairs share a single chest radiograph but contain different external photographs. In matched pairs, the chest radiograph and photograph both contain findings suggesting the same disease (e.g., varicella pneumonia suggested by lung opacities and crusted skin lesions seen in chickenpox). In mismatched pairs, the photograph depicts an alternative clinical finding that would not lead to the same unifying diagnosis (e.g. replacing crusted skin lesions with ordinary acne). Synthetic photograph generation allows clinical findings to be varied while the person's features and photographic setting stay consistent, reducing confounding. In an investigation of three frontier models, we found that models hallucinated clinically significant photograph findings in 45-57.5% of mismatched pairs, up from 25-37.5% for the same photographs shown alone. When faced with mismatched pairs, models tended to ignore mismatches and instead hallucinated findings that better matched the radiograph (e.g. misreading acne as crusted skin lesions to justify diagnosing chickenpox). Trick-or-Treat both demonstrates concerning error pattern in frontier models' medical reasoning and provides a proof of concept for the use of synthetic images in adversarial multimodal evaluation.",
-      "categories": [
-        "cs.CV",
-        "cs.AI"
-      ],
-      "published": "2026-11-04T15:13:35Z",
-      "paper_url": "http://arxiv.org/abs/2611.06631v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.06631v1.pdf",
-      "score": 93,
-      "score_reasons": [
-        "分类：LLM",
-        "标题命中：reasoning",
-        "摘要命中：benchmark",
-        "标题命中：evaluation",
-        "标题命中：multimodal"
-      ],
-      "category": "llm",
-      "category_label": "LLM",
-      "track": "frontier"
-    },
-    {
-      "arxiv_id": "2611.06911",
-      "title": "BEAKER: An Expert-Curated Benchmark for Embodied Brains in Self-Driving Chemical Laboratories",
-      "authors": [
-        "Fei Lin",
-        "Tengchao Zhang",
-        "Ziyang Gong",
-        "Xiaotong Yu",
-        "Bohan Zhang",
-        "Yifan Zhou",
-        "Qihao Yang",
-        "Ji Dai",
-        "Dong Li",
-        "Yining Jiang",
-        "Qinghua Ni",
-        "Jun Huang",
-        "Qiang Zhang",
-        "Yue Zhou",
-        "Zhihang Zhong",
-        "Yonglin Tian",
-        "Fei-Yue Wang",
-        "Xue Yang"
-      ],
-      "abstract": "Self-Driving Chemical Laboratories (SDCLs) are moving chemical experimentation toward embodied automation, where machines must perceive laboratory scenes, reason about experimental states, and act under physical, procedural, and safety constraints. Although Multimodal Large Language Models (MLLMs) are increasingly considered as embodied brains for such systems, existing laboratory benchmarks mainly focus on safety, anomaly detection, or general scientific understanding, leaving their execution-oriented embodied capabilities underexplored. To fill this gap, we introduce BEAKER, a Benchmark for evaluating Embodied Actionability, Knowledge, Experimentation, and Reasoning in SDCLs. BEAKER contains 1,000 expert-curated question-answer samples across 11 image and video task types, covering key judgments required for chemical laboratory execution, including affordance grounding, trajectory planning, equipment, state, and safety recognition, apparatus setup, operation and step reasoning, and temporal procedure reasoning. All questions and annotations are manually created and reviewed by chemistry and embodied Artificial Intelligence (AI) experts, without AI-assisted generation or annotation. We evaluate 28 general-purpose, science-oriented, chemistry-specialized, and embodied MLLMs in an offline, single-turn setting. Results show that current models can follow coarse experimental procedures in videos, but still struggle to ground actions into operable regions and feasible trajectories, to recognize fine-grained laboratory apparatus, states, and safety norms, and to order steps in mid-length procedures. BEAKER thus reveals a clear gap between coarse procedural understanding and the precise, action-grounded perception required for laboratory execution, providing a diagnostic benchmark for future MLLMs in SDCLs.",
+      "abstract": "Large language model agents are increasingly deployed through the Model Context Protocol (MCP), which allows them to discover and invoke tools across multiple servers at runtime. Existing MCP benchmarks primarily measure task completion; where they diagnose failures, they do so after execution rather than building specific reasoning, execution, and memory failure risks into task construction. We introduce MCPHallu, a benchmark for diagnosing hallucination-prone agent failures in MCP environments along three axes: reasoning, execution, and memory. MCPHallu contains 358 tasks across five capability domains and runs on 36 production MCP servers in isolated containers. Each task is designed with a structural trigger that makes one of four subtypes the dominant failure risk: Branch Collapse, Unreachable Goal, Tool Misuse, or Context Forgetting. This design enables subtype-level analysis rather than aggregate task success alone. We evaluate fourteen frontier LLM agents from eight vendors on 5{,}012 trajectories. Current MCP agents remain vulnerable to hallucination-inducing tool environments, achieving an average score of 0.642 on a $[0,1]$ scale (higher is better). Failures concentrate on Unreachable Goal tasks, where the average score drops to 0.458 and 23.2\\% of runs pass, indicating that agents often continue issuing tool calls or claim successful completion rather than recognizing infeasible goals. Subtype rankings diverge sharply: a model's rank shifts by 6.9 of 13 positions on average across subtypes, and Branch Collapse is uncorrelated with Unreachable Goal across models ($r = -0.12$). MCPHallu is released at https://github.com/J1zz/mcp_hallu.",
       "categories": [
         "cs.AI"
       ],
-      "published": "2026-11-04T18:57:17Z",
-      "paper_url": "http://arxiv.org/abs/2611.06911v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.06911v1.pdf",
+      "published": "2026-11-05T09:14:26Z",
+      "paper_url": "http://arxiv.org/abs/2611.07689v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.07689v1.pdf",
       "score": 92,
       "score_reasons": [
         "分类：LLM",
         "摘要命中：large language model",
         "摘要命中：language model",
-        "摘要命中：reasoning",
-        "标题命中：benchmark",
-        "摘要命中：multimodal"
+        "标题命中：reasoning",
+        "标题命中：benchmark"
       ],
       "category": "llm",
       "category_label": "LLM",
       "track": "frontier"
     },
     {
-      "arxiv_id": "2611.05515",
-      "title": "TSFM Meets LLM: Context as Covariates",
+      "arxiv_id": "2611.07408",
+      "title": "PSGAgent: Enhancing MLLMs' Dynamic Visual Perception for Panoptic Scene Graph Generation via Agentic Reasoning",
       "authors": [
-        "Hemanth Ram",
-        "Sai Shankar Narasimhan",
-        "Shubhankar Agarwal",
-        "Sandeep Chinchali"
+        "Qingyun Liu",
+        "Yuankun Liu",
+        "Jiaye Feng",
+        "Jie Huang",
+        "Zonghong Dai",
+        "Haochen Li",
+        "Jingkun Wang",
+        "Weiping Li",
+        "Tong Mo"
       ],
-      "abstract": "Textual information is ubiquitous in real-world time series datasets, appearing as news, reports, and annotations that hold key predictive signals not deducible from numerical history alone. Large Language Models (LLMs) interpret text but lack numerical precision, while Time Series Foundation Models (TSFMs) are quantitatively accurate but cannot reason about the effects of text. Moreover, the lack of large-scale paired multimodal datasets limits progress in bridging this gap. In this work, we address this challenge by providing a scalable approach for generating realistic multimodal datasets by annotating real-world time series with LLMs. Building on this, we propose Context as Covariates (CoCo), a forecasting framework in which an LLM distills its textual reasoning into numerically grounded forecast and confidence covariates that guide a TSFM backbone, thereby exploiting the strengths of both LLMs and TSFMs. We align the two models in stages, first fine-tuning the LLM via Group Relative Policy Optimization (GRPO) with a reward tied to covariate-induced improvement in forecasting performance, and then fine-tuning the TSFM on covariates generated by the aligned LLM. Our experiments show that models trained on our synthetic multimodal corpus generalize to real benchmarks spanning finance, economics, weather, traffic, and security. Notably, CoCo with Qwen3-4B-Instruct-2507 as the LLM and Chronos2 as the TSFM achieves up to 12% MAE improvement over state-of-the-art TSFMs and LLM forecasters, such as GPT-4o. Code, checkpoints, and the evaluation datasets are publicly available.",
+      "abstract": "Panoptic Scene Graph generation (PSG) requires holistic yet fine-grained reasoning over complex relations among objects. However, current Multimodal Large Language Models (MLLMs) applied to PSG suffer from a perception bottleneck: they function as static observers limited by fixed-resolution views. As a result, models often overlook critical relations involving small or peripheral objects and struggle to differentiate ambiguous predicates in complex scenes. To address these limitations, we propose PSGAgent, an agentic framework that enhances visual perception for PSG through a think-act-observe loop. PSGAgent allows MLLMs to dynamically refine their visual perception using two tools: a Region Zoom-In Tool for local exploration of small or boundary relations and a Visual Highlight Tool for relation-focused segmentation that filters out irrelevant contextual noise. To optimize decision-making, we construct a two-stage training pipeline. First, we create a high-quality, error-aware Multimodal Chain-of-Thought (M-CoT) dataset that provides robust supervision for cold-start learning. Then, we design a novel hierarchical reward mechanism integrated with Group Sequence Policy Optimization (GSPO) to enable strategic and adaptive tool usage. Extensive experiments on the PSG benchmark show that PSGAgent achieves SOTA performance, demonstrating strong capability in both holistic and fine-grained scene understanding.",
       "categories": [
-        "cs.LG",
+        "cs.CV",
         "cs.AI"
       ],
-      "published": "2026-11-03T19:13:19Z",
-      "paper_url": "http://arxiv.org/abs/2611.05515v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.05515v1.pdf",
-      "score": 91,
+      "published": "2026-11-05T04:02:16Z",
+      "paper_url": "http://arxiv.org/abs/2611.07408v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.07408v1.pdf",
+      "score": 92,
       "score_reasons": [
         "分类：LLM",
         "摘要命中：large language model",
         "摘要命中：language model",
-        "摘要命中：reasoning",
+        "标题命中：reasoning",
         "摘要命中：benchmark",
-        "摘要命中：evaluation"
+        "摘要命中：multimodal"
       ],
       "category": "llm",
       "category_label": "LLM",
@@ -927,6 +930,32 @@
       ],
       "category": "rl",
       "category_label": "RL",
+      "track": "frontier"
+    },
+    {
+      "arxiv_id": "2611.07283",
+      "title": "Encoding and Propagation of Grammatical Number in Large Language Models",
+      "authors": [
+        "Jacob Solinsky",
+        "Serguei Pakhomov"
+      ],
+      "abstract": "Sparse autoencoders (SAEs) have become an increasingly popular means of translating Large Language Model (LLM) hidden state vectors into a human-comprehensible list of features or symbols. As such, SAEs may provide insight into an LLM's knowledge representation and internal ``mental'' grammar - topics of pragmatic interest for mechanistic interpretation of AI behavior and of theoretical interest for the study of in silico representations of human language. Language models with fewer than 100M parameters, trained on small corpora, nonetheless exhibit strong grammatical competence and discourse coherence, despite producing content of limited reliability. We use SAEs that we trained on one such model (Pythia-70M) to conduct an in-depth examination of how a single grammatical phenomenon, number agreement, is represented and processed in an LLM. We demonstrate the mechanism and the methodology by which SAEs can be used to find and propagate ``plural noun'', ``plural matrix subject'', and ``generate a plural verb'' features which cause the LLM to produce plural verb forms such as ``are'', ``do'', or ``have'' instead of ``is'', ``does'', and ``has'' in response to prompts such as ``the men in the park''. We show that intervening to remove these features from the hidden states of plural subject noun tokens causes the model to produce singular verbs instead, and vice versa. We also show that corresponding ``singular noun'' and ``generate a singular verb'' features are not as effective for this task. This asymmetry suggests that Pythia-70m makes use of a privative representation of grammatical number in English. These findings replicated with larger LLMs Gemma-2-2b and Llama-3.1-8b yielded similar results. Our main contribution is a novel approach to the use of SAEs to understanding how LLMs encode human language that addresses a number of technical and methodological challenges.",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-11-05T01:04:02Z",
+      "paper_url": "http://arxiv.org/abs/2611.07283v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.07283v1.pdf",
+      "score": 87,
+      "score_reasons": [
+        "分类：LLM",
+        "标题命中：large language model",
+        "标题命中：language model",
+        "cs.CL"
+      ],
+      "category": "agent",
+      "category_label": "Agent",
       "track": "frontier"
     },
     {
@@ -960,78 +989,46 @@
       "track": "frontier"
     },
     {
-      "arxiv_id": "2611.04960",
-      "title": "An Agentic Framework for Quality-Aware and Scenario-Adaptive Image Compression",
+      "arxiv_id": "2611.06956",
+      "title": "Octopus: One Brain, Many Branches for Latent-KV Multi-Agent Reinforcement Learning",
       "authors": [
-        "Zhenghao Chen",
-        "Lebin Zhou",
-        "Zicong Chen",
-        "Naifu Xue",
-        "Jiahao Li",
-        "Bin Li",
-        "Dong Xu",
-        "Yan Lu"
+        "Tianming Sha"
       ],
-      "abstract": "Despite decades of progress, image codecs remain difficult to adapt to diverse real-world compression scenarios for two main reasons. First, most image codecs are optimized for a specific objective and require substantial redevelopment when the compression goal changes. Second, they typically assume clean inputs, whereas sensor-captured images often contain degradations that alter rate-quality behavior. To address these challenges, we propose Practical Image Coding Agents (PICA), a multi-agent framework that adapts existing codecs to diverse user requirements and potentially degraded inputs. PICA consists of four collaborative agents: a Perception agent that interprets user intent and analyzes image content, an Improvement agent that jointly considers bitrate and reconstruction quality to guide pre-coding restoration, a Coding agent that refines quality-control settings from global to regional levels, and an After-coding improvement agent that addresses residual degradations and compression-induced artifacts through restoration guided solely by image quality. To enable codec-agnostic regional adaptation, we introduce Agentic ROI Coding (AROIC), which treats the codec as a black box and allows the agent to automatically schedule, execute, evaluate, and reflect ROI coding plans without architectural modifications or codec-specific retraining. We integrate these four agents with a Scenario-Guided Quality-Rate (SGQR) evaluation strategy to enable more effective scenario-adaptive compression across heterogeneous codecs. Comprehensive experiments on clean, noisy, and blurred images across standard, perceptual, and machine-vision compression scenarios demonstrate that PICA consistently enhances the compression performance of both the conventional H.266/VVC codec and the neural Cheng2020 codec, outperforming competing compression methods on the Kodak, CLIC2020, and HEVC datasets.",
+      "abstract": "Multi-agent LLM systems explore in parallel by spawning sub-agents with isolated context windows, whereas single-agent systems append every search and verification step into one growing trajectory. However, existing multi-agent frameworks duplicate prefix KV caches across branches, exchange findings by re-prefilling text summaries, and flatten or drop cross-branch dependencies during reinforcement learning (RL). We introduce Octopus, a single-model multi-agent RL framework in which all threads share one backbone and coordinate over a GPU-resident directed acyclic graph (DAG) of KV states through five primitives (fork, read_thread, wait_threads, rewind, commit). Octopus combines three co-designed mechanisms: (1) Zero-Copy Radix Forking, which spawns branches as $\\mathcal{O}(1)$ cursor views over shared physical KV pages; (2) Attention-Only KV Mounting, which mounts a sibling thread's terminal KV blocks directly into full-attention layers while bypassing linear-recurrent states (Gated DeltaNet / Mamba-2), cutting off-task hijacking by $21\\times$ ($57.9\\% \\to 2.7\\%$) while retaining $92.2\\%$ of full-text mutual information at zero extra KV allocation; and (3) a Packed DAG-GRPO Trainer, which packs all episode branches into one block-sparse attention pass and assigns counterfactual branch credit via leave-one-branch-out marginal rewards. Trained end-to-end with GRPO on Qwen3.5-4B over a sparse BM25 corpus, Octopus reaches $49.6\\%$ accuracy on BrowseComp-Plus ($+17.5$ points over single-agent GRPO at 143K context and $+12.5$ points over text-summary multi-agent RL) and $51.2\\%$ on OpenResearcher, outperforming dense-retrieval agents up to $250\\times$ larger while increasing training throughput $3.3\\times$ and cutting peak KV memory $2.8\\times$.",
       "categories": [
-        "cs.CV"
+        "cs.LG",
+        "cs.CL"
       ],
-      "published": "2026-11-03T14:19:39Z",
-      "paper_url": "http://arxiv.org/abs/2611.04960v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.04960v1.pdf",
+      "published": "2026-11-03T22:42:25Z",
+      "paper_url": "http://arxiv.org/abs/2611.06956v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.06956v1.pdf",
       "score": 85,
       "score_reasons": [
         "分类：Agent",
-        "摘要命中：multi-agent",
-        "标题命中：agentic",
-        "标题命中：agent"
-      ],
-      "category": "agent",
-      "category_label": "Agent",
-      "track": "frontier"
-    },
-    {
-      "arxiv_id": "2611.05179",
-      "title": "OperAItor: An Agentic Framework for Fault-Tolerant Operation of Chemical Processes",
-      "authors": [
-        "Javal Vyas",
-        "Mehmet Mercang{ö}z"
-      ],
-      "abstract": "OperAItor, an open-source framework for developing and evaluating large language model agents for supervisory fault management in chemical processes. The framework is demonstrated on a dynamic reactor-distillation process representing isopropanol dehydrogenation, with physically based thermodynamics and modified reaction kinetics to permit liquid-phase operation. The process is represented by a 113-variable differential-algebraic model and operates at a nominal feed rate of 100kmol/h, producing approximately 4t/h of acetone. The simulated plant includes 8 PI control loops, 22 process alarms, 5 duty-standby pump trains, and 11 independent safety instrumented functions. The agent architecture integrates multivariate statistical process monitoring, fault diagnosis, knowledge-graph retrieval, action planning, and supervisory action generation. Five action-validation configurations are investigated, comprising operation without validation, an LLM-based judge, digital-twin simulation, and deterministic admissibility checks with and without consequence projection. The framework is evaluated using four LLMs across 20 scenarios involving single and multiple simultaneous faults. Without agent intervention, 18 scenarios result in plant stops, corresponding to an economic loss of $399,000 relative to fault-free operation under the assumed benchmark economics. For GPT-5 nano, Qwen3 8B, and Mistral 7B, validated agent configurations reduce the number of stops to 5-8 and recover $265,000 of the loss. The study provides a reproducible benchmark for comparing agent architectures, language models, and action-validation methods for supervisory fault management in chemical processes.",
-      "categories": [
-        "eess.SY",
-        "cs.AI"
-      ],
-      "published": "2026-11-03T16:40:46Z",
-      "paper_url": "http://arxiv.org/abs/2611.05179v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.05179v1.pdf",
-      "score": 84,
-      "score_reasons": [
-        "分类：Agent",
-        "标题命中：agentic",
+        "标题命中：multi-agent",
         "标题命中：agent",
-        "摘要命中：planning"
+        "cs.CL"
       ],
       "category": "agent",
       "category_label": "Agent",
       "track": "frontier"
     },
     {
-      "arxiv_id": "2611.04579",
-      "title": "FreeForm Harness: A Mobile-Native Agent Harness for Open and Composable Extensions",
+      "arxiv_id": "2611.07442",
+      "title": "Req2Rust: A Requirements-Guided Agent Harness for Project-Level C++-to-Rust Migration",
       "authors": [
-        "Bo Zhang",
-        "Pengbo Zhang",
-        "Jiaxin Jiao",
-        "Yue Liu"
+        "Shengbo Wang",
+        "Mingwei Liu",
+        "Yuwen Chen",
+        "Yanlin Wang"
       ],
-      "abstract": "Mobile phones support many everyday agent tasks, but current mobile agents bundle capabilities into monolithic pipelines with no open recombination point. Users and third parties cannot publish, install, and compose new behaviors, leaving personalized daily-life requests underserved. We argue that the missing piece is a substrate: although phones are the Web's dominant access point, open publication and composition under decentralized authorship stop at the agent harness. We present FreeForm Harness (FFH), a mobile-native agent harness for open, composable extensions. A frozen base and a permanence-aware required layer handle mobile constraints, including location, proactive triggering, and scarce channels. A uniform plugin contract makes independently authored extensions composable, checkable, and replaceable over a frozen socket set. FFH also supports end-user authorship through a tiered commissioned-authoring path. When no existing extension matches a user's intent, a Web coding agent generates a candidate artifact, which is validated and admitted on device under the same contract as other extensions. An Android prototype spans device, market, and cloud. Evaluation shows that architectural boundaries are enforced at runtime; realistic daily-life requests fit the declared composition space without widening it; and user intent reaches on-device execution through retrieval or commissioned authoring, with final trust decisions remaining device-local. FFH advances the agentic Web from \"everything is a plugin\" toward \"everyone is a developer\" on mobile.",
+      "abstract": "Memory-safety concerns make Rust an attractive target for modernizing legacy C/C++ systems, yet project-level C++ migration must balance semantic fidelity with Rust-oriented reconstruction. Source-structure-preserving migration can track low-level behavior, but it can also carry source-language organization, unsafe idioms, and project assumptions into Rust. Direct agent-based translation gives the model more freedom to construct a Rust project, but semantic coverage depends on the model identifying the source behaviors that must be preserved. This problem is especially acute for C++, where source behaviors are often hidden in object models, destructor-driven lifetime protocols, and other hard-to-localize C++ semantics. This paper presents Req2Rust, the first project-level LLM-based C++-to-Rust migration harness. Req2Rust first derives an evidence-grounded Migration Requirements Specification (MRS) that records the behaviors and constraints that must be preserved. It then synthesizes a Rust Design Specification (RDS) and realizes it as an initial Rust project. Because real projects contain implementation details and idioms that only become visible during build and validation, Req2Rust treats the initial Rust project as an executable refinement state. Compiler, semantic, and unsafe-reduction validators produce validation reports for improving buildability, behavioral alignment, and unsafe usage. We evaluate Req2Rust on general C++ projects and modules from the large-scale Openharmony codebase against a ClaudeCode baseline. Req2Rust produces buildable Rust crates in both settings and improves test pass rate from 69.5% to 91.9% on general projects and from 45.4% to 87.9% on Openharmony modules.",
       "categories": [
         "cs.SE"
       ],
-      "published": "2026-11-03T09:39:21Z",
-      "paper_url": "http://arxiv.org/abs/2611.04579v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.04579v1.pdf",
+      "published": "2026-11-05T04:40:17Z",
+      "paper_url": "http://arxiv.org/abs/2611.07442v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.07442v1.pdf",
       "score": 80,
       "score_reasons": [
         "分类：Harness",
@@ -1124,30 +1121,36 @@
       "track": "harness"
     },
     {
-      "arxiv_id": "2611.04456",
-      "title": "How Agent Skills Evolve: A Large-Scale Empirical Study of Skills on GitHub",
+      "arxiv_id": "2611.07238",
+      "title": "How Do AI Agents Waste Your Money?",
       "authors": [
-        "Jinjun Huang",
-        "Jialun Cao",
-        "Junxiao Han",
-        "Zhonghao Jiang",
-        "Shing-Chi Cheung",
-        "Zhongxin Liu"
+        "Huimin Zeng",
+        "Yuxuan Lu",
+        "Jesse Cai",
+        "Eric Hanchen Jiang",
+        "Di Wu",
+        "Po-Nien Kung",
+        "Wenbo Hu",
+        "Ziyi Wang",
+        "Dakuo Wang",
+        "Jiaxin Pei",
+        "Kai-Wei Chang"
       ],
-      "abstract": "Large language model-based agents increasingly rely on external skills to reuse task-specific knowledge without retraining the model. As skills become common for extending agent capabilities, understanding creation and evolution is critical for reliable agent systems. However, existing studies mainly examine agent skills from a static perspective, leaving their evolution in real-world repositories largely unexplored. This limits our understanding of the patterns and motivations behind skill changes. To fill this gap, we present a large-scale empirical study of agent skills, capturing 84,200 skills and 750,898 commits from GitHub. We manually construct taxonomies of skill components, change patterns, and evolution motivations, and build an automated annotation pipeline to label changes at scale. Based on the taxonomy, we conduct quantitative analyses of skill composition and post-creation evolution frequency, together with qualitative assessments of modified components, change patterns, and motivations. Our findings reveal five implications: (i) reliability receives less attention in skill composition and change, motivating execution-contract skill design that incorporates verification and recovery mechanisms; (ii) evolution changes concentrate in project-coupled skills, calling for automated just-in-time skill updating mechanisms; (iii) change patterns are dominated by incremental enrichment and refinement, motivating pattern-guided skill enhancers that diagnose and improve incomplete skill components; (iv) redundancy is a practical maintenance issue, highlighting the need for context-efficient skill representation; (v) security-motivated changes show limited risk reduction, suggesting skill regression testing methods that objectively verify skill functionality and security. Beyond these insights, our dataset provides a basis for future studies on automated skill techniques.",
+      "abstract": "AI agents may consume massive tokens across a wide range of tasks, but how many of those tokens are really necessary? Although prior work has shown that agents can incur unexpectedly high token costs, we still lack a systematic way to identify and measure token waste. In this work, we introduce a unified framework for measuring token waste across heterogeneous agent systems. Our framework records and normalizes complete agent trajectories, identifies removable spans using an LLM-as-a-Judge (LLMaJ), and maps the identified text spans back to the original trajectory for token-level measurement. We validate the identified waste through direct interventions by removing marked spans, resuming agent execution, and measuring changes in task outcomes and subsequent actions. In online pruning experiments, we remove 41-46% of the model's reasoning while largely preserving task performance across two distinct agent benchmarks. Using this framework, we analyze agents across multiple settings. Our analysis shows that token waste has a system-level structure that aggregate token usage alone cannot reveal. First, waste varies more across tasks and agent settings than across models. Second, reasoning and visible execution can exhibit different waste patterns. Third, different harnesses can introduce distinct sources of inefficiency even under the same model and task. Overall, our framework transforms token waste into an actionable optimization signal, enabling researchers and practitioners to train more efficient models, design better reasoning strategies, and optimize agent harnesses toward reducing unnecessary computation rather than merely reducing token usage.",
       "categories": [
-        "cs.SE"
+        "cs.CL"
       ],
-      "published": "2026-11-03T07:46:48Z",
-      "paper_url": "http://arxiv.org/abs/2611.04456v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.04456v1.pdf",
-      "score": 60,
+      "published": "2026-11-04T23:43:03Z",
+      "paper_url": "http://arxiv.org/abs/2611.07238v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.07238v1.pdf",
+      "score": 58,
       "score_reasons": [
-        "分类：Skill",
-        "标题命中：agent skill"
+        "分类：Harness",
+        "摘要命中：agent harness",
+        "cs.CL"
       ],
-      "category": "skill",
-      "category_label": "Skill",
+      "category": "harness",
+      "category_label": "Harness",
       "track": "harness"
     },
     {
@@ -1347,6 +1350,35 @@
       "track": "classic-algorithms"
     },
     {
+      "arxiv_id": "2611.07478",
+      "title": "Localization Does Not Imply Steerability: A Mechanistic Study of Sign Errors in LLM Mathematics",
+      "authors": [
+        "Shradha Agarwal",
+        "Tariq J.",
+        "Deepak Rajbhar"
+      ],
+      "abstract": "When large language models do multi-step mathematics, a characteristic failure recurs: the model writes one wrong sign token mid-computation -- a cofactor sign, the minus of a recursive integration-by-parts step -- then executes the rest of the arithmetic correctly, and the answer comes out wrong. We ask where inside the network that sign is written. Across six open models spanning 14B to 675B parameters, a per-layer readout shows the wrong sign is committed late -- by MLP layers in the last quarter of the network (70-100% per model and task), a pattern present, where tested (Qwen), in the base model before instruction tuning. The mechanism varies: some models carry fixed \"minus-stamp\" layers that push a minus regardless of the right answer, others carry amplifiers of whichever sign was already chosen, and Qwen adds a downstream rescue layer that opposes the stamp. The circuit is causal: subtracting a single sign direction from the residual stream flips 13 of 14 held-out minus-written integration-by-parts errors on Llama-3.3-70B, with flips replicating on Qwen, Gemma, and Mistral-Small (24-70% per cell), and with representation-level specificity -- the same dose breaks correctly-minus answers while sparing correct-plus answers where the direction is surgical (0/72 on Llama), and matched random-direction and control-layer interventions are null. Core claims were preregistered with pass criteria frozen in git before held-out data was seen: 23 of 29 checks passed, all misses reported. But causality is not uniform: Phi-4 implements an equally well-localized circuit at the same late depth, yet the identical intervention flips almost nothing -- the sign is written redundantly across ~15 layers with margins several times larger (median 17.8 logits). Localization, we conclude, does not imply steerability: two models can share a circuit location yet differ enormously in how overturnable it is.",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "published": "2026-11-05T05:36:28Z",
+      "paper_url": "http://arxiv.org/abs/2611.07478v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.07478v1.pdf",
+      "score": 81,
+      "score_reasons": [
+        "分类：基座模型",
+        "摘要命中：base model",
+        "摘要命中：qwen",
+        "摘要命中：llama",
+        "cs.CL"
+      ],
+      "category": "foundation-models",
+      "category_label": "基座模型",
+      "track": "foundation-models"
+    },
+    {
       "arxiv_id": "2611.06741",
       "title": "TailSteer: Trajectory-Tail Steering for Drift-Resistant Multi-turn Image Editing",
       "authors": [
@@ -1380,23 +1412,19 @@
       "track": "foundation-models"
     },
     {
-      "arxiv_id": "2611.06546",
-      "title": "Adapting Sleep Foundation Models for Dense Sleep Spindle Localization",
+      "arxiv_id": "2611.07886",
+      "title": "When, Where, How: Active In-Context Learning for Tabular Foundation Models",
       "authors": [
-        "Alexis Bollengier",
-        "Abel Díaz Berenguer",
-        "Olivier Pallanca",
-        "André Anjos",
-        "Hichem Sahli"
+        "Christian M. M. Frey"
       ],
-      "abstract": "Adapting sleep foundation models to dense electroencephalography (EEG) event localization is challenging because multi-second representations may not preserve sufficient temporal detail for precise boundary recovery. We address sleep spindle localization by adapting a frozen SleepFM encoder with a local time-frequency pathway that preserves spindle-relevant spectral content and intra-token position. The local representation drives localization, while residual cross-attention incorporates SleepFM temporal context. Dense predictions are obtained through localized token-to-sample reconstruction and temporal refinement. Tested on the Massive Online Data Annotation (MODA), the proposed model achieves an event-level $F_1$ of $0.8080 \\pm 0.0040$ at IoU 0.2 across six folds. Ablations show that localization primarily depends on local spectral and sub-token temporal information, while the pretrained representation provides complementary context. These results indicate that dense adaptation benefits from preserving information below the pretrained token scale. Code will be released upon acceptance.",
+      "abstract": "Tabular Foundation Models (TFMs) adapt to a new task only through the labeled rows in their context. However, labels are expensive to acquire in real-world scenarios due to the need for highly specific domain knowledge to ensure high-quality data. Active in-context learning transfers classical acquisition rules to this setting, in which the model that guides acquisition changes with every label added. We ask how the value of diversity, predictive uncertainty and target-aware information gain changes as a frozen TFM acquires more context. For that, we study Target-Aware Nearest Neighbor (TANN) acquisition and the Expected Predictive Information Gain in Context (EPIC) and evaluate them against classical rules. Our study across twenty benchmarks with two well-established TFMs and classical GBDTs highlights three findings: (i) When: diversity-based acquisition is best during the first acquisition iterations; (ii) Where: labeling pool rows that serve the target inputs via a simple target-aware nearest-neighbor rule matters substantially; (iii) How: EPIC yields the best models at the label budget, retains on average 80--87% of the chance-corrected full-data performance with only 5-10% of the pool labeled on the eight benchmarks with the largest pools, and selects labels that also improve the predictive performance of gradient-boosted decision trees.",
       "categories": [
-        "eess.SP",
-        "cs.LG"
+        "cs.LG",
+        "cs.AI"
       ],
-      "published": "2026-11-04T14:12:33Z",
-      "paper_url": "http://arxiv.org/abs/2611.06546v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.06546v1.pdf",
+      "published": "2026-11-05T12:04:48Z",
+      "paper_url": "http://arxiv.org/abs/2611.07886v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.07886v1.pdf",
       "score": 65,
       "score_reasons": [
         "分类：基座模型",
@@ -1407,23 +1435,26 @@
       "track": "foundation-models"
     },
     {
-      "arxiv_id": "2611.06441",
-      "title": "Graph Foundation Models Can Become Effective Multivariate Time Series Anomaly Detectors",
+      "arxiv_id": "2611.07883",
+      "title": "InnerLogic-Surg: An Open Surgical Foundation Model via Continual Pretraining",
       "authors": [
-        "Zhuangyan Hu",
-        "Zhuoxuan Liang",
-        "Wei Li",
-        "Xiaohua Jia",
-        "Moustafa Youssef",
-        "Sumi Helal"
+        "Kun Yuan",
+        "Hao Ding",
+        "Yiqing Shen",
+        "Gasper Podobnik",
+        "Benjamin Killeen",
+        "Tito Porras",
+        "Axel Krieger",
+        "Mathias Unberath"
       ],
-      "abstract": "Multivariate time series anomaly detection (MTSAD) relies on modeling both temporal dynamics and inter-sensor dependencies to identify complex system faults. Although graph-based detectors explicitly model sensor topologies, they train task-specific networks from scratch on limited target-domain data, remaining vulnerable to spurious correlations and unable to reuse transferable priors. While pretrained Graph Foundation Models (GFMs) offer transferable topological priors and anomaly discriminability, directly adapting them to MTSAD is hindered by cross-modal feature-topology mismatch, unreliable pseudo-anomaly supervision, and decision distortion during node-to-window aggregation. To fill these gaps, we propose a novel adaptation framework, Gfm4Mtsad, which unleashes pretrained GFMs for MTSAD. We introduce the Structure-and-Information Contract Alignment (SICA) module to bridge continuous time series and the pretrained GFM space. This module harmonizes principal subspace token projection, normal-prior-guided graph construction, and residual recovery to suppress spurious edges while retaining fine-grained temporal details. We propose a Mechanism-Aligned Pseudo-Anomaly Screening strategy (MAPS) to steer unsupervised learning. It applies localized dependency breaks while preserving empirical residuals, selecting hard negatives near the normal boundary for targeted supervision. We develop a Tail-Gated Evidence Calibration mechanism (TGEC) to eliminate node-to-window aggregation distortion. It calibrates multi-granular graph responses against normal operational references, strictly preserving benign score rankings while selectively refining extreme anomaly candidates in the tail distribution for reliable window detection and interpretable sensor evidence. Extensive evaluations with two GFM backbones demonstrate that Gfm4Mtsad achieves superior detection performance over existing baselines.",
+      "abstract": "Vision foundation models are the backbone of modern surgical image analysis, yet most surgical systems still rely on encoders pretrained on natural images or on specialist models trained from scratch on comparatively small datasets. Pretraining encoders on large amounts of surgery-specific data has the potential to generally enhance the performance of surgical image analysis methods simply by providing stronger backbones. Here we present InnerLogic-Surg, an open family of surgical vision encoders (21M--300M parameters) obtained by continually pretraining a transformer-based image encoder on millions of surgical images curated from 11,965 internet-sourced surgical videos spanning ~2,900 hours and more than fifteen procedure types. Our training recipe inherits DINOv3's pretraining stage to preserve representation ability after surgical adaptation, and additionally applies a learned feature-upsampling module for high-resolution dense prediction at low token cost. Across a benchmark covering workflow, instrument and anatomy recognition, segmentation, detection, and monocular depth, under the same architecture, the largest InnerLogic-Surg model achieves the best linear-probe performance in all 20 surgical tasks. We demonstrate that surgical continual pretraining yields transferable representations that generalize across procedures, anatomical regions, and task types, showing our surgical image encoders as a promising and scalable alternative to the procedure-specific representation learning approaches that have traditionally dominated surgical computer vision.",
       "categories": [
-        "cs.LG"
+        "cs.CV",
+        "cs.AI"
       ],
-      "published": "2026-11-04T12:43:16Z",
-      "paper_url": "http://arxiv.org/abs/2611.06441v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.06441v1.pdf",
+      "published": "2026-11-05T12:03:01Z",
+      "paper_url": "http://arxiv.org/abs/2611.07883v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.07883v1.pdf",
       "score": 65,
       "score_reasons": [
         "分类：基座模型",
@@ -1434,75 +1465,52 @@
       "track": "foundation-models"
     },
     {
-      "arxiv_id": "2611.06356",
-      "title": "EEGDash Corpus: A Training-Ready Public Corpus for EEG Foundation Models",
+      "arxiv_id": "2611.07756",
+      "title": "Scaling Laws for SAE Training Data",
       "authors": [
-        "Kuber Shahi",
-        "Bruno Aristimunha",
-        "Arnaud Delorme"
+        "Nikita Koriagin",
+        "Nikita Balagansky",
+        "Daniil Gavrilov"
       ],
-      "abstract": "Foundation models for electroencephalography (EEG) are pretrained on tens of thousands of hours of recordings, and their accuracy grows with that amount. Such data is hard to assemble. The largest sources are clinical archives that cannot be redistributed, and the public sources are spread over several archives, file formats, and licences. We release eegdash-corpus-v0, a training-ready corpus of 77 public EEG datasets, as the gated Hugging Face dataset EEGDash/eegdash-corpus-v0 with the SHA-256 of every file. REVE, the largest published EEG foundation model, names 89 datasets as its pretraining corpus. Twelve cannot be redistributed: four clinical archives that hold 82% of its hours, and eight under no-derivatives licences. The corpus holds the 76 others that REVE's sampling rate allows and one more from REVE's release card: 77 datasets, 14,075 hours from 7,272 subjects, 5.0 million 10-second samples and 6.21 billion tokens per epoch. Every dataset is fetched through EEGDash, converted once with REVE's recipe, and stored in its own buckets of a chunked Zarr store with its licence recorded beside it, so a model can train on the whole store or on any subset of datasets. To test that the store pretrains a model, we retrain REVE-Base from scratch twice with the authors' code, changed only in how it reads data, and score it on seven public OpenEEGBench tasks. It reaches 0.331 under linear probing and 0.273 after fine-tuning, against 0.333 and 0.325 for the released model and 0.200 and 0.205 for an untrained encoder. The converter, the conversion reports, and the loader changes are released with the corpus.",
+      "abstract": "Activation storage is often a bottleneck in sparse autoencoder (SAE) training. We study how many unique activations an SAE needs when its total training budget is fixed. Quality improves rapidly as the buffer grows, then reaches a plateau where replaying the buffer is nearly as effective as using fresh activations throughout training. Beyond this point, additional unique activations bring little benefit to reconstruction or interpretability, so the buffer need not grow with the training budget. We describe this tradeoff between diversity and repetition with a scaling law for limited data. We validate it across dictionary sizes and token budgets, early, middle, and late layers of Llama-3.1, Qwen3 model sizes, and BatchTopK, TopK, and JumpReLU SAEs. Sweeps using mathematical text and Python code test the effect of changing the activation source. Evaluation covers explained variance (EV), reconstruction MSE, feature absorption, automated interpretability, and sparse probing. These results give a practical training rule: choose the smallest buffer that reaches the quality plateau and replay it for the remaining budget. In our experiments, this reduces activation storage by $8\\text{--}64\\times$ with negligible quality loss.",
       "categories": [
-        "cs.LG"
-      ],
-      "published": "2026-11-04T11:17:56Z",
-      "paper_url": "http://arxiv.org/abs/2611.06356v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.06356v1.pdf",
-      "score": 65,
-      "score_reasons": [
-        "分类：基座模型",
-        "标题命中：foundation model"
-      ],
-      "category": "foundation-models",
-      "category_label": "基座模型",
-      "track": "foundation-models"
-    },
-    {
-      "arxiv_id": "2611.05993",
-      "title": "Decouple to Reuse: Fine-Grained Knowledge Augmentation for Time Series Foundation Models",
-      "authors": [
-        "Yuqian Wu",
-        "Qingxiang Liu",
-        "Yuxin Guo",
-        "Weifeng Su",
-        "Jian Li",
-        "Pengfei Xu",
-        "Xi Chen",
-        "Yutao Yue",
-        "Yuxuan Liang"
-      ],
-      "abstract": "Time series forecasting is critical for demand prediction and resource management in modern Web services, yet applying pretrained Time Series Foundation Models (TSFMs) to downstream tasks remains challenging due to domain shifts. Existing retrieval-augmented approaches typically retrieve coarse-grained window contexts and may introduce context-specific noise. To address this problem, we argue that temporal patterns should be reused at a decomposition level, as effective trend and seasonal dynamics may originate from different contexts. We propose \\method, a two-stage \\underline{F}ine-grained \\underline{K}nowledge \\underline{A}ugmentation framework that decouples and consolidates pre-training knowledge into compact, task-shared residual codebooks to enhance frozen TSFMs. Specifically, Stage I constructs dual-branch residual codebooks for decoupled trend and seasonal signals, while Stage II dynamically retrieves and merges these fine-grained patterns into target representations via task-adaptive aggregation and gate fusion. Extensive experiments across eight real-world benchmarks with four representative TSFM backbones demonstrate the superior effectiveness and computational efficiency of \\method, while further validating the strong transferability of the residual codebooks across different backbones. The source code is available at the anonymous repository: https://github.com/yuppielqx/TSFM-Component-Token-Adapter",
-      "categories": [
-        "cs.LG"
-      ],
-      "published": "2026-11-04T05:37:24Z",
-      "paper_url": "http://arxiv.org/abs/2611.05993v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.05993v1.pdf",
-      "score": 65,
-      "score_reasons": [
-        "分类：基座模型",
-        "标题命中：foundation model"
-      ],
-      "category": "foundation-models",
-      "category_label": "基座模型",
-      "track": "foundation-models"
-    },
-    {
-      "arxiv_id": "2611.05652",
-      "title": "Quantifying Trait-State Hierarchy in EEG Foundation Model and Signal Processing Embeddings",
-      "authors": [
-        "Anusha Madapura",
-        "Aditya Kommineni",
-        "Shrikanth Narayanan"
-      ],
-      "abstract": "Electroencephalography (EEG) measures brain activity through recording electrical potentials of the scalp. EEG recordings capture two distinct sets of characteristics in the signal: (1) \\emph{Traits} -- information that remains relatively constant over the course of a recording session, such as subject identity, age, and sex; (2) \\emph{States} -- signatures that encode responses to external stimuli, including visual, auditory, and motor information. There is limited understanding of how different EEG modeling features (signal processing and foundation models) encode state and trait characteristics. In this work, we quantify state- and trait-level features captured by EEG embeddings using a hierarchy metric and kNN purity on Brain-Computer Interface dataset trials, and find that a majority of EEG features form a macro-trait hierarchy (embeddings form trait-level clusters with micro-states within). Our linear probe results indicate that this hierarchy structure leads to suboptimal state distinguishability, negatively impacting BCI performance of EEG foundation models. To mitigate this, we explore normalization techniques that reduce trait-specific information in embeddings and provide a $\\sim$ 10\\% improvement in balanced accuracy for state classification. Additionally, we observe that when fine-tuning models for downstream state decoding, embedding spaces transform from macro-trait to macro-state hierarchies, which in turn lead to better state decoding.",
-      "categories": [
+        "cs.LG",
         "cs.AI",
+        "cs.CL"
+      ],
+      "published": "2026-11-05T10:00:55Z",
+      "paper_url": "http://arxiv.org/abs/2611.07756v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.07756v1.pdf",
+      "score": 65,
+      "score_reasons": [
+        "分类：基座模型",
+        "摘要命中：qwen",
+        "摘要命中：llama",
+        "cs.CL"
+      ],
+      "category": "foundation-models",
+      "category_label": "基座模型",
+      "track": "foundation-models"
+    },
+    {
+      "arxiv_id": "2611.07717",
+      "title": "Pediatric ECG foundation model via adult-to-pediatric fine-tuning: downstream tasks and clinical evaluation",
+      "authors": [
+        "Yu Cao",
+        "Haiyan Xu",
+        "Xiaohan Li",
+        "Jian Yang",
+        "Yuqing Feng",
+        "Wei Wang",
+        "Haomin Li"
+      ],
+      "abstract": "Pediatric electrocardiogram (ECG) interpretation is complicated by age-dependent electrophysiological changes that limit direct transfer of adult AI models. We asked whether an adult ECG foundation model could be adapted to pediatric ECGs. Using 339,563 12-lead ECGs from 238,189 children, we compared direct application, pediatric fine-tuning, and training from scratch under an identical architecture. Direct transfer was poor (mean AUC 0.8256). Fine-tuning reached 0.9695, above de novo training (0.9661), and attained 0.9079 using only 1% of training data. On 10,999 external ECGs, fine-tuning achieved a mean AUC of 0.9385 across 30 labels. It generalized to age regression (MAE 1.12 years) and congenital heart disease classification (AUC 0.9562). Across 17 clinicians and 100 cases, diagnostic accuracy rose from 56.8% to 65.4% (p < 0.001) and did not decline when AI erred. Adult ECG foundation models require pediatric adaptation; fine-tuning offers a data-efficient route to scalable pediatric ECG AI.",
+      "categories": [
         "cs.LG"
       ],
-      "published": "2026-11-03T21:37:52Z",
-      "paper_url": "http://arxiv.org/abs/2611.05652v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.05652v1.pdf",
+      "published": "2026-11-05T09:36:44Z",
+      "paper_url": "http://arxiv.org/abs/2611.07717v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.07717v1.pdf",
       "score": 65,
       "score_reasons": [
         "分类：基座模型",

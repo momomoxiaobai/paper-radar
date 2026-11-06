@@ -1,0 +1,213 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-06T11:30:00+08:00
+title: "Circe 论文解读：没有标准答案时，模型内部计算能否暴露自己答错了"
+featured: true
+category: llm
+tags:
+  - llm-evaluation
+  - uncertainty
+  - hallucination-detection
+  - mechanistic-interpretability
+  - calibration
+description: "完整拆解 Circe 如何用 attention-induced FFN change、跨层表征几何和 token likelihood 构造单次生成的正确性分数，并分析它为何仍需标签选权重、白盒访问与额外计算。"
+paper:
+  title: "Circe: Training-Free LLM Self-Evaluation via Component Interaction Consistency"
+  venue: "arXiv preprint, 2026"
+  paperUrl: "https://arxiv.org/abs/2611.07948"
+  pdfUrl: "https://arxiv.org/pdf/2611.07948"
+  score: 91
+  scoreNote: "推荐理由：把输出置信度、hidden-state trajectory 与 attention–FFN 交互放进同一证据链，五模型六数据集的消融和跨语言/视觉/混合分布实验较完整；扣分在于 training-free 并非 label-free，融合权重依赖分域开发集，白盒双 FFN 计算限制闭源模型使用，且 AUROC 改善不能直接等同于可靠的逐样本判真。"
+---
+
+> [!NOTE]
+> 论文于 **2026 年 11 月 5 日**首次公开，共 13 页。它研究的是“给一个回答排序：哪个更可能正确”，不是在没有标准答案时凭空证明答案真伪。阅读实验时应优先看 AUROC、FPR95 和分布迁移，不要把某个分数阈值当成通用真理。
+
+## 一句话结论
+
+**Circe 不再只问“模型给这个回答多高概率”，而是观察计算过程是否自洽：早层 attention 写入 residual stream 的方向，是否与晚层 attention 对 FFN 输出造成的变化同向；再把这种组件交互一致性与 hidden-state 轨迹、token likelihood 融合。它在五个开源模型、六个 benchmark 的四类任务上取得更好的正确/错误排序，但代价是白盒访问、额外 FFN forward，以及用带标签开发集选择分域融合权重。**
+
+<figure><img src="/paper-radar/images/circe/method.svg" alt="Circe 将组件交互一致性、表征几何和似然置信度融合为正确性分数" width="1600" height="900" loading="eager"/><figcaption>图 1：根据论文 Figures 1–2 与 Eqs. (1)–(12) 重绘。三条信号不是三个“投票模型”，而是同一次生成的组件级、轨迹级和输出级观察。</figcaption></figure>
+
+## 问题背景：模型可以非常自信地犯同一个错
+
+真实应用中的问题通常没有即时 reference answer。常见替代方案各有盲点：
+
+- 最大 token probability、perplexity 或 entropy 只描述模型分布，不保证事实正确；
+- 让模型口头报置信度，可能得到“我非常确定”的流畅幻觉；
+- self-consistency、semantic entropy 或 SelfCheckGPT 需要重复采样，而且同一种偏见可能让多次回答稳定地错；
+- 训练 verifier 或 hidden-state probe 需要带正确标签的数据，并可能在新任务上失效。
+
+Circe 的出发点是：Transformer 的 residual stream 只呈现 attention 与 FFN 更新相加后的结果。如果两个回答的最终 hidden-state trajectory 相似，内部“attention 提供什么信息、FFN 如何响应”仍可能不同。作者试图从这个被合并掉的交互中再找一条 correctness signal。
+
+## 先建立 Transformer 里的三个量
+
+对生成 token $t$、第 $\ell$ 个 block：
+
+- $h_{t,\ell-1}$：进入该 block 的 residual state；
+- $a_{t,\ell}$：attention 写回 residual stream 的增量；
+- $F_\ell(\cdot)$：包含输入 normalization 的 FFN 映射。
+
+普通 forward 中 FFN 接收 $h_{t,\ell-1}+a_{t,\ell}$。Circe 额外构造一个反事实：如果当前 attention update 没写进去，FFN 会输出什么？二者之差为
+
+$$
+\Delta m_{t,\ell}
+=F_\ell\!\left(h_{t,\ell-1}+a_{t,\ell}\right)
+-F_\ell\!\left(h_{t,\ell-1}\right).
+$$
+
+它不是原始 FFN output，也不是 attention 与 FFN 的简单 cosine；它隔离了“这一次 attention update 导致 FFN 改了多少”。这一步需要对同一个 FFN 多算一次，是方法的主要额外成本来源。
+
+## Method 1：Component Interaction Consistency
+
+先在回答的 $T$ 个 token 上平均：
+
+$$
+\bar a_\ell=\frac1T\sum_{t=1}^T a_{t,\ell},
+\qquad
+\overline{\Delta m}_\ell=\frac1T\sum_{t=1}^T\Delta m_{t,\ell}.
+$$
+
+然后比较早层 attention direction 与后续 $r$ 层处的 attention-induced FFN change：
+
+$$
+s_{\mathrm{CIC}}
+=\frac1R\sum_{r=1}^{R}
+\frac1{L-r}\sum_{\ell=1}^{L-r}
+\cos\!\left(\bar a_\ell,\overline{\Delta m}_{\ell+r}\right).
+$$
+
+实验固定 $R=4$。高 CIC 的直观意义不是“所有层方向都一样”，而是：早层 attention 强调的信息方向，在后续 block 中仍能引起一致方向的 FFN 响应。作者观察到正确回答平均更一致。
+
+附录给了局部线性解释。若 $F_\ell$ 在 attention update 附近光滑，Taylor 展开得到
+
+$$
+\Delta m_{t,\ell}
+=J_{t,\ell}a_{t,\ell}+e_{t,\ell},
+\qquad
+\lVert e_{t,\ell}\rVert
+\le \frac{\beta_\ell}{2}\lVert a_{t,\ell}\rVert^2.
+$$
+
+因此 CIC 近似在比较“早层 attention direction”与“晚层 attention 经本地 FFN Jacobian 变换后的方向”。这给计算量一个明确语义，但仍不是因果证明：高对齐与正确性相关，不代表对齐本身产生正确答案。
+
+## Method 2：Representation Geometry
+
+Circe 同时保留已有 Chain-of-Embedding 思路。每层对回答 token 的 residual state 求平均：
+
+$$
+\bar h_\ell=\frac1T\sum_{t=1}^T h_{t,\ell},
+\qquad \ell=0,\ldots,L.
+$$
+
+相邻层的位移和转角分别用首尾变化归一化：
+
+$$
+d_\ell=
+\frac{\lVert\bar h_{\ell+1}-\bar h_\ell\rVert_2}
+{\lVert\bar h_L-\bar h_0\rVert_2+\epsilon},
+$$
+
+$$
+\theta_\ell=
+\frac{\arccos\!\bigl(\cos(\bar h_\ell,\bar h_{\ell+1})\bigr)}
+{\arccos\!\bigl(\cos(\bar h_0,\bar h_L)\bigr)+\epsilon}.
+$$
+
+最终
+
+$$
+s_{\mathrm{RG}}=\frac1L\sum_{\ell=0}^{L-1}(d_\ell-\theta_\ell).
+$$
+
+RG 描述“整体轨迹怎样走”，CIC 描述“attention 和 FFN 怎样配合”。二者都看内部，但粒度不同。
+
+## Method 3：Likelihood Confidence 与最终融合
+
+对已生成 token 计算平均负对数似然：
+
+$$
+\mathrm{NLL}
+=-\frac1T\sum_{t=1}^{T}\log p(y_t\mid x,y_{<t}),
+\qquad
+s_{\mathrm{LC}}=\frac1{1+\mathrm{NLL}}.
+$$
+
+作者先用单调函数把可能无界的 CIC、RG 压到 $(0,1)$：
+
+$$
+b(z)=\frac12\left(1+\frac{z}{1+|z|}\right),
+$$
+
+再两级融合：
+
+$$
+s_{\mathrm{int}}
+=\alpha b(s_{\mathrm{CIC}})+(1-\alpha)b(s_{\mathrm{RG}}),
+$$
+
+$$
+s_{\mathrm{Circe}}
+=(1-\lambda)s_{\mathrm{int}}+\lambda s_{\mathrm{LC}}.
+$$
+
+这里有一个容易漏读的限定：$\alpha,\lambda$ 不是完全无监督设定。每个 domain 用 1:4 的 development/test split，在带正确标签的 development questions 上，从 5,151 组权重中选一组；同域五个模型共享该组权重。数学、推理、知识、理解选出的 $(\alpha,\lambda)$ 分别约为 $(0.30,0.07)$、$(0.07,0.05)$、$(0.96,0.21)$、$(0.33,0.06)$。所以论文所说 training-free，是“不训练 backbone 或 detector 参数”，不是“不看任何正确性标签”。
+
+## 实验设置
+
+- 模型：Qwen2-1.5B/7B-Instruct、Llama3-8B-Instruct、Mistral-7B-Instruct、Qwen2.5-14B-Instruct。
+- 六个主 benchmark：GSM8K、MATH、CommonsenseQA、TheoremQA、MMLU、Belebele；覆盖数学、推理、知识和理解四域。
+- 正确回答为 positive class；指标为 AUROC、AUPR 和 FPR95。
+- baseline 包含 verbal confidence、max probability、perplexity、entropy、temperature scaling、energy，以及需多次 inference 的 PSA、MC Dropout、LN-Entropy、EigenScore；内部轨迹 baseline 为 CoE-R / CoE-C。
+- 扩展实验：MGSM 11 种语言、Qwen2.5-VL-7B + Geometry3K、混合 math/reasoning 分布。
+
+AUROC 只衡量正确样本是否倾向排在错误样本前面。它不告诉你线上应该选哪个 threshold；FPR95 则问“接受 95% 正确答案时，会误接收多少错误答案”，更贴近安全 gate。
+
+## 关键结果与真实比较
+
+<figure><img src="/paper-radar/images/circe/results.svg" alt="Circe 在四个领域的 AUROC 改善、组件消融与计算成本" width="1600" height="900" loading="lazy"/><figcaption>图 2：根据论文 Tables 1–2、5 与 Section 4 重绘。提升是相对每个领域最强 baseline 的平均 AUROC 差值，不是准确率。</figcaption></figure>
+
+Circe 在四域平均 AUROC、FPR95、AUPR 均为最好。相对各域最强 baseline，AUROC 分别提高 **7.37、3.13、5.11、5.31 个百分点**。20 个 model–domain 组合中有 18 个 AUROC 第一；两个例外是 Qwen2-7B 的知识域和 Qwen2.5-14B 的理解域，分别略低于 PSA pipeline 与 LN-Entropy。
+
+组件消融最有解释力。五模型六 benchmark 平均 AUROC：CIC only 65.90，RG only 66.16，LC only 59.52；三者融合为 71.76。去掉 CIC / RG / LC 后分别为 69.71 / 69.21 / 68.87。LC 单独最弱，却提供了最大消融损失之一，说明“弱但不高度相关”的信号仍能增加排序信息。
+
+困难任务上的优势更明显：MATH 上三模型 AUROC 约 79.2%–80.3%，TheoremQA 为 68.0%–79.3%。Geometry3K 多模态实验中，Circe AUROC 71.25，对比最强 CoE-R 的 65.86；该实验直接复用了文本任务权重，没有额外训练。
+
+开放混合分布中，Llama3-8B 的 mixed math 为 83.17，对比 CoE-C 79.89；mixed reasoning 为 62.04，对比 CoE-R 60.31。提升仍在，但推理混合分布绝对 AUROC 不高，说明它远非“可靠 verifier”。
+
+计算方面，Llama3-8B / GSM8K 平均基础生成 3.69s，Circe 额外 0.67s，约为基础 inference 的 18%。它比重复采样便宜，但不等于零成本，而且需要保存/访问内部 activation。
+
+## 论文最值得肯定与最需要警惕的地方
+
+最强之处是证据链完整：方法动机、局部 Jacobian 解释、三组件消融、难度、类别比例、跨语言、视觉和混合分布都互相支持。它也诚实展示 fusion 权重在不同域差异很大：知识域几乎由 CIC 主导，而数学/推理更依赖 RG。
+
+最需要警惕的是命名。“training-free”容易让人误以为可直接在任意任务零数据部署；实际上领域权重由 correctness-labelled development set 选择。第二，所有主模型都是开放权重 Transformer；闭源 API 通常不给 residual、attention update、FFN module，也无法做反事实 FFN forward。第三，回答 token 上简单平均可能抹掉关键步骤或错误首次出现的位置；很长 CoT 中“早期正确、后期出错”可能被整体统计稀释。
+
+## 工程启示
+
+- 若你有白盒模型，可把 Circe 当作 risk ranking feature，与规则 verifier、retrieval evidence、execution result 一起做 gate，不要单独决定真伪。
+- 线上要单独做 threshold calibration，并报告 coverage–risk curve；AUROC 好不代表选定阈值后的错误接受率低。
+- 需要区分 epistemic uncertainty 与模型内部“不自洽”。一个稳定但错误的内部计算仍可能获得高分。
+- 长回答可尝试 token-window CIC、错误定位或 step-level aggregation；整段平均更适合 response ranking，不适合定位。
+- 计算优化可以复用主 forward 的 FFN activation，但无-attention 反事实仍需额外算子；部署前应测吞吐和显存，不只看单请求延迟。
+
+## 局限与风险
+
+论文没有在真实生产流量、事实核验长文、tool-use trajectory 或闭源模型上验证。权重在 benchmark domain 内共享，但仍依赖已知域；新域如何无标签选择权重没有答案。correctness label 来自可自动比对的 benchmark，开放问答中的部分正确、引用质量和时效性并非二元标签。内部 signal 也可能被 adversarial prompt 或特定 decoding policy 操纵。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么高 token probability 不能证明回答正确，但仍值得保留 LC？</summary><div class="thought-answer">概率反映模型在自身分布中的确定程度，系统性误学会让错误答案同样高概率；但它仍携带与 CIC/RG 不完全重合的信息。消融中 LC only 最弱，去掉 LC 却让融合 AUROC 从 71.76 降到 68.87，正体现“弱且互补”的价值。</div></details>
+
+<details class="thought-question"><summary>2. 为什么直接比较 attention update 与原始 FFN output 不够？</summary><div class="thought-answer">原始 FFN output 同时取决于 incoming residual 和 attention update，无法知道其中多少变化由当前 attention 引起。用同一 FFN 对 $h+a$ 与 $h$ 做差，把 incoming state 和参数固定，才隔离出 attention-induced change。</div></details>
+
+<details class="thought-question"><summary>3. 如果把 R 从 4 增加到全部层，理论上信息更多，为什么实验没有持续改善？</summary><div class="thought-answer">远距离层的功能和尺度可能改变，简单 cosine 平均会把局部有效关系与长程噪声混在一起；项数也快速增加。论文中 Qwen2-7B 从 R=4 增至 8/16/27 的四域 AUROC 变化很小，说明多 lag 已足够，更多并不自动更好。</div></details>
+
+<details class="thought-question"><summary>4. “不训练参数但用标签选权重”应该怎样准确命名？</summary><div class="thought-answer">更准确的说法是 parameter-training-free 或 probe-free，而不是 fully unsupervised / label-free。部署到新域仍需要小规模标注做 fusion 与 threshold calibration，否则只能假设论文权重可迁移。</div></details>
+
+<details class="thought-question"><summary>5. Circe 适合放在 Agent 系统的哪个位置？</summary><div class="thought-answer">适合做风险路由：低分回答触发检索、工具验证、第二模型或人工复核；高分回答也不能绕过硬性安全/权限校验。对于 tool result 可精确验证的步骤，应优先使用执行结果，因为它比内部相关信号更接近事实。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2611.07948)
+- [PDF](https://arxiv.org/pdf/2611.07948)
