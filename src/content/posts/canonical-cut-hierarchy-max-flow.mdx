@@ -1,0 +1,305 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-07T10:20:00+08:00
+title: "算法重访｜Canonical Cut Hierarchy：怎样用 Max-Flow 在近线性时间压缩图的强度、树打包与 Arboricity"
+featured: true
+category: classic-algorithms
+tags:
+  - graph-algorithms
+  - max-flow
+  - min-cut
+  - spanning-tree-packing
+  - arboricity
+description: "从 Tutte–Nash–Williams 定理、图强度与 Lagrangian 主分割序列出发，推导 respecting tree、树网络 N(T)、excess halving 和 restriction–contraction recursion，解释 canonical cut hierarchy 的近线性算法。"
+paper:
+  title: "Canonical Cut Hierarchy in Almost-Linear Time via Reduction to Max-Flow"
+  venue: "arXiv preprint, 2026"
+  paperUrl: "https://arxiv.org/abs/2611.08466"
+  pdfUrl: "https://arxiv.org/pdf/2611.08466"
+  score: 94
+  scoreNote: "推荐理由：它把 Tutte–Nash–Williams partition、principal partition sequence、strength、partition connectivity、tree packing 与 arboricity 收束到一个 O(n) 层级结构，并用 O(log(n/η)) 次近线性规模 max-flow 解固定参数问题，再以守恒递归得到整体 (m+n)^{1+o(1)}；扣分在于算法随机化、依赖多项式有界正整数容量与现代 max-flow 黑盒，没有代码或实验常数，39 页证明距离可直接部署仍很远。"
+---
+
+> [!NOTE]
+> 论文于 **2026 年 11 月 5 日**首次公开，共 39 页。它没有工程 benchmark；“主要结果”是定理、概率保证与复杂度证明。本文不会用不存在的运行时间图代替理论证据，而是明确比较此前 $nm^{1+o(1)}$ 与本文 $(m+n)^{1+o(1)}$ 的适用前提。
+
+## 一句话结论
+
+**Canonical cut hierarchy 递归地用“最细”的 Tutte–Nash–Williams 最优分割拆图，根标签就是 strength，所有内部标签最大值给出 fractional arboricity，还隐式编码 principal partition sequence 与最大 fractional spanning-tree packing。新论文把固定 Lagrangian 参数下的最优分割化成 $O(\log(n/\eta))$ 次近线性规模 max-flow，再利用参数单调嵌套与 restriction–contraction 二分重建全层级；对多项式有界正整数容量，随机期望时间达到 $(m+n)^{1+o(1)}$。**
+
+<figure><img src="/paper-radar/images/canonical-cut-hierarchy/structure.svg" alt="Canonical cut hierarchy 递归分割图并编码 strength、partition connectivity 与 arboricity" width="1600" height="900" loading="eager"/><figcaption>图 1：依据论文 Figure 1 与 Section 1 重绘。集合由后代叶隐式表示，每个内部节点只存 children 与对应诱导子图的 strength，因此总空间为 O(n)。</figcaption></figure>
+
+## 从 min-cut 到“分成任意多块”的 cut
+
+全局 min-cut 只把顶点分成两侧；Gomory–Hu tree 用一棵树紧凑表示所有点对 min-cut。Canonical cut hierarchy 处理的是更一般的 vertex partition。
+
+令无向图
+
+$$
+G=(V,E,c),\qquad c:E\to\mathbb Z_{>0},
+$$
+
+对顶点分割 $\Pi$，$\delta(\Pi)$ 是端点落在不同 part 的边。跨分割容量为
+
+$$
+c(\delta(\Pi))=\sum_{e\in\delta(\Pi)}c_e.
+$$
+
+图的 strength 定义为
+
+$$
+\beta(G)=\min_{\Pi:|\Pi|\ge 2}
+\frac{c(\delta(\Pi))}{|\Pi|-1}.
+$$
+
+分母不是 $|\Pi|$，因为把 $k$ 个 part 连成一棵树至少需要 $k-1$ 条跨 part 边。使上式最小的 partition 称为 Tutte–Nash–Williams partition。
+
+经典 Tutte–Nash–Williams 定理给出：
+
+$$
+\text{integral spanning-tree packing number}=\lfloor\beta(G)\rfloor,
+$$
+
+而 fractional spanning-tree packing number 恰为 $\beta(G)$。于是 strength 同时是 cut ratio 与树打包容量。
+
+## 为什么要“最细”最优分割
+
+同一个最小 ratio 可能由多个 partition 达到。论文在每个诱导子图 $G[S]$ 中，选择 part 数量最多的最优 partition，即 finest optimum；它是唯一的。层级定义为：
+
+- 根表示 $V$，标签为 $\beta(G)$；
+- 内部节点 $S$ 的 children 是 $G[S]$ 最细 Tutte–Nash–Williams partition 的各个 part；
+- 单点为叶。
+
+每个内部节点至少两个孩子，因此节点总数不超过 $2n-1$。最大内部标签为 fractional arboricity：
+
+$$
+\gamma(G)=\max_{S\subseteq V,\,|S|\ge2}
+\frac{c(E[S])}{|S|-1},
+$$
+
+而 arboricity 是 $\lceil\gamma(G)\rceil$。根标签的 floor 给 partition connectivity，也就是 integral tree packing number。
+
+这解释了它为何不只是“一种切树”：一个 $O(n)$ 对象同时回答多种经典图不变量。
+
+## Lagrangian 化：让参数 λ 扫描整个层级
+
+定义
+
+$$
+\Phi_{G,\lambda}(\Pi)
+=c(\delta(\Pi))-\lambda(|\Pi|-1),
+$$
+
+并允许 $|\Pi|=1$。当 $\lambda$ 小，切边代价占主导，最优是少分；当 $\lambda$ 增大，每多一个 part 得到更大“奖励”，最优 partition 逐渐细化。
+
+记 $\Pi_G(\lambda)$ 为该目标的唯一 finest optimum。随着 $\lambda$ 从 0 到 $\infty$，它只会 split，不会把已经分开的 part 合并：
+
+$$
+0\le x\le y\quad\Longrightarrow\quad
+\Pi_G(y)\preceq\Pi_G(x),
+$$
+
+其中 $\preceq$ 表示“左侧 refinement 右侧”。这组至多 $n$ 个 partition 就是 principal partition sequence；breakpoint 成为 hierarchy 的内部标签。
+
+若归一化 $q_e=c_e/\lambda$，可以把最小化 $\Phi$ 改写成最大化 deficit：
+
+$$
+D(\Pi)=|\Pi|-1-q(\delta_G(\Pi)),
+\qquad
+D^*=\max_\Pi D(\Pi)=-\frac{\operatorname{OPT}_G(\lambda)}{\lambda}.
+$$
+
+固定 $\lambda$ 的核心问题就是：怎样用少量 max-flow 找到使 $D$ 最大的 finest partition。
+
+## Respecting tree：从任意多 part 降到一棵树
+
+对任意 spanning tree $T$，要连接 $|\Pi|$ 个 part，至少有 $|\Pi|-1$ 条 tree edge 跨越 $\Pi$。若恰好达到下界：
+
+$$
+|T\cap\delta(\Pi)|=|\Pi|-1,
+$$
+
+就称 $T$ respects $\Pi$。这意味着每个 part 在 $T$ 中诱导连通子树，没有多余跨界。
+
+设 $\Pi^*$ 为目标最优 partition，定义 excess：
+
+$$
+z_{\Pi^*}(T)
+=|T\cap\delta(\Pi^*)|-(|\Pi^*|-1)\in\mathbb Z_{\ge0}.
+$$
+
+论文的关键不是一开始就知道 $\Pi^*$，而是从任意 $T$ 出发，构造随机 $T'$ 满足
+
+$$
+\mathbb E[z_{\Pi^*}(T')]
+\le \frac12z_{\Pi^*}(T).
+$$
+
+重复 $O(\log(n/\eta))$ 次后，期望 excess 至多 $\eta$；因为 excess 是非负整数，Markov inequality 给出最终 $z=0$ 的概率至少 $1-\eta$。
+
+## 树网络 N(T)：为什么一次 max-flow 能同时做两件事
+
+网络 $N(T)$ 为每个非根顶点提供一单位 supply，为每条 tree edge 提供一单位 receiving capacity，两边各 $n-1$。
+
+要把顶点 $v$ 的一单位流送到 tree edge $f$，路径必须选择一个与 $v$ 相邻的 graph edge $e=vu$，且 $f$ 位于 $T$ 中唯一的 $v$–$u$ 路径上。所有使用同一 graph edge $e$ 的流都经过共享容量弧 $q_e$，防止两个端点各自重复使用容量。
+
+完整定义先产生 $O(m\log^2 n)$ arcs：作者用高度 $O(\log n)$ 的 tree-edge forest 压缩路径集合，使网络保持 $O(m+n)$ vertices、$O((m+n)\log^2 n)$ arcs。
+
+记最大流值为 $f_T\le n-1$，短缺为
+
+$$
+\alpha_T=n-1-f_T.
+$$
+
+网络 min-cut 有两面：
+
+1. 对任意 $T$，可从 min-cut 恢复一个 partition，deficit 至少 $\alpha_T$，所以 $\alpha_T\le D^*$；
+2. 若 $T$ respects 某最优 $\Pi^*$，可以构造容量 $n-1-D^*$ 的 network cut，故 $\alpha_T\ge D^*$。
+
+两者合起来，respecting tree 上有
+
+$$
+\alpha_T=D^*,
+$$
+
+网络 min-cut 恢复的 partition 就是 Lagrangian optimum。
+
+## 怎样把 excess 每轮减半
+
+若 $N(T)$ 的 flow 不足 $n-1$，算法先通过辅助节点补全；再对 fractional flow 做无偏随机舍入，得到 $n-1$ 条 unit flow path。每条 path 选择一条 graph edge，并把它双射分配给其 tree path 上一条 tree edge，得到含 $n-1$ 个 edge copy 的 multiset $F$。
+
+共享容量弧保证每条 graph edge 被选次数 $X_e$ 满足
+
+$$
+\mathbb E[X_e]\le q_e.
+$$
+
+因此对最优 partition：
+
+$$
+\begin{aligned}
+\mathbb E[|F\cap\delta(\Pi^*)|]
+&=\sum_{e\in\delta_G(\Pi^*)}\mathbb E[X_e]\\
+&\le q(\delta_G(\Pi^*))\\
+&=(|\Pi^*|-1)-D^*\\
+&\le |\Pi^*|-1.
+\end{aligned}
+$$
+
+组合 multigraph $E(T)\uplus F$ 可以分解成两棵 spanning trees $T_1,T_2$。均匀随机返回其中一棵，则
+
+$$
+\begin{aligned}
+\mathbb E[|T'\cap\delta(\Pi^*)|]
+&=\frac12\left(|T\cap\delta(\Pi^*)|
++\mathbb E|F\cap\delta(\Pi^*)|\right)\\
+&\le (|\Pi^*|-1)+\frac12z_{\Pi^*}(T).
+\end{aligned}
+$$
+
+减去不可避免的 $|\Pi^*|-1$，得到 excess halving。值得注意的是，它不是把所有 crossing 减半，而是把“超过理论下界的多余 crossing”减半，这使方法能处理 $|\Pi^*|$ 随 $n$ 增大的多分割。
+
+<figure><img src="/paper-radar/images/canonical-cut-hierarchy/algorithm.svg" alt="固定参数用 tree-based max-flow 找最优分割，再在参数区间递归构建 canonical cut hierarchy" width="1600" height="900" loading="lazy"/><figcaption>图 2：依据论文 Sections 1.3、4 与 Algorithm 2 重绘。上半部分是固定 λ 的内层随机算法；下半部分利用 principal partitions 的嵌套结构重建整棵层级。</figcaption></figure>
+
+## 从固定 λ 到完整 hierarchy
+
+固定 $t$ 得到 $P=\Pi_H(t)$ 后，经典 restriction–contraction identity 为
+
+$$
+\Pi_H(\lambda)=
+\begin{cases}
+\operatorname{lift}_{P}\!\left(\Pi_{H/P}(\lambda)\right), & 0\le\lambda\le t,\\
+\displaystyle\bigcup_{B\in P}\Pi_{H[B]}(\lambda), & \lambda\ge t.
+\end{cases}
+$$
+
+直观上：$t$ 之前只会把 $P$ 的 parts 合并，所以收缩每个 part；$t$ 之后只会在每个 part 内继续切，所以递归诱导子图。
+
+初始参数区间是 $[0,W+1]$，其中
+
+$$
+W=\sum_{e\in E}c_e.
+$$
+
+连通图在 $\lambda=0$ 的 finest optimum 是单 part，在 $W+1$ 是 singleton partition。每次取中点 $t=(\ell+u)/2$，求 $\Pi_H(t)$，递归 $H/P$ 的 $[\ell,t]$ 与各 $H[B]$ 的 $[t,u]$，再用子 hierarchy 替换 contraction hierarchy 的 leaves。
+
+整数容量保证不同 breakpoint 至少相隔
+
+$$
+\Delta=\frac{1}{(n-1)^2}.
+$$
+
+当 $u-\ell<\Delta$，区间至多一个 breakpoint，可直接返回 root label
+
+$$
+\frac{c_H(E(H))}{|V(H)|-1}
+$$
+
+并连接所有 singleton leaves。
+
+## 为什么整体仍是近线性，而不是递归爆炸
+
+一个父问题 $H$ 分割为 $P$ 后，每条 edge 恰好进入一个 child：跨 $P$ 的 edge 进入 $H/P$，part 内 edge 进入相应 $H[B]$。因此同一递归深度：
+
+$$
+\sum_H m_H\le m,
+\qquad
+\sum_H(n_H-1)\le n-1.
+$$
+
+深度为
+
+$$
+L=1+\left\lceil\log_2\left((W+1)(n-1)^2\right)\right\rceil.
+$$
+
+每个固定 $\lambda$ 子问题用 $O(\log(n/\eta))$ 次 max-flow，network 总规模只多 polylog 因子。容量、多项式参数与 $1/\eta$ 都被 $(m+n)^{O(1)}$ 界住时，现代 almost-linear max-flow 黑盒使总期望时间成为
+
+$$
+(m+n)^{1+o(1)}.
+$$
+
+## 与此前算法的真实比较
+
+- 经典 Barahona 固定 $\lambda$ 最多用 $n$ 次 max-flow；结合二分与现代 flow，strength 仍为 $nm^{1+o(1)}$。
+- Cen 等此前 canonical hierarchy 算法对多项式有界容量为 $nm^{1+o(1)}$。
+- 本文把固定参数降为 $O(\log(n/\eta))$ 次 flow，并通过每层实例总规模守恒，去掉乘法 $n$，得到 $(m+n)^{1+o(1)}$。
+- 这是 reduction result：若 max-flow 的复杂度继续改善，本文算法同步改善；它不声称给出比 max-flow 更小的常数或独立实现。
+
+论文没有 wall-clock、内存峰值或真实图数据实验，也没有代码。理论比较公平地在相同图模型和容量假设下讨论 asymptotic bound；工程上则不能从 $1+o(1)$ 推断中等规模就一定快，因为 $\log^2n$ network expansion、多轮 flow 与随机舍入的常数可能很大。
+
+## 局限与风险
+
+- 要求无向图、正整数容量；有向图、零/负容量不在定理范围。
+- almost-linear 结论要求容量和 $\lambda$ 的分子分母多项式有界；超大 bit complexity 会进入运行时间。
+- 算法随机化，只以至少 $1-\eta$ 概率返回正确结果；实现需做 partition 连通性等 failure check。
+- hierarchy 隐式表示 fractional tree packing edge loads，不会显式列出指数多个 spanning trees。
+- 论文披露 AI 参与从 directed min-cut 思路推导 strength/hierarchy 并由作者验证；这不改变证明责任，但提醒读者应按定理逐步审查，而非把“AI 生成”当正负证据。
+
+## 工程启示
+
+- 若下游同时需要 strength、tree packing 与 arboricity，维护 hierarchy 比分别跑算法更有复用价值。
+- 实现时必须用 implicit descendant leaves；在每个节点展开原始顶点集合会破坏 O(n) 表示优势。
+- max-flow network 的 path compression 是复杂度核心，不可直接为每个 graph edge 展开整条 tree path。
+- 生产版本应显式记录随机 seed、每轮 excess proxy、flow integrality 与 failure probability budget。
+- 在中小图上，应与 parametric-flow 或现有 arboricity 实现做 crossover benchmark；渐近优势并不等于实际优势。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么 strength 的分母是 |Π|−1，而不是 |Π|？</summary><div class="thought-answer">把 $|\Pi|$ 个 contracted parts 连成 spanning tree 至少需要 $|\Pi|-1$ 条跨 part edge；该归一化让 cut 条件与 Tutte–Nash–Williams tree-packing 条件完全对齐。</div></details>
+
+<details class="thought-question"><summary>2. finest optimum 为什么让 hierarchy 唯一？</summary><div class="thought-answer">同一 ratio/目标值可能有多个不可比 partition。最优 partition 的 refinement 结构保证存在唯一 part 数最多的最细解；递归始终选它，节点的 children 不再依赖任意 tie-breaking。</div></details>
+
+<details class="thought-question"><summary>3. excess 的整数性为什么重要？</summary><div class="thought-answer">反复减半只给期望界 $\mathbb E[z]\le\eta$。因为 $z$ 是非负整数，事件 $z>0$ 蕴含 $z\ge1$，所以 $P(z>0)\le\mathbb E[z]\le\eta$；若是连续量，小期望不能保证精确等于零。</div></details>
+
+<details class="thought-question"><summary>4. 为什么 recursive children 的总边数不会翻倍？</summary><div class="thought-answer">每条 parent edge 只有两种互斥归宿：跨 partition 就变成 contraction edge，只在某个 part 内就进入该 induced subgraph。它不会同时出现在两类 child，因此每层边数总和守恒。</div></details>
+
+<details class="thought-question"><summary>5. hierarchy 与 Gomory–Hu tree 的区别是什么？</summary><div class="thought-answer">Gomory–Hu tree 用 $n-1$ 个加权 tree edge 表示所有点对 min-cut；canonical cut hierarchy 表示随 Lagrangian 参数细化的多路 partition，编码 strength、arboricity 和 tree packing。两者都是 O(n) 结构，但回答的 cut family 不同。</div></details>
+
+<details class="thought-question"><summary>6. 如果 max-flow 实现返回 fractional flow，会怎样？</summary><div class="thought-answer">理论允许先做随机 flow rounding，但运行时第二条保证要求 integral maximum flow。整数容量网络通常存在 integral optimum；实现必须确保 black-box 输出或后处理满足 integrality，才能直接使用树分解和相应复杂度界。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2611.08466)
+- [PDF](https://arxiv.org/pdf/2611.08466)
+- 作者未在论文或 arXiv 页面提供代码仓库。

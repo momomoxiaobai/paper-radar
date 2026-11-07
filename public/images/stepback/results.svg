@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">StepBack efficiency and accuracy results</title><desc id="desc">Token savings and accuracy changes versus self-consistency at budget 32, plus adaptive method combinations.</desc>
+  <rect width="1600" height="900" rx="30" fill="#081525"/>
+  <text x="80" y="86" fill="#f8fafc" font-family="Inter,system-ui,sans-serif" font-size="42" font-weight="700">固定 32 个答案：少生成，不等于少投票</text>
+  <text x="80" y="132" fill="#94a3b8" font-family="Inter,system-ui,sans-serif" font-size="23">Table 2 加权平均（4,166 题）与 Table 3 代表性组合；ΔAcc 为百分点</text>
+  <g font-family="Inter,system-ui,sans-serif">
+    <text x="95" y="210" fill="#e2e8f0" font-size="27" font-weight="700">相对 SC@32 的平均 token 节省</text>
+    <line x1="330" y1="264" x2="330" y2="630" stroke="#334155"/><line x1="330" y1="630" x2="930" y2="630" stroke="#334155"/>
+    <g font-size="20"><text x="310" y="318" text-anchor="end" fill="#cbd5e1">Llama-3B / NLL</text><text x="310" y="388" text-anchor="end" fill="#cbd5e1">Llama-3B / PRM</text><text x="310" y="458" text-anchor="end" fill="#cbd5e1">Qwen-3B / NLL</text><text x="310" y="528" text-anchor="end" fill="#cbd5e1">Qwen-3B / PRM</text><text x="310" y="598" text-anchor="end" fill="#cbd5e1">Qwen-7B / PRM</text></g>
+    <g><rect x="330" y="284" width="416" height="42" rx="8" fill="#0ea5e9"/><rect x="330" y="354" width="280" height="42" rx="8" fill="#14b8a6"/><rect x="330" y="424" width="407" height="42" rx="8" fill="#0ea5e9"/><rect x="330" y="494" width="316" height="42" rx="8" fill="#14b8a6"/><rect x="330" y="564" width="342" height="42" rx="8" fill="#14b8a6"/></g>
+    <g fill="#f8fafc" font-size="20" font-weight="700"><text x="758" y="312">27.74% / −0.17</text><text x="622" y="382">18.66% / +0.36</text><text x="749" y="452">27.15% / +0.12</text><text x="658" y="522">21.07% / +0.17</text><text x="684" y="592">22.80% / +0.82</text></g>
+    <g transform="translate(1010 214)"><rect width="510" height="430" rx="24" fill="#102438" stroke="#334155"/><text x="32" y="54" fill="#e2e8f0" font-size="26" font-weight="700">Qwen-3B：与自适应策略叠加</text><text x="32" y="92" fill="#94a3b8" font-size="18">accuracy / tokens per question</text><g font-size="21"><text x="32" y="148" fill="#cbd5e1">MATH500</text><text x="190" y="148" fill="#f8fafc">SC 72.8 / 18,335</text><text x="190" y="182" fill="#5eead4">StepBack 73.2 / 13,620</text><text x="32" y="244" fill="#cbd5e1">GSM8K</text><text x="190" y="244" fill="#f8fafc">SC 91.21 / 9,506</text><text x="190" y="278" fill="#5eead4">StepBack+DSC 92.12 / 1,815</text><text x="32" y="340" fill="#cbd5e1">HotpotQA</text><text x="190" y="340" fill="#f8fafc">ESC 32.8 / 7,061</text><text x="190" y="374" fill="#5eead4">StepBack+ESC 35.0 / 6,567</text></g></g>
+    <rect x="94" y="694" width="1426" height="100" rx="20" fill="#172554" stroke="#1d4ed8"/><text x="128" y="735" fill="#bfdbfe" font-size="21">边界：AIME24 / OlympiadBench 上收益不稳定；PRM 在 HotpotQA 并非总是优于简单 final-step rollback。</text><text x="128" y="770" fill="#94a3b8" font-size="19">token 节省不含把外部 PRM 模型长期驻留显存的系统成本；论文单列 scoring wall-clock share（约 3%–14%）。</text>
+  </g>
+  <text x="800" y="852" fill="#64748b" font-family="Inter,system-ui,sans-serif" font-size="19" text-anchor="middle">依据论文 Tables 2–3 重绘；蓝色为 NLL，绿色为 PRM</text>
+</svg>

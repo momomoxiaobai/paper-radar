@@ -1,0 +1,236 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-07T10:10:00+08:00
+title: "Coding Agent 失败预测解读：告警究竟看见了坏运行，还是只认出了难题和弱模型"
+featured: true
+category: harness
+tags:
+  - coding-agent
+  - reliability
+  - failure-prediction
+  - swe-bench
+  - evaluation
+description: "深读 Hard Issue, Weak Model, or Bad Run：为何 pooled AUROC 会被任务难度主导，模型切换的 oracle gap 可由随机性产生，以及 repeated-run 与闭环等预算评测怎样重写 Agent 失败预测。"
+paper:
+  title: "Hard Issue, Weak Model, or Bad Run? Rethinking Failure Prediction for Coding Agents"
+  venue: "arXiv preprint, 2026"
+  paperUrl: "https://arxiv.org/abs/2611.08285"
+  pdfUrl: "https://arxiv.org/pdf/2611.08285"
+  datasetUrl: "https://huggingface.co/datasets/tarsur385/swebench-verified-trajectories"
+  score: 90
+  scoreNote: "推荐理由：它没有再堆一个 trajectory classifier，而是用 pair decomposition、run-blind references、Rasch/2PL no-specialization 模型、equivalence test 与 repeated runs 检查 failure predictor 到底学到什么，并把离线 AUROC 接到 stop/switch/retry 的真实决策；扣分在于仅 5 页、主要依赖 SWE-bench Verified + mini-swe-agent，一个重复运行 pilot 使用较旧 Llama 模型，结论更像强方法论警报而非跨平台定律。"
+---
+
+> [!NOTE]
+> 论文于 **2026 年 11 月 5 日**公开，共 5 页。篇幅短不等于证据只来自一个表：作者使用 3,492 条七模型轨迹、23 模型结果、16 个外部模型难度参考，以及 522 个 issue 的重复运行 corpus，分别回答预测、切换和重试三个问题。
+
+## 一句话结论
+
+**当前 coding-agent failure predictor 的 pooled AUROC 主要在区分“哪个 issue 难”和“哪个 model 弱”，并没有证明它读懂了这一次 trajectory 为什么会失败。任务难度这个完全不看运行的分数就能达到 0.924 AUROC，轨迹 TF-IDF 只有约 0.63；加上难度与模型身份后，trajectory score 的增益与零统计等价。大 oracle gap 也不自动支持模型路由，因为第二次独立尝试本身就制造 gap；真正有价值的 bad-run 重试，需要 repeated-run benchmark 才能识别。**
+
+<figure><img src="/paper-radar/images/coding-agent-failure/causes.svg" alt="Coding Agent 失败的三个来源：难题、弱模型和坏运行，以及对应动作" width="1600" height="900" loading="eager"/><figcaption>图 1：根据论文 Figure 1 与 item response theory 设定重绘。三个原因都能产生同一个 failure label，却分别对应 stop/human、switch 与 retry。</figcaption></figure>
+
+## 为什么这是 Harness 问题，而不是分类器问题
+
+软件工程 Agent 的一次 run 包括 reasoning、shell command、tool output、文件编辑与测试。预测器在第 $t$ 步读取 prefix，输出失败分数 $s(\tau_{\le t})$；平台据此提前终止、冷重启或切换模型。
+
+这条闭环要求的不只是“未来会不会失败”，还要知道**哪种动作能修复**：
+
+- hard issue：多数模型都做不出来，应停止、升级人工或增加新信息；
+- weak model：该模型整体能力不够，应切更强模型；
+- bad run：模型有能力，只是本次搜索走错，应 retry 同一模型。
+
+如果预测器只认出难题，却被平台解释成 bad run，越自信的告警反而越会触发低收益 retry。离线指标与 Harness 动作之间存在因果断层。
+
+## 最小生成模型：难度、能力与随机运行
+
+Rasch 模型把模型 $m$ 解决 issue $i$ 的概率写为
+
+$$
+P(Y_{im}=1)=\sigma(\theta_m-b_i),
+$$
+
+其中 $\theta_m$ 是模型能力，$b_i$ 是 issue 难度，$\sigma(x)=1/(1+e^{-x})$。2PL 再加入区分度 $a_i$：
+
+$$
+P(Y_{im}=1)=\sigma\!\left(a_i(\theta_m-b_i)\right).
+$$
+
+这两个 no-specialization reference 中，每个 issue 对所有模型的排序相同；结果仍由 Bernoulli 随机变量抽样，所以会出现“弱模型偶尔赢强模型”和“至少一个模型成功”。这就是论文用来检验 oracle gap 的零假设世界。
+
+bad run 是该概率模型在单次观测上的剩余随机性：同一 $(i,m)$ 重复运行，有时成功、有时失败。只看每个 $(i,m)$ 一次的公开 leaderboard，无法区分稳定难度/能力与偶然运行。
+
+## 为什么 pooled AUROC 会骗人
+
+AUROC 可写成随机抽取一个失败样本 $-$ 和一个成功样本 $+$ 时，分数排序正确的概率：
+
+$$
+\operatorname{AUROC}=P(s^- > s^+) + \frac12P(s^-=s^+).
+$$
+
+若绝大多数 sample pair 来自不同 issue，一个只记住 issue difficulty 的 run-blind score 就能很强。论文测试折中共有 494,109 个 failed–successful pairs，**99.66% 比较的是不同 issue**。于是 pooled AUROC 几乎成为 task ranking metric，而不是 within-task run diagnosis。
+
+作者把 pair 拆为：
+
+- cross-issue：两个 run 来自不同 issue；
+- within-issue consistent：弱模型失败、强模型成功；
+- within-issue upset：强模型失败、弱模型成功。
+
+真正读 trajectory 的 predictor 应在 consistent 与 upset 上都高于 0.5。只跟随模型能力排名的 predictor 会在 consistent 上接近 1、upset 上接近 0。
+
+## 数据与预测器
+
+### 单次运行主数据
+
+- mini-swe-agent 在 SWE-bench Verified 500 个 issue 上的公开轨迹；
+- 七个近期模型，共 3,492 条已知结果 run，其中 994 失败；
+- 排除两份 transcript 完全相同但 label 冲突的 GPT-5.2 source；
+- 另用 23 模型结果检查更大模型集合，用其中不在七模型集的 16 个模型估计 issue difficulty。
+
+代表性观察点是仍在运行的 step 20，共 2,840 条。预测器读取 last 8 steps（R8）或 full prefix（ALL），不直接看到 issue text 或 model name：
+
+- TF-IDF + logistic regression，按 issue 分组做 5-fold cross-validation；
+- 一折上 LoRA 微调 Qwen3-0.6B，并配同输入 logistic baseline；
+- 合计 18 个 configuration 进入统计检验。
+
+### Run-blind references
+
+外部难度分数定义为
+
+$$
+D_i^{\mathrm{ext}}=\frac{1}{16}\sum_{m\in\mathcal M_{\mathrm{out}}}
+\mathbb 1[Y_{im}=0],
+$$
+
+即 16 个外部模型失败比例。它用到部署时不可得的结果，所以只是诊断 reference，不是可上线 predictor。
+
+模型身份分数 $M_m$ 是该模型在训练 issue 上的失败率；`Length + M` 再加 prefix 长度，用来检查 predictor 是否只学到“跑得久”和模型风格。
+
+### 重复运行 pilot
+
+Nebius SWE-agent trajectory corpus 中，Llama 70B/8B 对 522 个 SWE-bench-extra/dev issue 各运行至少 4 次。每个 model-issue 的 runs 随机切成 A/B 两半：A 选模型或找 upset，B 测泛化；重复 200 次 random split，并 bootstrap issue 给区间。
+
+## 核心结果 1：预测器主要看见 issue 与 model
+
+<figure><img src="/paper-radar/images/coding-agent-failure/evidence.svg" alt="任务难度、模型身份和轨迹预测器的 AUROC，以及模型路由与重复运行结果" width="1600" height="900" loading="lazy"/><figcaption>图 2：依据论文 Tables I–II、Figure 2 与 Sections III-A–C 重绘。pooled 与 within-issue 的比较单位不同，不能混为一个“预测能力”。</figcaption></figure>
+
+step-20 的代表性结果：
+
+| 分数 | pooled AUROC | within-issue | consistent | upset |
+| --- | ---: | ---: | ---: | ---: |
+| $D^{\mathrm{ext}}$ | 0.924 | 0.500 | 0.500 | 0.500 |
+| Model identity $M$ | 0.567 | 0.724 | 1.000 | 0.000 |
+| $D^{\mathrm{ext}}+M$ | 0.929 | 0.718 | 0.869 | 0.317 |
+| TF-IDF R8 | 0.624 | 0.604 | 0.678 | 0.415 |
+| TF-IDF ALL | 0.630 | 0.610 | 0.687 | 0.416 |
+
+最醒目的 0.924 完全不看 trajectory。TF-IDF 在 upset 上低于 0.5，说明它在模型表现反常时反而经常排错；它部分从输出风格、命令和工具结果中反推出模型能力排名。
+
+更关键的是增量检验。把 trajectory score 加到 $D^{\mathrm{ext}}+M$ 后，18 个 configuration 的 AUROC 增益都落入预先设定的 $\pm0.02$ 等价区间；例如 ALL 的增益 $-0.001$，90% interval $[-0.003,0.000]$。这里不是“$p>0.05$ 所以没发现显著提升”，而是 two one-sided equivalence test 支持“增益小到可视为零”。
+
+固定 issue 的 conditional logit 中，把 score 加到 $M$，within-issue AUROC 也没有改善；代表性估计 $-0.011$，95% interval $[-0.024,0.002]$。
+
+## 核心结果 2：oracle gap 不是 router 的收益
+
+七模型中最好单模型解决 76.8% issue；事后挑“任一成功模型”可到 86.8%，oracle gap 为 10.0 个百分点。23 模型 gap 为 12.4 点。若把它直接解释成“模型各有所长”，就会高估 routing。
+
+在无专长 Rasch/2PL 模型中，独立随机尝试同样产生 gap。直观上，若 A 对所有 issue 成功率 0.7、B 为 0.6，事后 any-model 成功率是
+
+$$
+1-(1-0.7)(1-0.6)=0.88,
+$$
+
+比 A 高 18 点；但每个 issue 上 A 都更优。把 A 自己跑两次则为
+
+$$
+1-(1-0.7)^2=0.91,
+$$
+
+甚至更高。gap 证明的是“第二次独立机会有价值”，不是“B 有条件优势”。
+
+论文中观测的 oracle gap 和 upset rate 都没有显著高于 8 组 no-specialization reference（7/23 模型 × Rasch/2PL，Holm correction）。这不证明 specialization 不存在，只说明现有 gap 不是它的证据。
+
+真正 held-out routing 的收益很小：
+
+- 用同 issue 的 A-half 历史选模型，在 B-half 比固定最佳模型只高 $+0.09$ pp，95% CI $[-0.36,0.63]$；
+- 用 model identity + issue text 为新 issue 路由，只高 $+0.41$ pp，95% CI $[-1.83,2.85]$。
+
+Specialization 确实存在：A-half 找到的 upset 在 B-half 有 44% 重现，高于 no-specialization 的 19%，$p=0.004$；但只涉及约 15/522 个 issue。方差分解为 issue 53%、specialization 4.6%、run-to-run 42%。可泛化专长是稀疏现象，不能用 oracle 上界替代 router 实绩。
+
+## 核心结果 3：retry 有空间，但告警不会挑
+
+同一模型在同一 issue 上有时成功有时失败，说明 bad run 普遍存在；42% outcome variation 来自 run-to-run，retry 有真实上限。
+
+但 trajectory predictor 的 64%–82% score variance 位于 issue 之间，而不是同 issue runs 内。高分更像“这是难题/弱模型”，恰好是 retry 较难修复的失败。Fail-Fast 的 cold restart 只额外提升 0.2 pp，与此观察一致。
+
+若第一次失败后统一升级到一个固定第二模型，在七模型数据上可提升 $+6.91$ pp，95% CI $[4.67,9.15]$。这仍主要是第二次 attempt 的价值，因为事前按 issue 选模型只有 $+0.41$ pp；而且该数字假设 perfect failure detector，不含误报与监控成本。
+
+## 基线和统计设计为什么可信
+
+论文最强的地方不是某个模型，而是把三种混杂拆开：
+
+1. issue-grouped CV 阻止同一 issue 直接跨 train/test；
+2. run-blind difficulty/ability reference 揭示 pooled 指标的上限；
+3. pair-type decomposition 检查 predictor 是否只复刻模型排名；
+4. equivalence test 主动支持“增益可忽略”，而不是把不显著冒充相等；
+5. Rasch/2PL simulation 给 oracle gap 建立随机基准；
+6. repeated-run A/B split 把事后选择与 held-out 收益分开。
+
+不完美之处也很明确：$D^{\mathrm{ext}}$ 是使用额外模型结果的 diagnostic oracle，不能与线上可用 predictor 直接竞争；LoRA neural predictor 只在一折验证；repeated-run pilot 只有两个旧 Llama 模型；SWE-bench 单 benchmark 与 mini-swe-agent 单 scaffold 可能让 issue effect 特别大。
+
+## 对 Agent Harness 的直接改写
+
+失败预测接口不应只返回 `p_fail`，而应返回 action-conditioned value：
+
+$$
+V(a\mid h_t)=P(\text{success after action }a\mid h_t)-\lambda C(a),
+$$
+
+其中 $a\in\{\text{continue},\text{stop},\text{retry},\text{switch},\text{human}\}$，$C(a)$ 是 token、延迟、人工与副作用成本。真正要优化的是
+
+$$
+a^*=\arg\max_a V(a\mid h_t),
+$$
+
+而不是最大化一个与动作无关的 AUROC。
+
+评测也应按相同总尝试数、总 token 或总 wall-clock 比较。`A→B after failure` 必须对比 `A→A retry`、`A→B fixed second attempt` 与 `A only`，否则“路由收益”会吞进第二次机会收益。
+
+## 局限与风险
+
+- 论文只研究 trajectory-based predictor，不否定能访问 issue、执行状态或模型内部信号的方法。
+- 2PL 仍是简化模型；不拒绝 no-specialization 只表示当前样本证据不足。
+- 公布的 resolved label、冲突 transcript 与 benchmark contamination 都可能影响 outcome。
+- repeated runs 会产生环境、采样温度、并发与工具版本差异；应记录 seed 与环境快照。
+- 方差分解依赖 pilot 模型与任务分布，42% 不能外推为所有 coding agent 的 retry 上限。
+
+## 工程启示
+
+- 报告 pooled AUROC 时必须同时给 within-issue / within-model / within-run-repeat 指标。
+- 给每个告警标注预期动作，并用“动作后的成功率减成本”校准，而不是只测 label prediction。
+- 将 issue difficulty、model prior、trajectory evidence 分列进日志；否则 predictor 的 feature importance 不可审计。
+- 建立 repeated-run 小型金标集：对相同 issue×model 在固定容器中运行 4–8 次，才可估计 bad-run probability。
+- Router 要在 held-out runs 上评估，并与固定最佳模型、同模型 retry、固定第二模型比较。
+- 对高风险代码更应优先依据测试、类型检查、静态分析和 patch evidence；文本 trajectory score 只能做调度信号。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么 pooled AUROC=0.92 与 within-issue AUROC=0.50 可以同时成立？</summary><div class="thought-answer">如果分数准确区分 hard/easy issue，它会正确排列大量跨 issue 的失败–成功 pair；但同一 issue 的所有 run 得分相同，所以无法排列其中哪次失败。论文里 99.66% pair 是 cross-issue，足以主导 pooled AUROC。</div></details>
+
+<details class="thought-question"><summary>2. 为什么 oracle gap 不是 router 的可实现上界？</summary><div class="thought-answer">oracle 在看到所有尝试结果后才选成功模型，利用了未来随机性；router 必须在结果前选择。即使所有 issue 上 A 都优于 B，A/B 两次独立尝试也会制造很大 any-model gap。可实现上界必须来自 held-out 决策策略。</div></details>
+
+<details class="thought-question"><summary>3. “未显著优于零”与“等价于零”有什么差别？</summary><div class="thought-answer">前者可能只是样本不足；后者先设一个可忽略区间（这里 ±0.02 AUROC），再用两个单侧检验确认整个置信区间落入其中。论文的 trajectory incremental gain 属于后者，证据更强但仍依赖区间选择。</div></details>
+
+<details class="thought-question"><summary>4. 如果 run-to-run variation 很大，最合理策略是否总是 retry？</summary><div class="thought-answer">不是。仍要比较 retry 成功概率、剩余预算和副作用。不可逆数据库写入、外部消息或耗时构建会让 retry 成本很高；hard issue 的 retry 概率也低。要估计 $V(\text{retry}\mid h_t)$，而非只看全局 42%。</div></details>
+
+<details class="thought-question"><summary>5. 如何验证一个模型真的在特定 issue 类型上有专长？</summary><div class="thought-answer">先预注册 issue feature，再用多个模型对每类任务重复运行；训练 router 时只看 train issues，按 issue 和 run 双重 held-out 测试，并与 Rasch/2PL no-specialization simulation 比较。事后从成功表里挑类别会严重选择偏差。</div></details>
+
+<details class="thought-question"><summary>6. 什么是更好的线上告警指标？</summary><div class="thought-answer">对每个动作报告 selective success、false-alarm cost、平均/尾延迟、token/美元和 action regret；例如“被标为 retry 的失败中，重跑能修复多少”比单一 AUROC 更贴近 Harness 价值。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2611.08285)
+- [PDF](https://arxiv.org/pdf/2611.08285)
+- [七模型 SWE-bench Verified 轨迹](https://huggingface.co/datasets/tarsur385/swebench-verified-trajectories)
+- [23 模型结果](https://huggingface.co/datasets/tarsur385/swev-trm-trajectories-25models)
+- [重复运行 SWE-agent 轨迹](https://huggingface.co/datasets/nebius/SWE-agent-trajectories)
