@@ -1,0 +1,258 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-08T10:20:00+08:00
+title: "算法重访｜Reap：把 MCTS 放进 Lean，重新理解 AND–OR 搜索、价值回传与证明成本"
+featured: true
+category: classic-algorithms
+tags:
+  - monte-carlo-tree-search
+  - formal-theorem-proving
+  - lean4
+  - and-or-search
+  - reinforcement-learning
+description: "从 Lean 原生状态、AND–OR tree、progressive sampling、PUCT 与 policy–value expert iteration 拆解 Reap，并解释 Reaper-1 的 79.9% miniF2F pass@32、搜索预算边际收益与 search-interaction compression。"
+paper:
+  title: "Reap: Uncovering Monte Carlo Proof Search with a Lightweight Model"
+  venue: "arXiv preprint"
+  paperUrl: "https://arxiv.org/abs/2611.02678"
+  pdfUrl: "https://arxiv.org/pdf/2611.02678"
+  codeUrl: "https://github.com/frenzymath/reap"
+  score: 95
+  scoreNote: "推荐理由：论文把经典 MCTS 适配到 Lean 的 AND–OR proof state，并把语义关键搜索环原生实现为 tactic，让训练 rollout、推理、kernel replay 与可观测日志共享一套实现；1.7B 模型给出强结果和搜索行为分析。扣分在于基线推理预算不匹配、premise selector 另有 8B、训练 pipeline 尚未完全开源，且顶层 tactic 数会低估复合 tactic 的真实成本。"
+---
+
+> [!NOTE]
+> 论文 arXiv 当前记录为 **2026 年 11 月 2 日**首次公开，PDF 页眉还保留了作者早期稿的 `2610.35013 / 2026-10-26` 标记。本文以 arXiv 元数据 11 月 2 日为发布日期，并把它放进「算法重访」：贡献不只是一个证明模型，而是 MCTS 在 AND–OR 形式证明中的新实现、分析和应用。
+
+## 一句话结论
+
+**Reap 把 policy–value-guided MCTS 的选择、扩展、评估、回传和状态转移放进 Lean 4 tactic monad，用 OR 节点表示 tactic 选择、AND 节点表示必须全部完成的独立子目标，再由 kernel 重放验证。1.7B 的 Reaper-1 在独立 8B premise selector 辅助下取得 miniF2F-test 79.9% pass@32；更重要的发现是 RL 将证明从 21.7 个顶层步骤压到 5.2 个、树节点从 2,368 压到 119，却把单个 tactic 的中位延迟从 12.0ms 推到 43.2ms——搜索交互变少，不等于底层计算变少。**
+
+<figure><img src="/paper-radar/images/reap-mcts/method.svg" alt="Reap 在 Lean 中运行 AND-OR MCTS 并把 kernel 验证轨迹用于策略价值训练" width="1600" height="900" loading="eager"/><figcaption>图 1：依据论文 Figures 1–2、Sections 3.1–3.2 重绘。OR 节点的任一 child 成功即可；AND 节点需要全部独立 subgoal 成功。synthetic focus edge 成本为 0，tactic edge 成本为 1。</figcaption></figure>
+
+## 为什么要重访 MCTS
+
+经典 MCTS 常被描述为四步循环：Selection、Expansion、Evaluation、Backpropagation。围棋里的 state transition 由游戏规则定义，终局 reward 清楚；形式证明更麻烦：
+
+- tactic 可能失败、超时、引入多个 subgoal 或 expression metavariable；
+- “某个子目标解出”不代表原 theorem 完成；
+- 生成一个 `have`、`suffices` 或 `<;>` action，表面是一条边，内部可能执行多次推理与 solver；
+- 外部搜索器若把 Lean state 序列化再模拟，很容易与 proof assistant 的真实语义漂移。
+
+Reap 的核心不是“首次把 MCTS 用于证明”，而是**把语义关键搜索环直接实现成 Lean tactic**。每个节点保存 `Tactic.SavedState`，每条 tactic edge 真正在 Lean 中 elaborate 与 execute；外部模型只提供 policy/value。训练 rollout 与推理调用同一实现，成功后还回到根状态重放，交给正常 declaration checker 做最终验证。
+
+## 搜索空间：为什么形式证明天然是 AND–OR tree
+
+设 proof state 为 $s$，tactic action 为 $a$。
+
+- OR node：当前 goal 有多个 tactic 选择，任一个 child 解出即可；
+- AND node：一个 tactic 产生多个彼此独立的 proof obligations，所有 child 都要解出。
+
+Reap 只在多个 goal 不含 unresolved expression metavariables 时拆成 AND node；否则 subgoal 仍耦合在一个 OR-state，避免错误假设独立性。
+
+价值表示负的剩余 proof-search cost。tactic edge 的代价
+
+$$
+d(a)=1,
+$$
+
+而 AND node 聚焦某个 subgoal 的 synthetic focus edge 代价为 0。OR node 保存 visit-average value；AND node把当前已评估、未解决 children 的最小 value 向上回传，因为 value 越接近 0 越好，最负的 child 对应最难子目标。全部解决时 AND value 为 0。
+
+这与简单加总 subgoal cost 不同：搜索选择需要优先处理瓶颈，同时避免因为 focus 操作重复计费。
+
+## progressive sampling：什么时候生成新 tactic
+
+设 $N(s)$ 是状态访问数，$M(s)$ 是已发生的 policy–value evaluations 数。Reap 只有在
+
+$$
+M(s)\le C N(s)^\alpha
+$$
+
+时继续从 policy 采新 tactic；否则主要复访现有 children。$\alpha$ 控制 action set 随访问量扩张的速度，避免语言模型的巨大动作空间在浅层一次爆开。
+
+每批生成的 tactic 先在 Lean 中执行。若序列化后的 proof state 与当前 MCTS path 上某状态相同，就丢弃以防环；若与当前节点已有 child 相同，则把该样本的 prior weight 合并到既有 edge，而不重复建节点。
+
+## PUCT：价值成本与策略先验怎样结合
+
+论文的 OR-node selection score 写成
+
+$$
+\operatorname{PUCT}(s,a)=
+\gamma^{-V(s,a)-1}
++c(N(s))P(s,a)
+\frac{\sqrt{N(s)}}{1+N(s,a)},
+$$
+
+其中
+
+$$
+c(N)=c_{\mathrm{init}}+
+\log\left(\frac{N+c_{\mathrm{base}}+1}{c_{\mathrm{base}}}\right),
+$$
+
+而
+
+$$
+V(s,a)=\bar v(s')-d(a).
+$$
+
+$P(s,a)$ 是 temperature-scaled tactic log-prob 归一化得到的 policy prior。因为 $V$ 是负剩余成本，$\gamma^{-V-1}$ 偏向成本更低的 child；第二项给访问少但 prior 高的 action 探索机会。未访问 child 的 exploitation 初始化为 0。
+
+AND node 则需要优先解决最难 obligation，对已访问未解 child 使用 $1-\gamma^{-V-1}$，并排除已解 child；未访问 child exploitation 为 1。这里不是把 AlphaZero 公式原样搬过来，而是根据“价值为负成本”与 AND semantics 改写 exploitation。
+
+## 为什么 MCTS 标记 solved 后还要 kernel replay
+
+搜索树中的局部 tactic 成功可能留下 auxiliary declaration 或 deferred obligation。Reap 因此：
+
+1. 从 root 恢复原 proof state；
+2. 沿选定 solved subtree 重放 tactic；
+3. 用 Lean 正常 declaration-checking pipeline 再验证。
+
+只有 replay 与 final verification 都通过的轨迹才进入 RL data。这使 reward 接近形式系统里的硬真值，而不是模型 judge。
+
+## Reaper-1：共享 backbone 的 policy 与离散 value
+
+Reaper-1 从 Qwen3-1.7B-Base 初始化，policy head 自回归生成完整 tactic，value head 预测剩余成本的 $K=32$ 个离散 bin。训练三阶段：
+
+1. CPT：Lean code、Mathlib、formal/informal math；
+2. SFT：从 elaboration traces 抽取 proof-state、retrieved premises 与 tactic；
+3. RL：Reap MCTS 产生、重放并验证成功轨迹，做五轮 expert iteration。
+
+成功 replay dataset 写作
+
+$$
+\mathcal D_{\mathrm{RL}}=\{(s,a,y)\},
+$$
+
+$y$ 是 AND–OR tree 回传后离散化的剩余成本。联合目标：
+
+$$
+\begin{aligned}
+\mathcal L(\theta)
+=&\ \lambda_P\left[-\mathbb E_{(s,a,y)\sim\mathcal D_{\mathrm{RL}}}
+\log\pi_\theta(a\mid s)\right]\\
+&+\lambda_V\left[-\mathbb E_{(s,a,y)\sim\mathcal D_{\mathrm{RL}}}
+\log p_\theta(y\mid s)\right].
+\end{aligned}
+$$
+
+RL1–RL4 各自扫约 25K 个 AoPS 训练题，并逐步提高 MCTS budget；RL5 改为 8,192 simulations、pass@8 的小批多 rollout。B13 后，每题最多保留两条 $|\text{backed-up root value}|$ 最小的成功轨迹。完整 RL 使用 60 NVIDIA A100 GPU-days。
+
+## premise selector 不能藏在“1.7B 模型”后面
+
+Reaper-1 的生成/价值 backbone 是 1.7B，但默认 PS-2 retriever 是独立训练的 Qwen3-Embedding-8B。它从 Mathlib v4.28.0-rc1 中给当前 state 检索声明，RL 时保持冻结。
+
+作者做了 inference-time replacement：
+
+- PS-2：79.9% miniF2F pass@32；
+- rule-based SineQuoNon：75.8%；
+- rule-based MePo：67.6%。
+
+因此“1.7B 达到 79.9%”成立于 policy–value 参数量，却不是完整系统只有 1.7B。好消息是 selector 可模块化替换；用规则检索仍保留大部分性能，说明主 prover 没完全依赖神经 retriever 的黑箱能力。
+
+## 实验设置与去污染
+
+- benchmark：miniF2F-test 244 题、ProofNet-test、FATE-M 150 题、PutnamBench 660 题、CombiBench 100 题；
+- 所有训练语料对评测集做 10-gram filtering；评测集只用于 retrospective evaluation，不做训练或模型选择；
+- miniF2F 主设置：每个独立 search 最多 8,192 simulations、policy generation 最长 1,024 tokens、pass@32；
+- 244 题约 3 小时，使用 32 张 A100 和 800 CPU cores；premise selector 占总推理时间约 8.6%；
+- 所有成功 proof 都 replay 并由 Lean 验证。
+
+pass@$k$ 表示每题给 $k$ 个独立 search，只要至少一个成功即算解出。它同时测 policy、多样性与 test-time compute，不能与 pass@1 混用。
+
+## 主要结果：强，但不是统一预算横评
+
+Reaper-1 的结果：
+
+- miniF2F：79.9% pass@32（195/244）；
+- ProofNet：33.9%；
+- FATE-M：81.3%；
+- PutnamBench：21/660；
+- CombiBench：7/100，pass@16。
+
+它比同为 1.7B 的 Kimina-Prover-RL 高 3.3 点，也超过若干 7B step-level / whole-proof 系统。但 Table 1 明确保留各基线原始 budget：REAL-Prover 是 pass@64，HunyuanProver 是 pass@8，BFS-Prover-V2 是 accumulative。作者没有把 GPU、CPU、simulations 与 retriever 统一，因此这个表支持“同尺寸竞争力强”，不支持严格的 compute SOTA。
+
+## 搜索扩展：512 simulations 已经拿到大部分覆盖
+
+miniF2F pass@32 随每次 search 的 MCTS 上限：
+
+| Simulations | Solved | Pass@32 |
+| ---: | ---: | ---: |
+| 512 | 188 | 77.05% |
+| 1,024 | 191 | 78.28% |
+| 2,048 | 194 | 79.51% |
+| 4,096 | 194 | 79.51% |
+| 8,192 | 195 | 79.92% |
+
+从 2,048 增到 8,192，预算 4× 只多解 1 题。最终分数不是完全靠最大预算堆出来，但 79.9% 的最后小数点有明显边际递减；产品若追求吞吐，512 或 2,048 可能是更好的工作点。
+
+<figure><img src="/paper-radar/images/reap-mcts/results.svg" alt="Reaper-1 miniF2F 搜索预算曲线与 SFT 到 RL5 的搜索交互压缩指标" width="1600" height="900" loading="lazy"/><figcaption>图 2：依据论文 Tables 4–5 重绘。proof/action 统计只在 SFT、RL4、RL5 都解出的 151 题上计算，以控制题目难度；coverage 使用全部 244 题。</figcaption></figure>
+
+## RL 改变了什么：search-interaction compression
+
+在 151 题 common-solved set 上：
+
+| 指标 | SFT | RL4 | RL5 |
+| --- | ---: | ---: | ---: |
+| mean proof steps | 21.7 | 11.2 | 5.2 |
+| mean search-tree nodes | 2,368 | 162 | 119 |
+| median action characters | 19 | 23 | 66 |
+| tactic identifiers / action | 1.38 | 1.38 | 2.80 |
+| actions 含 `<;>` | 2.9% | 4.5% | 23.9% |
+| median evaluation latency | 12.0ms | 15.2ms | 43.2ms |
+
+RL 后模型更常引入有用中间结构，一步执行复合 tactic program，而不是靠许多局部修补；所以顶层轨迹和搜索树都大幅收缩。与此同时 action 变长、包含更多 tactic，Lean 执行延迟 3.6×。论文称之为 **search-interaction compression**：模型与搜索器交互次数减少，但证明工作被打包到 action 内。
+
+value head ablation 也支持它在引导短路径：相同 8,192 simulations / pass@32 下，RL5 解 195 题，禁用 value head 解 193；在两者都解出的 193 题上，平均 tactic steps 从 17.4435 降到 16.4553，root value 也更接近 0。提升不是巨大，却与“估剩余成本”目标一致。
+
+## 基线是否公平
+
+论文内部实验较干净：固定 checkpoint、相同 search budget 替换 retriever；固定 151 common-solved set 比较行为；固定 RL5 做 value ablation；搜索扩展只改 simulations。
+
+外部系统表则不是 matched compute，作者主动标注原 budget，这是诚实但有限的比较。尤其要同时看到：
+
+1. policy–value model 是 1.7B，默认 selector 是 8B；
+2. step-level MCTS 同时消耗 GPU model serving 与大量 CPU Lean execution；
+3. whole-proof 与 step-level prover 的一次 sample 成本结构不同；
+4. pass@32 会把独立尝试数纳入系统能力。
+
+因此最可靠的 claim 是“Reap 在其公开设置下，以轻量 backbone 达到强覆盖并提供可观测搜索”，而不是“统一计算预算下击败所有 7B”。
+
+## 局限与风险
+
+- action count 是不完整的 proof cost。模型可以把多个操作包装进 `<;>`、`have` 或 solver，一步更贵却在 reward 中只计 1。
+- RL 只用成功轨迹，失败树中的 hard negative 与错误 tactic 主要通过搜索间接体现。
+- 只验证 Lean 4 和单一 1.7B backbone；AND–OR 设计能迁移，数值结论未必能迁移到 Isabelle、Coq 或更大模型。
+- 训练 pipeline `Scythe-rl` 仍在准备公开；现在可复现搜索和模型推理，尚不能完整复现 60 A100-days 的训练。
+- PutnamBench 21/660 与 CombiBench 7/100 表明 olympiad-style miniF2F 高覆盖不等于开放高等数学能力。
+- PDF 自身保留两个不同 arXiv 标记，引用时应以当前 2611.02678 元数据为准。
+
+## 工程启示
+
+- 把 verifier 放进环境状态转移，不要让外部 orchestrator 猜 proof state；训练与推理共享 transition implementation 可减少不可见 mismatch。
+- 对会产生多个 obligation 的工具或程序分析，也应显式区分 OR choice 与 AND requirements，避免把“解了一个子任务”误当全局完成。
+- 记录 action text、state key、policy prior、value、visit count、Lean latency、timeout 与 replay result；只有 final proof 无法解释策略怎样变化。
+- 搜索预算先做 saturation curve。若 2,048→8,192 只增加极少覆盖，应把预算投入更多独立题、retrieval 或更好的 value calibration。
+- reward 不要只按 top-level step 数。应加入 tactic wall time、generated tokens、solver calls 或更细粒度 AST complexity，防止“把计算藏进一步”。
+- premise retrieval 要单独计参数与延迟；系统卡不能用 generator 参数量代表全部服务成本。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么 AND node 回传最难 child，而不是所有 child 的 value 求和？</summary><div class="thought-answer">Reap 的 value 用负剩余成本并服务选择。AND node 必须先暴露瓶颈，最负的未解 child 决定当前可完成性；focus edge 又不是真实 tactic，不应额外计费。求和会让 subgoal 数多的状态天然被惩罚，也可能掩盖一个极难 obligation。</div></details>
+
+<details class="thought-question"><summary>2. progressive sampling 解决了语言动作空间的什么问题？</summary><div class="thought-answer">tactic 是开放文本，无法像棋类先枚举所有合法动作。$M(s)\le C N(s)^\alpha$ 让 action set 随访问量渐进扩张：早期利用高 prior 的少数 tactic，证据累积后再花模型调用探索新动作，避免每个节点一次生成过多分支。</div></details>
+
+<details class="thought-question"><summary>3. 为什么“树节点更少”不能直接推出“证明计算更少”？</summary><div class="thought-answer">一条 action 可以包含多个 tactic、组合子和 solver。RL5 的 action 字符、tactic 数、`<;>` 占比与中位执行延迟都上升；它减少的是搜索器与 Lean 的顶层交互，部分计算被压进单边内部。</div></details>
+
+<details class="thought-question"><summary>4. 若 kernel 已验证每个 tactic transition，为什么还要从根重放？</summary><div class="thought-answer">局部执行成功不保证原 theorem declaration 完整：搜索可能引入 auxiliary declaration、保存/恢复状态或留下 deferred obligation。根重放把被选路径重新放进正常声明检查，排除搜索 bookkeeping 造成的伪 solved。</div></details>
+
+<details class="thought-question"><summary>5. 79.9% 应怎样与一个 pass@64 的 54.1% 比较？</summary><div class="thought-answer">只能说明在各自已报告 pipeline 与预算下 Reaper-1 覆盖更高，不能推出同计算量更好。需要对齐独立 search 数、每次 simulations、生成长度、retriever、GPU/CPU 和 wall time，或至少画 success–compute curve。</div></details>
+
+<details class="thought-question"><summary>6. 这套 AND–OR MCTS 能迁移到 coding agent 吗？</summary><div class="thought-answer">可以迁移结构：OR 表示 patch/工具选择，AND 表示必须同时满足的编译、单测、类型与安全条件，verifier 提供硬状态转移。但代码环境有副作用和不可逆操作，需要 snapshot/restore；动作成本也不能只按一次工具调用计数。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2611.02678)
+- [PDF](https://arxiv.org/pdf/2611.02678)
+- [Reap 官方代码](https://github.com/frenzymath/reap)
+- [Reaper-1 官方模型权重](https://huggingface.co/FrenzyMath/Reaper-1)

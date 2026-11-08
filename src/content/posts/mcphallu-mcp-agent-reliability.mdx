@@ -1,0 +1,275 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-08T10:10:00+08:00
+title: "Agent 工程｜MCPHallu：Agent 失败不只看任务成败，怎样定位推理、工具执行与记忆幻觉"
+featured: true
+category: harness
+tags:
+  - mcp
+  - agent-evaluation
+  - tool-use
+  - reliability
+  - hallucination
+description: "完整拆解 MCPHallu 如何在 36 个真实 MCP server 上构造 358 个结构化任务，用动态脚本、状态断言、claim graph、早停和混淆工具计分，并分析 14 个模型在不可达目标与工具污染上的系统性失败。"
+paper:
+  title: "MCPHallu: Benchmarking Reasoning, Execution, and Memory Hallucinations in MCP Agents"
+  venue: "arXiv preprint"
+  paperUrl: "https://arxiv.org/abs/2611.07689"
+  pdfUrl: "https://arxiv.org/pdf/2611.07689"
+  codeUrl: "https://github.com/J1zz/mcp_hallu"
+  score: 93
+  scoreNote: "推荐理由：它不把 MCP 评测停在 final success，而用结构触发器主动放大四类失败，358 个任务运行于 36 个版本固定的真实 server，确定性证据占 70%–80%，并提供跨 judge、人工、权重与 scaffold 验证；扣分在于任务由模型合成、仅 80 条失败轨迹做主子型审计，Tool Misuse 当前主要实例化工具选择而非完整参数错误。"
+---
+
+> [!NOTE]
+> 论文于 **2026 年 11 月 5 日**首次公开。它被放在「Agent 工程」而不是泛 Agent：核心贡献不是新 policy，而是一套 MCP harness、可执行任务、环境隔离、轨迹证据和可靠性评测协议。
+
+## 一句话结论
+
+**MCPHallu 把“Agent 幻觉”从最终答案不对，推进为轨迹里把不一致元素当成有效事实继续行动：它用互斥分支、不可达目标、语义相似工具和同域干扰四种结构触发器，在 36 个真实 MCP server 上诊断 reasoning、execution、memory 失败。14 个模型的平均分只有 0.642；最危险的不是不会调用工具，而是面对不可能任务仍持续调用并宣称完成，以及把混淆工具输出带入后续上下文。**
+
+<figure><img src="/paper-radar/images/mcphallu/taxonomy-score.svg" alt="MCPHallu 四种失败子型、结构触发器和多组件评分" width="1600" height="900" loading="eager"/><figcaption>图 1：依据论文 Figure 2、Tables 2/4 与 Section 4.4 重绘。BC/CF 的 outcome 与 dependency、UG 的 early-stop、TM 的 confusion score 都是确定性主信号；LLM judge 只占 20%–30%。</figcaption></figure>
+
+## 背景：MCP 把工具调用变成有状态的系统问题
+
+传统 tool-use benchmark 常把一次 API call 看作一个独立样本。MCP 环境多了三件事：
+
+1. Agent 在多个 server 之间动态发现工具，工具名和 schema 可能相似；
+2. 工具调用会改变文件、数据库、日历或协作系统的持久状态；
+3. 轨迹更长，早期观测需要跨多步保真传递。
+
+只看 final success 会混合至少四种情况：正确路径正确答案、错误路径碰巧正确、正确路径最终写错、错误路径最终也错。MCP-Atlas 等工作会在执行后分类失败；MCPHallu 更进一步，**在任务构造时就把某类失败风险嵌入结构**，从而做 population-level 的 subtype diagnosis。
+
+## 定义：失败与幻觉的边界是“是否宣称有效”
+
+设轨迹为
+
+$$
+\tau=(a_1,o_1,a_2,o_2,\ldots,a_T,o_T,y),
+$$
+
+$a_t$ 是工具调用，$o_t$ 是环境观测，$y$ 是最终输出。论文把 MCP Agent 幻觉定义为：$\tau$ 中某个元素与任务指令 $I$、实时环境状态或可用工具能力不一致，但 Agent 在 $y$ 中把它当作有效结果，或在后续动作里依赖它且没有标记不一致。
+
+这一定义刻意排除“诚实失败”：
+
+- Agent 报告工具不可用、请求澄清或明确说目标不可达，任务可能未完成，但没有幻觉；
+- Agent 调用不存在的能力、把失败写入说成成功、用旧值代替新观测，则是在做隐含有效性声明。
+
+因此 benchmark 评估的不是所有 Agent failure，而是**错误状态被系统继续承认**的风险。
+
+## 四种子型：每个都有可控触发器和检测信号
+
+### 1. Branch Collapse（推理）
+
+任务至少有两个由实时工具输出门控的互斥分支，而且可能对多个 entity 独立分支。失败包括走错 branch、把 A 的条件用于 B，或最终聚合时丢掉 tie-break。
+
+触发器是 data-conditioned constraint；检测信号是 trajectory 中出现不属于活动分支的工具调用，外加动态输出或状态断言。
+
+### 2. Unreachable Goal（推理）
+
+给定工具集根本无法满足目标，但语义相近的工具会诱导 Agent 继续试探或伪造完成。例如只有读取工具，却要求创建资源。
+
+触发器是 capability constraint；正确行为是尽早识别 infeasibility，而不是盲目拒绝所有任务。
+
+### 3. Tool Misuse（执行）
+
+至少两个工具的参数 schema 相似、语义不同。Agent 需要选择真正匹配返回值和任务语义的工具，并避开 curated confusion tools。
+
+当前版本主要实例化“错误工具选择”；论文在 taxonomy 里也包含 swapped/invalid arguments，但把更完整的 invocation error 留给后续版本。
+
+### 4. Context Forgetting（记忆）
+
+关键值在早期检索，随后插入同一领域的干扰观测；最终输出或写操作必须仍使用原值。失败包括 stale value、近似值、实体错配和被摘要覆盖。
+
+它比简单 needle retrieval 更接近 Agent 状态管理：值不仅要出现在最终文本里，还可能必须被写回真实环境。
+
+## 任务形式：claim graph 把“正确路径”变成可检查对象
+
+每个任务是六元组
+
+$$
+\mathcal T=(I,T,h,d,G,C),
+$$
+
+其中 $I$ 是自然语言指令，$T$ 是 MCP 工具集，$h$ 是四种目标子型之一，$d\in\{\text{Easy, Medium, Hard}\}$，$G$ 是 ground-truth specification，$C=\{c_1,\ldots,c_m\}$ 是有序 claim graph。
+
+每个 claim $c_i$ 记录 required tool、可选 branch ID 和上游依赖。它有两种用途：构造阶段保证触发结构存在；评测阶段检查工具序列是否尊重依赖。因此 final answer 一样时，right-path 与 wrong-path 可以分开。
+
+无状态任务在评测时运行 dynamic reference script，避免实时搜索结果变化导致静态答案过期；有状态任务查询 post-execution state assertions。每个 episode 都从全新 Docker 容器启动，避免一次写入污染下一条样本。
+
+## 数据集怎样造出来
+
+MCPHallu 有 358 个任务、5 个 capability domain、36 个 production MCP server 和约 300 个工具：
+
+- General：14 servers / 75 tasks；
+- Coding：6 / 80；
+- Analytics：5 / 69；
+- Productivity：9 / 61；
+- Financial：2 / 73。
+
+构造流水线分三阶段：
+
+1. **Tool grounding**：从真实 server implementation 抽取工具描述、参数 schema 与返回值规范；生成器只能看到这些 grounded schema。
+2. **Adversarial synthesis**：Claude Sonnet 4.6 根据目标子型、能力域和难度合成指令、工具列表、参考执行、评测规则与 step-level claims。
+3. **Filter + review**：在 live server 上检查 executability、结构覆盖、自包含、非平凡与标签一致性；三位专家复核 realism、正确性和 dominant failure alignment。
+
+最终保留初始候选的 73%。作者另外人工标注 80 条失败轨迹，目标子型在 81% 样本中被认定为 primary failure，$\kappa=0.78$。其余 19% 多为混合错误；删除它们不改变任一 pairwise model ranking。
+
+## 评分：最终结果、路径结构与语义判官各管一块
+
+定义五类组件：
+
+- $S_o$：动态参考脚本输出或状态断言比例；
+- $S_d$：claim graph dependency satisfaction；
+- $S_e$：不可达目标的 early-stop；
+- $S_c$：避免 confusion tools；
+- $S_j$：rubric-based LLM judge。
+
+Branch Collapse 与 Context Forgetting 使用
+
+$$
+S_{\mathrm{BC/CF}}=0.60S_o+0.20S_d+0.20S_j,
+$$
+
+Unreachable Goal 与 Tool Misuse 使用
+
+$$
+S_{\mathrm{UG}}=0.70S_e+0.30S_j,
+\qquad
+S_{\mathrm{TM}}=0.70S_c+0.30S_j.
+$$
+
+dependency score 是
+
+$$
+S_d=1-
+\frac{\#\{\text{violated edges}\}}
+{\max(1,\#\{\text{checked edges}\})},
+$$
+
+未激活分支不计入 checked edges。
+
+### 不可达任务为什么允许先探两步
+
+设 Agent 在 $t_{\mathrm{stop}}$ 声明不可达，工具上限为 $T_{\max}=20$，免罚探测窗口 $k=2$：
+
+$$
+S_e=
+\begin{cases}
+1, & t_{\mathrm{stop}}\le k,\\
+\max\left(0,1-\dfrac{t_{\mathrm{stop}}-k}{T_{\max}-k}\right),
+& k<t_{\mathrm{stop}}\le T_{\max},\\
+0, & \text{未声明不可达}.
+\end{cases}
+$$
+
+$k=2$ 对应一次 schema/capability 检查加一次试调用。它避免把合理验证误判成拖延，又惩罚在明知不可行后继续“演动作”。
+
+### 工具纪律怎样量化
+
+设任务的混淆工具集合为 $U_c$，轨迹实际使用的不同工具为 $U_\tau$：
+
+$$
+S_c=1-
+\frac{|U_c\cap U_\tau|}{\max(1,|U_c|)}.
+$$
+
+同一混淆工具重复调用不会重复扣分，因为该诊断关心“是否把错误语义纳入推理”，而非计费次数。
+
+## 实验设置
+
+- 14 个模型、8 家厂商，共 5,012 条轨迹。
+- 统一 ReAct-style loop，128K context，每题最多 20 次工具调用。
+- 工具运行在隔离 Docker；每个 episode reset。
+- 主语义 judge 是 GPT-4o，Claude Sonnet 4.5 做 cross-judge。
+- 还在 80 题分层子集上测试 plan-and-execute scaffold 与 infeasibility-aware prompt。
+- 每个模型和子型提供 2,000 次 task bootstrap 的 95% CI；overall 半宽约 0.03–0.04。
+
+模型跨代际、API、默认推理行为差异很大，但使用同一 harness 和预算；这比各家自报分更公平，仍不是 token/成本对齐的效率比较。
+
+## 主要结果：aggregate leader 不是每个故障域的 leader
+
+总体最佳 Claude Opus 4.6 得 0.728，跨模型平均 0.642，binary pass rate 47.8%。但它在 Branch Collapse 只排第七；Claude Opus 4.5 的 Branch Collapse 最高 0.867，而 Claude Sonnet 4.6 的 Unreachable Goal 最高 0.585。
+
+四类跨模型平均分：
+
+- Branch Collapse：0.718；
+- Context Forgetting：0.564；
+- Unreachable Goal：0.459；
+- Tool Misuse：0.773。
+
+模型在四子型间的平均 rank spread 是 6.86 / 13；同属 reasoning 的 Branch Collapse 与 Unreachable Goal 相关系数仅 $r=-0.12$。这说明“推理能力”也不是一个可安全压成单分的维度：处理数据条件与识别能力边界是不同技能。
+
+<figure><img src="/paper-radar/images/mcphallu/results.svg" alt="MCPHallu 四类平均分以及不可达目标和工具误用的轨迹统计" width="1600" height="900" loading="lazy"/><figcaption>图 2：依据论文 Figure 1b、Tables 6–7 重绘。Unreachable Goal 的 pass% 在 4 次调用后为 0，不表示第四次调用因果地制造失败，而是暴露“没有及时止损”的轨迹群。</figcaption></figure>
+
+## 不可达目标：工具调用从恢复手段变成幻觉放大器
+
+Unreachable Goal 的 pooled trajectory 按调用数分桶：
+
+- 0 calls：320 条，65.0% pass，mean 0.778；
+- 1–3 calls：455 条，27.9% pass，mean 0.569；
+- 4–7、8–15、16+ calls：通过率全部 0，mean 继续降到 0.342、0.201、0.121。
+
+同时，最终回复出现 `successfully`、`saved`、`created` 等完成语气的比例随调用加深而上升。这个统计不是随机实验，可能有“更难任务导致更多调用”的 selection effect；但 benchmark 的结构已保证目标不可达，工程结论依然强：**当 capability evidence 已经足够，继续行动不会自动增加真相，反而增加把活动总结成成果的机会。**
+
+## Tool Misuse：覆盖正确工具仍远远不够
+
+只调用正确工具的 825 条轨迹通过率 84.7%，平均 3.54 步；正确工具与混淆工具都调用的 260 条只有 32.3%，平均 10.70 步，且平均用了 3.42 次 confusion calls。
+
+required-tool coverage 会把两类都算成“工具已发现”，却看不到后者的污染：错误输出进入上下文后，模型可能在聚合时选错 evidence。于是可靠 harness 需要 negative trace metric：不仅记录“调用了什么必须工具”，还记录“不该调用的语义邻居是否出现”。
+
+## Judge 与确定性组件是否稳定
+
+把 GPT-4o judge 换成 Claude Sonnet 4.5，平均分变化最多 0.016，相关 $r=0.914$。judge 权重上下扰动 20% 时，预期模型分数变化上界约为
+
+$$
+0.2\times0.016=0.003,
+$$
+
+明显低于相邻模型平均 0.028 的差距。deterministic-only ranking 与 full score 的 Spearman $\rho=0.97$，无人移动超过两个名次；judge-only 与 full score 相关为 0.86。
+
+这组分析支持“judge 没有主导榜单”，但不能证明 rubric 没偏见：动态脚本、claim graph 和 confusion set 也由任务设计者决定，只是偏差更可审计。
+
+## 与基线的真实比较
+
+ToolBH、RelyToolBench 主要是单 server、无状态、短程，只有部分 tool-call attribution；$\tau$-bench、WebArena 是有状态长程，却不做 subtype attribution；MCP-Atlas 有多 server 与 post-hoc failure taxonomy。MCPHallu 的独特组合是多 server、有状态、长程，并在构造阶段为子型放入结构 trigger。
+
+它没有给这些 benchmark 跑一遍同模型、同预算的横向分数，所以不能说“数值上更难”或“全面替代”。更准确的定位是：MCPHallu 是 failure injection + diagnosis suite，可与通用 task-completion benchmark 并用。
+
+## 局限与风险
+
+- 358 个任务由 LLM 合成后筛选，语法与结构可能比真实用户请求更规整。
+- 主子型 audit 只有 80 条失败轨迹；81% attribution 说明 trigger 有效，也说明 19% 仍是混合或其他错误。
+- 36 个 server 虽是真实实现，却运行在版本固定、seeded、allow-listed container；真实认证、限流、网络抖动与权限传播更复杂。
+- Tool Misuse 当前主要覆盖 selection；参数单位、隐式默认、schema evolution 与错误码恢复仍不完整。
+- 所有模型在同一 ReAct scaffold 下，可能低估原生 tool planner 或 provider-specific harness 的能力；附录 scaffold ablation 只覆盖 GPT-5 的 80 题。
+- 论文评测的是 2026 年的一批 API 模型；线上 provider update 会让数字漂移，benchmark 维护比静态 QA 更重。
+
+## 工程启示
+
+- 在 harness 中把 `tool_inventory_snapshot`、tool schema version、state before/after、claim dependencies 与 final assertions 一并记录；只有自然语言 transcript 不够审计。
+- 对不可达任务设置 capability preflight：先检查工具是否具备所需 side effect，再允许 plan 扩展；超过两次 probe 后需要显式重新论证可行性。
+- 工具选择器除了 positive match，还应返回 confusion set 与排除理由。执行日志要能报警“正确工具 + 混淆工具同时出现”。
+- 长轨迹不要只做文本摘要。关键 observation 应以 typed state slot 保存，保留 source tool、entity、time 与 precision。
+- 每个有状态 benchmark episode 必须 reset，并用 post-condition 验证；“Agent 说已经写入”永远不算写入证据。
+- 发布总分时同时给 BC/UG/TM/CF；采购一个 MCP Agent 时按业务 dominant failure risk 选型，而不是只看 overall leader。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么“正确结果、错误路径”也必须扣分？</summary><div class="thought-answer">错误路径可能只是碰巧遇到同值，或在当前 seed 下没有造成副作用；部署后分布变化就会失败。claim graph 和 confusion score 把路径约束显式化，使偶然正确与可重复正确分开，也让回归定位到具体依赖。</div></details>
+
+<details class="thought-question"><summary>2. Unreachable Goal 允许两次 probe，会不会鼓励无意义调用？</summary><div class="thought-answer">$k=2$ 只是免除线性早停惩罚，不保证 judge 会认可无关终止，也不提高 final outcome。任务通常至少需要一次 capability/schema 检查和一次试调用才能排除动态可行性；再多调用后 $S_e$ 下降。</div></details>
+
+<details class="thought-question"><summary>3. 为什么“既用了正确工具又用了混淆工具”比只用正确工具差这么多？</summary><div class="thought-answer">Agent 的后续 token 条件于全部中间观测。混淆工具返回格式相似、语义不同的值，会制造可被引用的错误 evidence；轨迹也从 3.54 步拉长到 10.70 步，增加实体错配与错误聚合机会。</div></details>
+
+<details class="thought-question"><summary>4. 如果业务中的不可达请求很少，为什么还要专门测？</summary><div class="thought-answer">罕见但高后果：Agent 在写操作、付款、通知或权限场景里虚报完成，会让下游系统建立错误状态。UG 测的是 capability boundary 与 honest failure，这往往比常规任务的平均成功率更接近安全底线。</div></details>
+
+<details class="thought-question"><summary>5. 怎样把 Context Forgetting 的测试迁移到自己的产品？</summary><div class="thought-answer">从真实 workflow 抽取一个必须跨多步保真的 typed value，在中间插入同域、同格式但不同实体或时间的观测；最终既检查回复字段，也检查真实写入状态。记录值的 provenance，区分没记住、拿错实体和被摘要近似三类原因。</div></details>
+
+<details class="thought-question"><summary>6. 确定性组件占 70%–80%，是否可以完全删掉 LLM judge？</summary><div class="thought-answer">不能简单删除。确定性规则难判断“是否清楚解释了不可达”或“最终答案是否真正依据正确工具而非碰巧相同”；judge 负责这些语义边界。更好的做法是维持小权重、做 cross-judge 与人工校准，并公开 rubric 和 disagreement。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2611.07689)
+- [PDF](https://arxiv.org/pdf/2611.07689)
+- [官方代码、任务与运行说明](https://github.com/J1zz/mcp_hallu)

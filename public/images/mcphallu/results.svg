@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">MCPHallu 结果：不可达目标与工具污染</title>
+  <desc id="desc">四类平均分、不可达目标随工具调用数的通过率，以及正确工具与混淆工具组合时的通过率。</desc>
+  <rect width="1600" height="900" fill="#fff"/>
+  <text x="80" y="82" font-family="system-ui,sans-serif" font-size="42" font-weight="700" fill="#111827">多调用不一定是恢复：不可达任务里，它会放大幻觉</text>
+  <text x="80" y="128" font-family="system-ui,sans-serif" font-size="24" fill="#4b5563">358 任务 × 14 模型 = 5,012 条轨迹；整体平均 0.642，最佳 0.728</text>
+  <g font-family="system-ui,sans-serif">
+    <text x="105" y="200" font-size="29" font-weight="700" fill="#0f172a">四个子型的跨模型平均分</text>
+    <line x1="120" y1="545" x2="690" y2="545" stroke="#64748b" stroke-width="2"/>
+    <rect x="150" y="305" width="95" height="240" rx="10" fill="#60a5fa"/><text x="150" y="285" font-size="25" font-weight="700">0.718</text><text x="137" y="585" font-size="20">分支坍缩</text>
+    <rect x="290" y="356" width="95" height="189" rx="10" fill="#a78bfa"/><text x="290" y="336" font-size="25" font-weight="700">0.564</text><text x="278" y="585" font-size="20">上下文遗忘</text>
+    <rect x="430" y="392" width="95" height="153" rx="10" fill="#fb7185"/><text x="430" y="372" font-size="25" font-weight="700">0.459</text><text x="420" y="585" font-size="20">不可达目标</text>
+    <rect x="570" y="287" width="95" height="258" rx="10" fill="#fbbf24"/><text x="570" y="267" font-size="25" font-weight="700">0.773</text><text x="572" y="585" font-size="20">工具误用</text>
+    <rect x="750" y="185" width="770" height="415" rx="24" fill="#fff7ed" stroke="#fdba74" stroke-width="3"/>
+    <text x="790" y="235" font-size="29" font-weight="700" fill="#9a3412">Unreachable Goal：调用越多，通过率越低</text>
+    <text x="790" y="285" font-size="22" fill="#7c2d12">0 calls</text><rect x="955" y="260" width="455" height="36" rx="8" fill="#22c55e"/><text x="1420" y="287" font-size="23" font-weight="700">65.0%</text>
+    <text x="790" y="350" font-size="22" fill="#7c2d12">1–3 calls</text><rect x="955" y="325" width="195" height="36" rx="8" fill="#f59e0b"/><text x="1160" y="352" font-size="23" font-weight="700">27.9%</text>
+    <text x="790" y="415" font-size="22" fill="#7c2d12">4–7 calls</text><rect x="955" y="390" width="6" height="36" rx="3" fill="#ef4444"/><text x="975" y="417" font-size="23" font-weight="700">0%</text>
+    <text x="790" y="480" font-size="22" fill="#7c2d12">8–15 calls</text><rect x="955" y="455" width="6" height="36" rx="3" fill="#ef4444"/><text x="975" y="482" font-size="23" font-weight="700">0%</text>
+    <text x="790" y="545" font-size="22" fill="#7c2d12">16+ calls</text><rect x="955" y="520" width="6" height="36" rx="3" fill="#ef4444"/><text x="975" y="547" font-size="23" font-weight="700">0%</text>
+  </g>
+  <rect x="105" y="660" width="1415" height="150" rx="24" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+  <text x="145" y="710" font-family="system-ui,sans-serif" font-size="29" font-weight="700" fill="#0f172a">Tool Misuse 的关键不是“有没有找到正确工具”，而是“有没有克制住多余工具”</text>
+  <text x="145" y="758" font-family="system-ui,sans-serif" font-size="25" fill="#166534">只用正确工具：84.7% pass，平均 3.54 步</text>
+  <text x="790" y="758" font-family="system-ui,sans-serif" font-size="25" fill="#b91c1c">正确 + 混淆工具：32.3% pass，平均 10.70 步</text>
+  <text x="145" y="795" font-family="system-ui,sans-serif" font-size="20" fill="#475569">混淆输出一旦进入上下文，会污染后续推理；“把可能有用的工具都调用一遍”不是可靠 harness 策略。</text>
+</svg>

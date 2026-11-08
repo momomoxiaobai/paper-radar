@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Reaper-1 的覆盖率与搜索交互压缩</title>
+  <desc id="desc">展示 miniF2F 结果、搜索预算边际收益，以及 SFT 到 RL5 的证明步数、树节点、action 复杂度和延迟变化。</desc>
+  <rect width="1600" height="900" fill="#fff"/>
+  <text x="80" y="82" font-family="system-ui,sans-serif" font-size="42" font-weight="700" fill="#111827">RL 让顶层搜索更短，但把更多计算塞进每个 tactic</text>
+  <text x="80" y="128" font-family="system-ui,sans-serif" font-size="24" fill="#4b5563">Reaper-1：1.7B policy–value backbone + 独立 8B premise selector</text>
+  <g font-family="system-ui,sans-serif">
+    <rect x="80" y="185" width="430" height="275" rx="24" fill="#eff6ff" stroke="#60a5fa" stroke-width="3"/>
+    <text x="120" y="240" font-size="29" font-weight="700" fill="#1e40af">miniF2F-test</text>
+    <text x="120" y="325" font-size="68" font-weight="700" fill="#2563eb">79.9%</text>
+    <text x="120" y="370" font-size="25" fill="#1e3a8a">pass@32，195 / 244</text>
+    <text x="120" y="414" font-size="21" fill="#475569">8,192 simulations/search</text>
+    <rect x="560" y="185" width="960" height="275" rx="24" fill="#f8fafc" stroke="#94a3b8" stroke-width="3"/>
+    <text x="600" y="240" font-size="29" font-weight="700" fill="#0f172a">搜索预算的边际收益</text>
+    <line x1="630" y1="400" x2="1450" y2="400" stroke="#cbd5e1" stroke-width="3"/>
+    <polyline points="650,365 835,335 1020,305 1205,305 1390,286" fill="none" stroke="#7c3aed" stroke-width="6"/>
+    <g fill="#7c3aed"><circle cx="650" cy="365" r="10"/><circle cx="835" cy="335" r="10"/><circle cx="1020" cy="305" r="10"/><circle cx="1205" cy="305" r="10"/><circle cx="1390" cy="286" r="10"/></g>
+    <text x="620" y="440" font-size="20">512</text><text x="795" y="440" font-size="20">1,024</text><text x="980" y="440" font-size="20">2,048</text><text x="1165" y="440" font-size="20">4,096</text><text x="1350" y="440" font-size="20">8,192</text>
+    <text x="620" y="350" font-size="20">77.05%</text><text x="805" y="320" font-size="20">78.28%</text><text x="990" y="290" font-size="20">79.51%</text><text x="1175" y="290" font-size="20">79.51%</text><text x="1360" y="270" font-size="20">79.92%</text>
+    <text x="1010" y="215" font-size="20" fill="#7c3aed">2,048→8,192 只多解 1 题</text>
+  </g>
+  <text x="80" y="530" font-family="system-ui,sans-serif" font-size="31" font-weight="700" fill="#0f172a">同一 151 题 common-solved set：SFT → RL4 → RL5</text>
+  <g font-family="system-ui,sans-serif">
+    <rect x="80" y="575" width="300" height="205" rx="22" fill="#ecfdf5"/><text x="110" y="620" font-size="24" font-weight="700" fill="#065f46">平均 proof steps</text><text x="110" y="685" font-size="42" font-weight="700">21.7 → 11.2 → 5.2</text><text x="110" y="735" font-size="20" fill="#475569">顶层交互减少 76%</text>
+    <rect x="410" y="575" width="300" height="205" rx="22" fill="#eff6ff"/><text x="440" y="620" font-size="24" font-weight="700" fill="#1e40af">平均 tree nodes</text><text x="440" y="685" font-size="42" font-weight="700">2368 → 162 → 119</text><text x="440" y="735" font-size="20" fill="#475569">搜索树显著收缩</text>
+    <rect x="740" y="575" width="300" height="205" rx="22" fill="#fff7ed"/><text x="770" y="620" font-size="24" font-weight="700" fill="#9a3412">action 中 tactic 数</text><text x="770" y="685" font-size="42" font-weight="700">1.38 → 1.38 → 2.80</text><text x="770" y="735" font-size="20" fill="#475569">单步程序更复合</text>
+    <rect x="1070" y="575" width="300" height="205" rx="22" fill="#fdf2f8"/><text x="1100" y="620" font-size="24" font-weight="700" fill="#9d174d">中位执行延迟</text><text x="1100" y="685" font-size="42" font-weight="700">12.0 → 15.2 → 43.2</text><text x="1100" y="735" font-size="20" fill="#475569">ms；隐藏成本上升</text>
+  </g>
+  <text x="80" y="842" font-family="system-ui,sans-serif" font-size="23" fill="#475569">结论边界：基线预算并不 compute-matched；21/660 PutnamBench 与 7/100 CombiBench 也提醒 miniF2F 的高分不能等同于通用数学证明能力。</text>
+</svg>

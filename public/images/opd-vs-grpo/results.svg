@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">OPD 对 GRPO 的关键结果与适用边界</title>
+  <desc id="desc">展示外部教师失败、self-GRPO 高效回收、双领域与四领域多教师合并成本，以及不可直接比较的边界。</desc>
+  <rect width="1600" height="900" fill="#fff"/>
+  <text x="90" y="90" font-family="system-ui,sans-serif" font-size="42" font-weight="700" fill="#111827">真正的反转来自教师来源，不是教师尺寸</text>
+  <text x="90" y="135" font-family="system-ui,sans-serif" font-size="24" fill="#4b5563">Qwen3-4B-Base 主设置；横轴均为累计训练 EFLOPs</text>
+  <line x1="110" y1="590" x2="1490" y2="590" stroke="#cbd5e1" stroke-width="3"/>
+  <g font-family="system-ui,sans-serif">
+    <rect x="110" y="210" width="300" height="380" rx="24" fill="#fff1f2" stroke="#fb7185" stroke-width="3"/>
+    <text x="145" y="260" font-size="29" font-weight="700" fill="#9f1239">外部教师</text>
+    <text x="145" y="310" font-size="22" fill="#881337">代码域：LCB v6</text>
+    <text x="145" y="360" font-size="48" font-weight="700" fill="#be123c">46.4%</text>
+    <text x="145" y="394" font-size="21" fill="#4b5563">GRPO @ 0.6 EFLOP</text>
+    <text x="145" y="452" font-size="36" font-weight="700" fill="#e11d48">36.7%</text>
+    <text x="145" y="485" font-size="21" fill="#4b5563">OPD-8B 峰值 @ 45.7</text>
+    <text x="145" y="535" font-size="36" font-weight="700" fill="#e11d48">28.7%</text>
+    <text x="145" y="568" font-size="21" fill="#4b5563">OPD-32B 峰值 @ 68.7</text>
+    <rect x="455" y="210" width="300" height="380" rx="24" fill="#ecfdf5" stroke="#34d399" stroke-width="3"/>
+    <text x="490" y="260" font-size="29" font-weight="700" fill="#065f46">self-GRPO</text>
+    <text x="490" y="310" font-size="22" fill="#064e3b">数学 OOD macro</text>
+    <text x="490" y="375" font-size="58" font-weight="700" fill="#059669">50×</text>
+    <text x="490" y="420" font-size="22" fill="#4b5563">G=1 蒸馏阶段 FLOPs 优势</text>
+    <text x="490" y="474" font-size="23" fill="#065f46">0.2 EFLOP 回收</text>
+    <text x="490" y="510" font-size="23" fill="#065f46">GRPO 10.1 EFLOP 的精度</text>
+    <text x="490" y="555" font-size="19" fill="#9a3412">但单域中教师本身已可部署</text>
+    <rect x="800" y="210" width="300" height="380" rx="24" fill="#eff6ff" stroke="#60a5fa" stroke-width="3"/>
+    <text x="835" y="260" font-size="29" font-weight="700" fill="#1e40af">2 个领域</text>
+    <text x="835" y="310" font-size="22" fill="#1e3a8a">Math + Code</text>
+    <text x="835" y="375" font-size="58" font-weight="700" fill="#2563eb">+5.2%</text>
+    <text x="835" y="420" font-size="22" fill="#4b5563">专家训练 FLOPs 之外</text>
+    <text x="835" y="470" font-size="23" fill="#1e40af">专家成本 10.7 EFLOP</text>
+    <text x="835" y="510" font-size="23" fill="#1e40af">合并仅需 +0.55 EFLOP</text>
+    <text x="835" y="555" font-size="21" fill="#1e40af">比 joint GRPO 少 42.0%</text>
+    <rect x="1145" y="210" width="300" height="380" rx="24" fill="#f5f3ff" stroke="#a78bfa" stroke-width="3"/>
+    <text x="1180" y="260" font-size="29" font-weight="700" fill="#5b21b6">4 个领域</text>
+    <text x="1180" y="310" font-size="20" fill="#4c1d95">+ IFBench + MMLU-Pro</text>
+    <text x="1180" y="375" font-size="58" font-weight="700" fill="#7c3aed">+8.0%</text>
+    <text x="1180" y="420" font-size="22" fill="#4b5563">专家训练 FLOPs 之外</text>
+    <text x="1180" y="470" font-size="23" fill="#5b21b6">专家成本 14.4 EFLOP</text>
+    <text x="1180" y="510" font-size="23" fill="#5b21b6">合并仅需 +1.15 EFLOP</text>
+    <text x="1180" y="555" font-size="21" fill="#5b21b6">比 joint GRPO 少 31.6%</text>
+  </g>
+  <rect x="110" y="650" width="1335" height="150" rx="24" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+  <text x="145" y="700" font-family="system-ui,sans-serif" font-size="28" font-weight="700" fill="#0f172a">读数边界</text>
+  <text x="145" y="744" font-family="system-ui,sans-serif" font-size="23" fill="#334155">50× 只计算蒸馏阶段；完整流水线必须加回专家 GRPO 成本。结果限定于 vanilla top-k reverse-KL、Qwen3/Olmo、数学/代码/知识/指令四域。</text>
+  <text x="145" y="780" font-family="system-ui,sans-serif" font-size="23" fill="#334155">外部教师 G=1 只在单域数学短暂翻转，代码与多域并不复现；FLOPs 也不是延迟、显存和调度成本的同义词。</text>
+</svg>

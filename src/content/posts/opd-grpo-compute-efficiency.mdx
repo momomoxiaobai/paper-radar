@@ -1,0 +1,249 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-08T10:00:00+08:00
+title: "前沿雷达｜OPD 对 GRPO：密集教师信号为什么未必省 FLOPs，何时多教师蒸馏才真正划算"
+featured: true
+category: rl
+tags:
+  - on-policy-distillation
+  - grpo
+  - reinforcement-learning
+  - knowledge-distillation
+  - compute-efficiency
+description: "从逐 token FLOPs、reverse-KL 目标、教师来源和四领域实验拆解 OPD 与 GRPO 的真实效率：外部教师总体不占优，self-GRPO checkpoint 适合低成本能力回收，多教师 OPD 的价值在跨域专家合并。"
+paper:
+  title: "Unpacking the Compute Efficiency of Strong-to-Weak OPD against GRPO"
+  venue: "arXiv preprint"
+  paperUrl: "https://arxiv.org/abs/2611.08453"
+  pdfUrl: "https://arxiv.org/pdf/2611.08453"
+  score: 94
+  scoreNote: "推荐理由：论文把 OPD 的‘更少 step’重新落到累计训练 FLOPs，在相同学生、prompt、rollout group 和共享超参下做九轴消融，并把单域 self-GRPO 的表面悖论推进到多域专家合并的完整成本比较；扣分在于结论限定于 vanilla top-k reverse-KL、少数模型家族和四类可验证领域，50× 是蒸馏阶段数字，论文也未发布专用代码仓库。"
+---
+
+> [!NOTE]
+> 论文于 **2026 年 11 月 5 日**首次公开。周末没有更新的 arXiv 批次；本文选择它，是因为它不再用 optimizer step 或 GPU 小时替代算法计算量，而是正面审计“OPD 是否真的比 GRPO 省训练 FLOPs”。
+
+## 一句话结论
+
+**普通 external-teacher on-policy distillation（OPD）虽然给每个 student token 一份密集教师分布，却还要为教师逐 token 前向和常见的长度膨胀买单；在论文的 matched-setting 实验中，它总体不如 GRPO 的 accuracy/FLOP。真正稳定的高效率出现在教师是学生自己的 GRPO checkpoint 时，而这一点在单域没有部署意义，只有“各领域先训专家、再按域路由教师做 OPD 合并”为一个通才”时，才形成比 joint GRPO 更完整的计算优势。**
+
+<figure><img src="/paper-radar/images/opd-vs-grpo/compute-accounting.svg" alt="GRPO 与 reverse-KL OPD 的逐 token FLOPs 对账以及三类教师设置" width="1600" height="900" loading="eager"/><figcaption>图 1：依据论文 Section 3、Figure 1 与 Sections 5–6 重绘。$N_s$、$N_t$ 分别是参与逐 token 矩阵乘法的学生与教师参数量；50× 只描述 self-GRPO 的蒸馏阶段。</figcaption></figure>
+
+## 问题背景：少 rollout、少 step，不等于少计算
+
+OPD 让学生从自己的 on-policy rollout 中学习，但每个位置由冻结教师给出 token distribution。它同时拥有两种看似理想的性质：
+
+- 与 sequence-level distillation 相比，学生在自己的状态分布上训练，减轻 train–test mismatch；
+- 与只有终局 $0/1$ reward 的 RL 相比，每个 token 都有教师信号，困难题即使没有正样本也能更新。
+
+问题是，密集信号不是免费的。OPD 每生成一个训练 token，都要多跑一次 teacher forward；如果教师诱导学生把回答拉到最大长度，step 更少也可能花更多 FLOPs。作者因此把比较轴固定为：
+
+$$
+\text{held-out accuracy}\quad\text{vs.}\quad
+\text{cumulative training FLOPs}.
+$$
+
+这比 GPU-hours 更接近算法口径：后者还混入硬件、并行策略、kernel 与调度质量；它也比 step 数公平，因为不同 objective 的单步成本不同。
+
+## 两个目标函数到底在优化什么
+
+设学生策略为 $\pi_\theta$，冻结教师为 $\pi_T$；给 prompt $q$ 采 $G$ 条学生 rollout $\{o_i\}_{i=1}^G$，终局 reward 为 $r_i\in\{0,1\}$。
+
+### GRPO：从组内相对结果学习
+
+论文采用 mean-centered outcome advantage：
+
+$$
+\hat A_i=r_i-\frac{1}{G}\sum_{j=1}^G r_j,
+$$
+
+并最小化
+
+$$
+\mathcal L_{\mathrm{GRPO}}(\theta)=
+-\mathbb E\left[
+\frac{1}{G}\sum_{i=1}^G\sum_{t=1}^{|o_i|}
+\hat A_i\log \pi_\theta(o_{i,t}\mid q,o_{i,<t})
+\right].
+$$
+
+组内全错或全对时，$\hat A_i$ 都接近 0，这是 OPD 理论上最可能占优的区域：教师仍能告诉学生每一步怎样改。
+
+### OPD：在学生 top-$k$ support 上做 reverse KL
+
+对位置 $(i,t)$，取学生概率最高的 $k=16$ 个 token 集合 $S_k(o_{i,t})$，分别截断并重新归一化：
+
+$$
+\widetilde\pi_\theta(v\mid o_{i,<t})=
+\frac{\pi_\theta(v\mid o_{i,<t})}
+{\sum_{u\in S_k}\pi_\theta(u\mid o_{i,<t})},
+\quad
+\widetilde\pi_T(v\mid o_{i,<t})=
+\frac{\pi_T(v\mid o_{i,<t})}
+{\sum_{u\in S_k}\pi_T(u\mid o_{i,<t})}.
+$$
+
+闭式 reverse-KL loss 是
+
+$$
+\begin{aligned}
+\mathcal L_{\mathrm{OPD}}(\theta)
+=\mathbb E\Bigg[
+\frac{1}{G}\sum_{i=1}^G\sum_{t=1}^{|o_i|}
+\sum_{v\in S_k}
+\widetilde\pi_\theta(v\mid o_{i,<t})
+\big(&\log\widetilde\pi_\theta(v\mid o_{i,<t})\\
+&-\log\widetilde\pi_T(v\mid o_{i,<t})\big)
+\Bigg].
+\end{aligned}
+$$
+
+$r_i$ 完全不进入这个目标。学生只在自己的轨迹上逼近教师，reverse KL 又偏向教师的高概率模态；这既能集中学习，也可能在 support 不重合时造成 prefix drift、低多样性和长度异常。
+
+## FLOPs 对账：OPD 的稠密监督有一张教师账单
+
+论文按每个生成 token 估算：
+
+$$
+C_{\mathrm{GRPO}}=2N_s+2N_s+6N_s=10N_s,
+$$
+
+三项依次是生成、log-prob recomputation、反向与更新。OPD 多一次冻结教师 forward：
+
+$$
+C_{\mathrm{OPD}}=10N_s+2N_t.
+$$
+
+两者共享的 prompt context 被排除，每次运行再乘自己的实际 generated tokens。这一设计抓住了 objective 的结构差异，但仍有边界：它不是实测 latency，不含显存驻留、通信、padding、KV cache 和并发调度；因此适合比较算法计算，不足以替代生产成本模型。
+
+## 实验设置：什么被对齐，什么没有
+
+- 学生：Qwen3-1.7B、4B、8B Base，另有 SFT cold start 与 Olmo-3-7B-Instruct-SFT 复现。
+- 教师：Qwen3 4B/8B/14B/32B thinking 模型、进一步 GRPO 的模型、base model 的 GRPO checkpoint。
+- 数学训练：DAPO-Math-17K、DeepMath-103K；OOD 数学指标是 AIME24、AIME25、AMC23 的不加权 macro mean@16。
+- 代码训练：LiveCodeBench v1–v5、CodeForces 子集；测试为 LiveCodeBench v6 的 175 题。
+- 多域再加入 MMLU-Pro（知识）与 IFBench-RLVR（指令遵循）。
+- 主比较对齐学生初始化、prompt、rollout group size 与共享超参；思考模式、batch、学习率、KL estimator、模型尺寸、领域和 RL framework 分别做消融。
+
+数学 OOD macro 把只有 30 题的 AIME 与 83 题的 AMC 等权，适合看跨难度稳定性，却不是按样本数加权的总正确率。代码、知识与指令遵循也使用不同 verifier，不能把 domain average 当作单一同质分布。
+
+## 第一层结果：外部教师越强，不代表学生每 FLOP 学得越快
+
+最反直觉的结果来自“应该最有利于 OPD”的困难子集：学生 mean@32 为 0、教师 mean@32 大于 0.6。即便 GRPO 的正奖励极稀疏，external-teacher OPD 在 in-domain 上仍被 GRPO 以更少 FLOPs 超过。
+
+作者沿九个方向寻找反例：
+
+1. 数据难度；
+2. 学习率；
+3. batch size；
+4. top-$k$ closed-form 与 sampled-token KL；
+5. thinking / no-thinking；
+6. base / SFT 学生；
+7. 学生尺寸；
+8. 数学 / 代码领域；
+9. `verl` / `tinker` framework。
+
+在 matched group size 下，GRPO 的 accuracy/FLOP 顺序均未被稳定翻转。一个例外是把 OPD 改为 $G=1$：单域数学上外部教师可赢，但它用 8 倍 optimizer steps，且优势在代码与多域消失，不能写成普遍结论。
+
+代码域是很好的压力测试。Qwen3-4B-Base 上，GRPO 用 0.6 EFLOP 达到 LiveCodeBench v6 46.4%；OPD-8B 到 45.7 EFLOP 的峰值只有 36.7%，OPD-32B 到 68.7 EFLOP 只有 28.7%。教师更大同时增加 $2N_t$，却没有把其能力完整传入学生。
+
+## 第二层结果：教师的 provenance 比教师的能力上限更关键
+
+把教师换成 base model 经同任务 GRPO 得到的 checkpoint 后，现象反转。Qwen3-4B-Base 的 self-GRPO 教师自身数学 OOD macro 为 33.9%，GRPO 要 10.1 EFLOP 到达；OPD 在默认 $G=8$ 用 1.62 EFLOP 完整回收，约 6×；$G=1$ 只需 0.2 EFLOP，约 50×。
+
+为什么“更弱、同源”的教师更容易教？论文用初始 top-16 token overlap 做诊断：
+
+$$
+\operatorname{Overlap}(s)=
+\frac{|\operatorname{Top16}(\pi_s)\cap
+\operatorname{Top16}(\pi_T)|}{16}.
+$$
+
+再定义归一化最小 teacher–student gap：
+
+$$
+g_{\min}=\frac{T-s^*}{T-s_0},
+$$
+
+$T$ 是教师精度，$s_0$ 是初始学生，$s^*$ 是 OPD 过程中最佳学生。固定 4B 学生的 14 个 run 上，初始 overlap 与更小 gap 强相关，线性拟合 $R^2=0.85$。但中间尺寸缺点、样本只有 14 个，这只是“先做小成本兼容性检查”的信号，不是普适定律。
+
+## 单域悖论：既然 checkpoint 已经好，为什么还蒸馏回原学生
+
+50× 很醒目，但只计算蒸馏阶段。为了得到 self-GRPO 教师，已经先支付了 10.1 EFLOP；单域部署时，直接使用这个 checkpoint 即可，再蒸馏回同尺寸 base student 只增加总成本。
+
+真正的新模型需求出现在多域：数学专家和代码专家分别有独特能力，任何单个 checkpoint 都不能同时服务两个域。此时 multi-teacher OPD 对每个训练样本按领域选择对应 self-GRPO 教师：
+
+$$
+T(q)=T_{d(q)},\qquad
+\mathcal L(q)=D_{\mathrm{RKL}}
+\big(\pi_\theta(\cdot\mid q)\,\|\,\pi_{T_{d(q)}}(\cdot\mid q)\big).
+$$
+
+这一步产生的是“任何专家都没有提供的多域通才”，因此不是重复部署已有模型。
+
+<figure><img src="/paper-radar/images/opd-vs-grpo/results.svg" alt="外部教师、self-GRPO 以及双领域和四领域多教师 OPD 的关键 FLOPs 结果" width="1600" height="900" loading="lazy"/><figcaption>图 2：依据论文 Figure 5、Sections 4.2、5.1、6 与 Appendix J 重绘。多教师柱的百分比是相对专家训练 FLOPs 的额外合并成本；42.0% 与 31.6% 是达到 joint-GRPO 参照性能所需总 FLOPs 的差异。</figcaption></figure>
+
+## 多域完整账本：5.2%–8.0% 的合并成本
+
+双领域（math + code）中：
+
+- 两个独立 GRPO 专家合计 10.7 EFLOP；
+- multi-teacher OPD 用额外 0.55 EFLOP 回收专家平均上限，即 $0.55/10.7\approx5.2\%$；
+- 完整“专家 + 合并”流水线达到 joint GRPO 参照性能时，少 42.0% 总 FLOPs。
+
+四领域（再加 IFBench 与 MMLU-Pro）中：
+
+- 四个专家合计 14.4 EFLOP；
+- 合并需额外 1.15 EFLOP，即约 8.0%；
+- 相对 joint GRPO 达到相同性能少 31.6% FLOPs，而且 joint GRPO 在测试预算内没有达到合并模型最终水平。
+
+单一 external 8B thinking teacher 在四域则严重崩溃：最终数学 0%、代码 0%、MMLU-Pro 7%、IFBench 18%，并伴随长度膨胀。结论不是“multi-teacher 总能胜过 joint training”，而是**同源、同域 RL checkpoint 的可传递性，比一个总体能力更强但状态分布偏离的教师更重要**。
+
+## 基线是否公平
+
+论文的优点是主对照对齐了 student、prompts、rollout group 与共享超参，并让每条曲线为自己的生成长度付费。九轴消融也减少了“只挑一个坏 OPD 配方”的担忧。
+
+仍需保留五个口径：
+
+1. 只研究 vanilla reverse-KL；混合 outcome reward、trajectory reweight、异步与 speculative rollout 可能改变结论。
+2. FLOPs 模型使用参数量线性近似，MoE、稀疏 kernel、通信与硬件利用率不一定同比例。
+3. 50× 是 checkpoint 已存在后的蒸馏增量，不是从 base 到最终通才的端到端 50×。
+4. 多域 joint GRPO 的共享 schedule 可能不是每个领域的 Pareto 最优；专家法天然获得每域独立超参与并行训练的好处。
+5. 论文横跨 Qwen3 与一项 Olmo 复现，但离“任意模型家族、任意开放任务”还有距离。
+
+## 局限与风险
+
+- 外部教师失败与 response-length inflation 同时出现，但因果机制只做了 token-overlap 与谱分析侧证。
+- self-GRPO 学生有时超过教师，Olmo 数学中甚至高 11 个绝对百分点；作者明确说原因未知，不应包装成稳定的 born-again 效应。
+- 所有主任务都有自动 verifier；偏好对话、安全、长程 agent 环境的 reward 噪声可能改变 specialist 与 joint training 的关系。
+- 领域路由假设 $d(q)$ 已知。真实请求跨域或标签错误时，该选哪个教师本身是一个 gating 问题。
+- 多专家的存储、治理、版本兼容与回归成本没有计入 EFLOPs；工程团队未必能免费维护一组同步教师。
+
+## 工程启示
+
+- 声称 OPD “更省”时，至少同时报告 generated tokens、student/teacher active params、forward/backward 次数和累计 FLOPs；只报 step ratio 不够。
+- 蒸馏前先抽样测 student–teacher top-$k$ overlap、响应长度漂移和 prefix divergence；强教师不是默认好教师。
+- 单域 self-GRPO 先问“为什么不直接部署 teacher checkpoint”；只有合并、压缩、许可或架构迁移等额外目标能证明蒸馏必要。
+- 多域可采用 `domain -> expert checkpoint -> routed KL`，但要保留 domain-balanced validation，避免平均分掩盖某一域归零。
+- 监控 rollout length histogram。若 OPD 很快撞上 max length，应该先解决目标或 support mismatch，不要继续堆训练步。
+- FLOPs 是可移植的研究指标，生产选型仍要补充 tokens/s、端到端延迟、显存、故障恢复和多教师服务成本。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么 OPD 即使只用 1 个 rollout，也可能比 G=8 的 GRPO 做更多 optimizer steps 却更省 FLOPs？</summary><div class="thought-answer">单步成本和总步数是两个轴。$G=1$ 显著减少每步生成 token，而教师 forward 的额外成本仍可能小于省下的 7 组 rollout；所以它能用更多小步到达目标。但这一优势取决于领域与长度，论文中只在单域数学稳定出现。</div></details>
+
+<details class="thought-question"><summary>2. 若教师比学生强很多，为什么 reverse KL 不一定把更多知识传过去？</summary><div class="thought-answer">OPD 只在学生自己的状态和 top-16 support 上看教师。若两者 token support、推理格式和 prefix 分布差异大，教师的高质量模式根本不在学生截断集合里；reverse KL 还可能强化少数可重叠模式，带来长度与多样性病态。能力上限高不等于局部训练信号兼容。</div></details>
+
+<details class="thought-question"><summary>3. 50× 的正确端到端表述应该是什么？</summary><div class="thought-answer">“给定学生自己的 GRPO checkpoint 已经训练完成，G=1 OPD 用约 0.2 EFLOP 回收该 checkpoint 的数学 OOD 精度，而原 GRPO 到该精度用约 10.1 EFLOP，蒸馏阶段约少 50×。”不能说“从 base 训练最终模型总共省 50×”，因为教师训练成本必须加回。</div></details>
+
+<details class="thought-question"><summary>4. 为什么多教师方案可以比单域 self-GRPO 更有经济意义？</summary><div class="thought-answer">单域 teacher 已经是目标模型；多域中每个 teacher 只掌握一部分目标能力，任何单个 checkpoint 都不可直接替代通才。额外 OPD 产出了一个新部署对象，并允许各领域用独立环境和超参并行开发，合并成本才有产品意义。</div></details>
+
+<details class="thought-question"><summary>5. 如果一个请求同时涉及代码与数学，按域路由应该怎样扩展？</summary><div class="thought-answer">可把硬路由 $T_{d(q)}$ 改为分段或 mixture routing：按样本、回合或 token 选择教师，并用可验证子任务标注监督 gate。风险是不同教师分布相互冲突；应测跨域集上的 KL、长度、遗忘和单域回归，而不是只看平均分。</div></details>
+
+<details class="thought-question"><summary>6. 为什么 FLOPs 胜出仍可能在生产里更慢？</summary><div class="thought-answer">OPD 需要同时或串行服务教师，可能受显存、跨机通信和小 batch 利用率限制；GRPO 虽 FLOPs 高，却可能由同一模型批量 rollout、kernel 更成熟。FLOPs 是实现无关的近似计算量，不包含系统瓶颈。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2611.08453)
+- [PDF](https://arxiv.org/pdf/2611.08453)
+- 论文未提供专用代码仓库；复现实验依赖公开的 Qwen3、DAPO、LiveCodeBench、MMLU-Pro、IFBench、`verl` 与 SGLang 组件，正文与 Appendix B 给出版本和主要超参。

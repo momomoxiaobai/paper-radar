@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Reap 的 Lean 原生 AND-OR MCTS 与训练闭环</title>
+  <desc id="desc">策略价值网络、选择扩展评估回传、Lean kernel 验证与可回放轨迹组成统一搜索训练接口。</desc>
+  <rect width="1600" height="900" fill="#f8fafc"/>
+  <text x="80" y="82" font-family="system-ui,sans-serif" font-size="42" font-weight="700" fill="#0f172a">MCTS 不在 Lean 外“模拟证明”，而在 tactic monad 里执行状态转移</text>
+  <text x="80" y="128" font-family="system-ui,sans-serif" font-size="24" fill="#475569">同一套语义关键路径服务训练 rollout 与推理，成功轨迹最终由 kernel 重放验证</text>
+  <g font-family="system-ui,sans-serif">
+    <rect x="80" y="190" width="305" height="135" rx="22" fill="#dbeafe" stroke="#3b82f6" stroke-width="3"/>
+    <text x="115" y="240" font-size="29" font-weight="700" fill="#1e40af">策略–价值网络</text>
+    <text x="115" y="283" font-size="22" fill="#1e3a8a">πθ(a | s) 提议 tactic</text>
+    <text x="115" y="315" font-size="22" fill="#1e3a8a">Vθ(s) 估剩余成本</text>
+    <rect x="455" y="190" width="690" height="500" rx="28" fill="#fff" stroke="#64748b" stroke-width="3"/>
+    <text x="500" y="238" font-size="31" font-weight="700" fill="#0f172a">Reap MCTS inside Lean</text>
+    <circle cx="800" cy="315" r="34" fill="#bfdbfe" stroke="#2563eb" stroke-width="3"/><text x="785" y="326" font-size="26" font-weight="700">OR</text>
+    <line x1="780" y1="347" x2="690" y2="420" stroke="#475569" stroke-width="4"/><line x1="820" y1="347" x2="910" y2="420" stroke="#475569" stroke-width="4"/>
+    <rect x="610" y="420" width="160" height="70" rx="18" fill="#fed7aa" stroke="#ea580c" stroke-width="3"/><text x="645" y="463" font-size="23" font-weight="700">tactic a₁</text>
+    <rect x="830" y="420" width="160" height="70" rx="18" fill="#fed7aa" stroke="#ea580c" stroke-width="3"/><text x="865" y="463" font-size="23" font-weight="700">tactic a₂</text>
+    <line x1="690" y1="490" x2="690" y2="550" stroke="#475569" stroke-width="4"/><line x1="910" y1="490" x2="910" y2="550" stroke="#475569" stroke-width="4"/>
+    <circle cx="690" cy="590" r="34" fill="#ede9fe" stroke="#7c3aed" stroke-width="3"/><text x="668" y="601" font-size="25" font-weight="700">AND</text>
+    <circle cx="910" cy="590" r="34" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/><text x="892" y="601" font-size="25" font-weight="700">OR</text>
+    <text x="500" y="650" font-size="21" fill="#475569">OR：任一子节点解出即可；AND：所有独立子目标都要解出</text>
+    <rect x="1215" y="190" width="305" height="135" rx="22" fill="#dcfce7" stroke="#22c55e" stroke-width="3"/>
+    <text x="1250" y="240" font-size="29" font-weight="700" fill="#166534">Lean Kernel</text>
+    <text x="1250" y="283" font-size="22" fill="#14532d">恢复根状态并重放 tactic</text>
+    <text x="1250" y="315" font-size="22" fill="#14532d">拒绝伪解决与遗留 obligation</text>
+    <rect x="80" y="520" width="305" height="170" rx="22" fill="#fef3c7" stroke="#f59e0b" stroke-width="3"/>
+    <text x="115" y="570" font-size="27" font-weight="700" fill="#92400e">PUCT + progressive sampling</text>
+    <text x="115" y="612" font-size="21" fill="#78350f">访问旧 child 与生成新 tactic</text>
+    <text x="115" y="648" font-size="21" fill="#78350f">状态去重、心跳与超时约束</text>
+    <text x="115" y="680" font-size="21" fill="#78350f">tactic 边成本 1，focus 边 0</text>
+  </g>
+  <path d="M385 255 H455 M1145 255 H1215" stroke="#334155" stroke-width="5" marker-end="url(#arrow)"/>
+  <path d="M1365 325 V760 H270 V690" fill="none" stroke="#334155" stroke-width="5" marker-end="url(#arrow)"/>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#334155"/></marker></defs>
+  <rect x="455" y="735" width="690" height="95" rx="20" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>
+  <text x="500" y="778" font-family="system-ui,sans-serif" font-size="25" font-weight="700" fill="#075985">验证轨迹 → (s, a, y) replay data → 联合训练 policy 与 32-bin value head</text>
+  <text x="500" y="813" font-family="system-ui,sans-serif" font-size="21" fill="#0c4a6e">CPT → SFT → 5 阶段 MCTS-guided expert iteration</text>
+</svg>

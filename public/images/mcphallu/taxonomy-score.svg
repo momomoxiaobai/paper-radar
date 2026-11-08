@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">MCPHallu 的四类结构化失败与计分证据</title>
+  <desc id="desc">将推理、执行、记忆三阶段映射到分支坍缩、不可达目标、工具误用、上下文遗忘，并列出确定性计分与判官权重。</desc>
+  <rect width="1600" height="900" fill="#f8fafc"/>
+  <text x="80" y="84" font-family="system-ui,sans-serif" font-size="42" font-weight="700" fill="#0f172a">把“Agent 失败”拆成可触发、可验证的结构</text>
+  <text x="80" y="130" font-family="system-ui,sans-serif" font-size="24" fill="#475569">任务元组 (I, T, h, d, G, C)：指令、工具集、目标子型、难度、ground truth、claim graph</text>
+  <g font-family="system-ui,sans-serif">
+    <rect x="80" y="190" width="450" height="265" rx="26" fill="#dbeafe" stroke="#3b82f6" stroke-width="3"/>
+    <text x="115" y="240" font-size="31" font-weight="700" fill="#1e40af">推理 / Planning</text>
+    <text x="115" y="295" font-size="27" font-weight="700" fill="#0f172a">Branch Collapse</text>
+    <text x="115" y="330" font-size="21" fill="#334155">≥2 个由实时输出门控的互斥分支</text>
+    <text x="115" y="370" font-size="21" fill="#1d4ed8">信号：轨迹调用了错误分支工具</text>
+    <text x="115" y="416" font-size="27" font-weight="700" fill="#0f172a">Unreachable Goal</text>
+    <text x="115" y="448" font-size="20" fill="#334155">可用工具集合根本无法满足目标</text>
+    <rect x="575" y="190" width="450" height="265" rx="26" fill="#ffedd5" stroke="#f97316" stroke-width="3"/>
+    <text x="610" y="240" font-size="31" font-weight="700" fill="#9a3412">执行 / Acting</text>
+    <text x="610" y="300" font-size="29" font-weight="700" fill="#0f172a">Tool Misuse</text>
+    <text x="610" y="345" font-size="22" fill="#334155">工具 schema 相似，语义却不同</text>
+    <text x="610" y="390" font-size="22" fill="#c2410c">信号：调用 curated confusion tools</text>
+    <text x="610" y="430" font-size="20" fill="#7c2d12">正确工具“也调用了”仍可能污染后续状态</text>
+    <rect x="1070" y="190" width="450" height="265" rx="26" fill="#ede9fe" stroke="#8b5cf6" stroke-width="3"/>
+    <text x="1105" y="240" font-size="31" font-weight="700" fill="#5b21b6">记忆 / State</text>
+    <text x="1105" y="300" font-size="29" font-weight="700" fill="#0f172a">Context Forgetting</text>
+    <text x="1105" y="345" font-size="22" fill="#334155">早期关键值 + 同域干扰步骤</text>
+    <text x="1105" y="390" font-size="22" fill="#6d28d9">信号：最终值与检索值不一致</text>
+    <text x="1105" y="430" font-size="20" fill="#4c1d95">覆盖陈旧、近似、错配与替代值</text>
+  </g>
+  <path d="M305 485 V530 H800 M800 485 V530 M1295 485 V530 H800" fill="none" stroke="#64748b" stroke-width="4"/>
+  <rect x="170" y="570" width="1260" height="230" rx="26" fill="#fff" stroke="#94a3b8" stroke-width="3"/>
+  <text x="210" y="625" font-family="system-ui,sans-serif" font-size="30" font-weight="700" fill="#0f172a">多组件评分：确定性证据是主信号，LLM judge 只补边界语义</text>
+  <text x="230" y="686" font-family="ui-monospace,monospace" font-size="28" fill="#1e40af">BC / CF:  S = 0.60Sₒ + 0.20S_d + 0.20S_j</text>
+  <text x="230" y="737" font-family="ui-monospace,monospace" font-size="28" fill="#9a3412">UG / TM:  S = 0.70S_e or 0.70S_c + 0.30S_j</text>
+  <text x="230" y="780" font-family="system-ui,sans-serif" font-size="21" fill="#475569">Sₒ：动态脚本/状态断言；S_d：claim graph 依赖；S_e：尽早识别不可达；S_c：避免混淆工具；S_j：有界语义判官。</text>
+</svg>

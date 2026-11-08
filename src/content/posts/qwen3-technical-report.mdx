@@ -1,0 +1,326 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-08T10:30:00+08:00
+title: "Qwen3 模型档案：Dense、MoE、双思考模式与四阶段后训练怎样组成一个模型家族"
+featured: true
+category: foundation-models
+tags:
+  - qwen3
+  - foundation-model
+  - mixture-of-experts
+  - reasoning
+  - model-distillation
+description: "系统拆解 Qwen3 官方技术报告：8 个模型的 Dense/MoE 架构、36T token 三阶段预训练、thinking/non-thinking 融合、Reasoning RL、General RL、strong-to-weak distillation、实验口径与未披露边界。"
+paper:
+  title: "Qwen3 Technical Report"
+  venue: "Official technical report"
+  paperUrl: "https://arxiv.org/abs/2505.09388"
+  pdfUrl: "https://arxiv.org/pdf/2505.09388"
+  codeUrl: "https://github.com/QwenLM/Qwen3"
+  score: 96
+  scoreNote: "推荐理由：这是 35 页官方系统报告，覆盖 0.6B–235B 的 Dense/MoE 架构、36T token 三阶段预训练、四阶段后训练、双模式、思考预算、蒸馏与大规模统一评测，长期参考价值明显高于近期信息稀薄的 Qwen3.8 发布页；扣分在于未披露精确数据配比、总 FLOPs、完整 RL 超参、污染审计与系统安全评测，闭源基线也并非统一推理预算。"
+---
+
+> [!NOTE]
+> arXiv v1 于 **2025 年 5 月 14 日**提交，官方 PDF 标注报告日期为 **2025 年 5 月 15 日**，本文采用后者作为报告发布日期。2026 年 8 月已有 Qwen3.8 模型发布，但现有官方材料主要是模型卡与发布说明；今天选择较早的 Qwen3 正式技术报告，是因为它完整记录架构、训练阶段、数据规模、消融和评测，长期可引用性更高，而不是固定追踪某个厂商的最新型号。
+
+## 一句话结论
+
+**Qwen3 的核心不是某个 benchmark 数字，而是一套覆盖 0.6B–235B 的家族化配方：六个 Dense 与两个细粒度 MoE 共享预训练主干，用 36T token 的 General–Reasoning–Long Context 三阶段建立 base，再让旗舰走 Long-CoT cold start、Reasoning RL、Thinking Mode Fusion、General RL，小模型则用 off-policy response 与 on-policy logits distillation 继承双模式能力。它把 thinking / non-thinking 合进同一 checkpoint，并用可截断 thinking budget 连续调节推理成本；但报告离“可复现训练配方”仍缺精确 data mixture、总 FLOPs、完整 RL 超参和污染审计。**
+
+<figure><img src="/paper-radar/images/qwen3-report/family-pipeline.svg" alt="Qwen3 Dense 与 MoE 家族、三阶段预训练和后训练流水线" width="1600" height="900" loading="eager"/><figcaption>图 1：依据官方报告 Tables 1–2、Figure 1 与 Sections 3–4.5 重绘。`30B-A3B` 表示约 30B 总参数、每 token 约 3B 激活；`235B-A22B` 同理。</figcaption></figure>
+
+## 为什么这份报告值得做“模型档案”
+
+一个模型 release 可回答“权重在哪里、怎么调用”，技术报告还应回答：
+
+- 家族各尺寸的 architecture 是否一致，active 与 total params 怎样区分；
+- 预训练数据规模、阶段、序列长度和长上下文外推怎样安排；
+- reasoning 能力来自 SFT、RL、蒸馏还是 test-time sampling；
+- benchmark 的 prompt、采样次数、max length 与比较口径是什么；
+- 哪些训练细节被披露，哪些只留了高层描述。
+
+Qwen3 报告对前四项提供了相当完整的系统视图，尤其能解释“双模式”和小模型来源；它对最后一项仍不够透明，这也是模型档案必须保留的边界。
+
+## 家族版图：六个 Dense，两个 MoE
+
+Dense 系列为 0.6B、1.7B、4B、8B、14B、32B。基本 block 延续 Qwen2.5：Grouped Query Attention（GQA）、SwiGLU、RoPE、pre-RMSNorm；变化是移除 QKV bias，并引入 QK-Norm 稳定训练。
+
+设单头 query/key 向量为 $q,k\in\mathbb R^{d_h}$，QK-Norm 可抽象为
+
+$$
+\widehat q=\operatorname{Norm}(q),\qquad
+\widehat k=\operatorname{Norm}(k),
+$$
+
+再计算旋转位置编码后的 attention logit：
+
+$$
+\ell_{ij}=\frac{
+\operatorname{RoPE}(\widehat q_i)^
+\top\operatorname{RoPE}(\widehat k_j)}{\sqrt{d_h}}.
+$$
+
+它控制 query/key 范数漂移，但报告没有给 QK-Norm 的独立消融，不能从最终性能反推其单项贡献。
+
+Dense 架构表的关键信息：
+
+| 模型 | Layers | Q / KV heads | Tie embedding | 报告表中 context |
+| --- | ---: | ---: | --- | ---: |
+| 0.6B | 28 | 16 / 8 | Yes | 32K |
+| 1.7B | 28 | 16 / 8 | Yes | 32K |
+| 4B | 36 | 32 / 8 | Yes | 128K |
+| 8B | 36 | 32 / 8 | No | 128K |
+| 14B | 40 | 40 / 8 | No | 128K |
+| 32B | 64 | 64 / 8 | No | 128K |
+
+MoE 系列：
+
+| 模型 | Layers | Q / KV heads | Experts total / active | Context |
+| --- | ---: | ---: | ---: | ---: |
+| 30B-A3B | 48 | 32 / 4 | 128 / 8 | 128K |
+| 235B-A22B | 94 | 64 / 4 | 128 / 8 | 128K |
+
+Qwen3 MoE 采用 fine-grained expert segmentation，不设 shared expert，每 token 路由到 128 个专家中的 8 个。若 router 对 token $x$ 给 expert logit $g_e(x)$，top-$k$ 稀疏门控可写为
+
+$$
+\mathcal E_k(x)=\operatorname{TopK}_{e\in\{1,\ldots,128\}}g_e(x),
+$$
+
+$$
+y(x)=\sum_{e\in\mathcal E_8(x)}
+\frac{\exp g_e(x)}{\sum_{j\in\mathcal E_8(x)}\exp g_j(x)}
+\operatorname{FFN}_e(x).
+$$
+
+报告只说采用 global-batch load-balancing loss 促进 specialization，没有给出完整公式和路由统计。读者应区分：A3B/A22B 是激活参数近似，不等于实际 FLOPs 只与 3B/22B dense 完全相同；attention、router、通信和 expert dispatch 仍有成本。
+
+Tokenizer 是 byte-level BPE，词表 151,669。大词表有利于多语言与代码覆盖，也增加 embedding/output head 成本；小模型通过 tied embedding 缓解参数占比。
+
+## 预训练数据：36T token 的规模与“未给出的配方”
+
+Qwen3 支持 119 种语言与方言，预训练约 36T tokens，是 Qwen2.5 token 数的两倍、语言覆盖约三倍。数据域包括 code、STEM、reasoning、books、多语言与 synthetic data。
+
+扩数有三条公开路径：
+
+1. 用 Qwen2.5-VL 从大量 PDF-like document 做 OCR/视觉转文本，再用 Qwen2.5 精炼，得到 trillions of tokens；
+2. 用 Qwen2.5、Qwen2.5-Math、Qwen2.5-Coder 生成 textbook、QA、instruction 与 code；
+3. 增加 multilingual sources。
+
+团队给 30T+ tokens 标注 educational value、field、domain 和 safety，在小 proxy model 上做 instance-level mixture ablation，而不是只按 source/domain 粗配比。
+
+这比“抓全网然后去重”更具体，但仍缺少：各来源和合成数据百分比、去重阈值、copyright 处理、训练–评测 contamination 数字、质量分类器精度。36T 描述规模，不能单独复现 corpus。
+
+## 三阶段预训练：把数据分布与学习率节奏分开
+
+### S1 General
+
+超过 30T tokens，sequence length 4,096，目标是通用语言和世界知识，覆盖 119 种语言与方言。
+
+### S2 Reasoning
+
+约 5T 更高质量 tokens，仍为 4,096 长度，提高 STEM、coding、reasoning 与 synthetic 比例，并加速 learning-rate decay。这个阶段说明 reasoning base 不全靠 post-training：预训练末段已经改变数据分布。
+
+### S3 Long Context
+
+数百 billion tokens，训练长度 32,768；其中 75% 样本长度 16,384–32,768，25% 为 4,096–16,384。RoPE base frequency 从 10,000 提高到 1,000,000，并结合 ABF、YARN 与 Dual Chunk Attention，把 inference capacity 再扩 4×。
+
+若原始 RoPE 角频率为
+
+$$
+\omega_i=\theta^{-2i/d},
+$$
+
+提高 $\theta$ 会减慢高维旋转随 position 的变化，缓解长距离外推过快失配；YARN 与 DCA 再处理缩放和 chunk 间 attention。报告附录用 RULER 测长上下文，但正文没有逐机制消融，因此不能把 128K 归因给某一个组件。
+
+团队称用小模型 scaling-law experiments 预测各阶段最佳 learning rate 与 batch size，却没有公开拟合曲线、loss target 或最终 schedule；这是“报告有方法方向、没有完整 recipe”的典型例子。
+
+## 后训练总览：两个旗舰目标
+
+Qwen3 post-training 同时追求：
+
+1. **Thinking Control**：同一模型支持 thinking 与 non-thinking，并用 budget 控制 reasoning depth；
+2. **Strong-to-Weak Distillation**：小模型不重复旗舰的四阶段流程，通过大小教师 transfer。
+
+旗舰模型走四阶段，小模型主要走蒸馏。这个分叉很重要：不能假设 0.6B–14B 的最终能力来自与 235B 完全相同的 RL recipe。
+
+## Stage 1：Long-CoT cold start
+
+数据覆盖 math、code、logic、STEM，每题要有可验证答案或 code tests。query filtering 用 Qwen2.5-72B-Instruct 去掉多子问、一般文本生成和无需 CoT 就能答对的题，并标注 domain 保持平衡。
+
+随后用 QwQ-32B 对每题采 $N$ 个回答。保留 positive Pass@$N$ 的候选，再过滤：
+
+- 最终答案错误；
+- 明显重复；
+- 只有猜测没有推理；
+- thinking 与 summary 不一致；
+- 不当语言混合/风格漂移；
+- 疑似与 validation item 过近。
+
+这一步刻意少样本、少 step，只注入 reasoning pattern，不在 cold start 把 capability ceiling 锁死。
+
+## Stage 2：Reasoning RL
+
+RL 数据必须没用于 cold start、对当前模型可学、尽量困难并覆盖子域。最终是 3,995 个 query–verifier pairs，用 GRPO 更新。
+
+报告强调 large batch、每 query 多 rollouts、off-policy reuse 与 entropy 控制，但没有给 group size、clip、KL、reward normalization、optimizer、总 FLOPs 等完整超参。旗舰 Qwen3-235B-A22B 的 AIME’24 在 170 个 RL steps 中从 70.1 提高到 85.1；这是单条 training progression，不是多 seed 方差。
+
+GRPO 的组内相对优势可概括为
+
+$$
+\widehat A_i=
+\frac{r_i-\operatorname{mean}(r_1,\ldots,r_G)}
+{\operatorname{std}(r_1,\ldots,r_G)+\epsilon},
+$$
+
+再用 $\widehat A_i$ 加权 policy ratio。报告引用 GRPO，却没有在技术报告中完整展开 objective；精确实现应回到训练代码或原始算法论文核对。
+
+## Stage 3：Thinking Mode Fusion
+
+Reasoning RL 得到的模型只擅长长思考。Stage 3 做 continual SFT，把两种数据合并：
+
+- thinking data：在 Stage 1 queries 上用 Stage 2 模型 rejection sampling，尽量保住 reasoning 能力；
+- non-thinking data：code、math、instruction following、多语言、creative writing、QA、role play，并用自动 checklist 评质量。
+
+chat template 使用 `/think` 与 `/no_think`。non-thinking response 仍保留空的 `<think></think>` block，使输出结构一致；multi-turn 中随机插入多个 flag，模型遵循最近一次 flag。
+
+### Thinking budget 不是显式训练出来的长度控制器
+
+当 thinking token 达到用户阈值，外部系统手工插入 stop-thinking instruction：
+
+> Considering the limited time by the user, I have to give the solution based on the thinking directly now.
+
+然后闭合 `</think>`，让模型依据已有思考输出 final answer。报告称预算能力从 mode fusion 自然涌现，并未专门训练。因此预算 $B$ 更像 generation-time intervention：
+
+$$
+y_{1:B}\sim\pi_\theta(\cdot\mid x,\texttt{/think}),
+\quad
+\text{inject stop instruction at }|y|=B,
+$$
+
+再生成 answer。它不保证 $B$ tokens 内推理完整，也不等价于可暂停恢复的 latent reasoning。
+
+## Stage 4：General RL
+
+General RL 覆盖 20+ tasks，目标包括 instruction/format following、open-ended preference、Agent、RAG 和专门场景。特别是 Agent rollout 允许多轮 tool call 与真实 environment feedback，这让工具能力进入 post-training，而不只靠 SFT 格式模仿。
+
+奖励三类：
+
+1. rule-based reward：可验证 reasoning、格式与 instruction constraints；
+2. model reward with reference：Qwen2.5-72B-Instruct 对照参考答案打分；
+3. reward model without reference：对 open-ended helpfulness、engagement、style 给 scalar。
+
+报告 Table 22 显示从 Reasoning RL 到 Mode Fusion 再到 General RL，Qwen3-32B 的 thinking/non-thinking 在 LiveBench、Arena-Hard、IFEval、Multi-IF、ToolUse 等普遍提升；但部分指标是 in-house，数据集与 judge 不公开，不能与公共 benchmark 同权看待。
+
+## 小模型的 strong-to-weak distillation
+
+覆盖 0.6B、1.7B、4B、8B、14B 与 30B-A3B，分两阶段：
+
+### Off-policy response distillation
+
+混合大教师在 `/think` 与 `/no_think` 下的输出，对学生做 response imitation，使其先学两种模式和基础 reasoning。
+
+### On-policy logits distillation
+
+从 prompt $x$ 让 student rollout $y\sim\pi_s(\cdot\mid x)$，再让 Qwen3-32B 或 235B-A22B 教师给相同 prefix 的 logits，最小化 KL：
+
+$$
+\mathcal L_{\mathrm{KD}}=
+\mathbb E_{x,\,y\sim\pi_s}
+\left[
+\sum_t D_{\mathrm{KL}}
+\left(\pi_s(\cdot\mid x,y_{<t})\,|\,
+\pi_T(\cdot\mid x,y_{<t})\right)
+\right].
+$$
+
+on-policy 的关键是教师在学生真的会到达的 prefix 上指导，减少只学 teacher-generated trajectory 的 distribution mismatch。
+
+## 思考预算证据：更多 token 在四类任务上平滑增益
+
+Qwen3-235B-A22B 在 AIME’24、AIME’25、LiveCodeBench v5、GPQA-Diamond 上把 thinking budget 从 1K 增到 32K，Pass@1 都随预算平滑上升；non-thinking 是固定红线。
+
+从原 Figure 2 可读到典型趋势：AIME’24 大致从低 40 提升到高 80，AIME’25 从约 30 到 80+，LiveCodeBench 从中 40 到高 60，GPQA 从约 64 到 72。不要把图上近似读数当精确 leaderboard 数；其价值是同 checkpoint、同任务内的 monotonic scaling evidence。
+
+这也提醒：比较 reasoning model 时必须报告 max thinking/output budget。给 Qwen3 thinking mode 最长 32,768 tokens，而 AIME 延长到 38,912；若一个 baseline 用更短上限，模型名相同也不是相同 test-time compute。
+
+<figure><img src="/paper-radar/images/qwen3-report/evidence-boundaries.svg" alt="Qwen3 思考预算趋势、8B 蒸馏与 RL 的 GPU 小时结果以及报告边界" width="1600" height="900" loading="lazy"/><figcaption>图 2：依据官方报告 Figure 2、Table 21 与 Sections 4.6–4.7 重绘。左侧为趋势示意，不把图像读数伪装成精确表格；右侧数值来自 Table 21。</figcaption></figure>
+
+## 蒸馏与 RL：1,800 对 17,920 GPU 小时应该怎样读
+
+Qwen3-8B 从同一个 off-policy distilled checkpoint 出发，在 math/code query 上比较继续 RL 与 on-policy distillation：
+
+| Method | AIME’24 | AIME’25 | MATH500 | LCB v5 | MMLU-Redux | GPQA | GPUh |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 起点 | 55.0 | 42.8 | 92.4 | 42.0 | 86.4 | 55.6 | – |
+| + RL | 67.6 | 55.5 | 94.8 | 52.9 | 86.9 | 61.3 | 17,920 |
+| + OPD | 74.4 | 65.5 | 97.0 | 60.3 | 88.3 | 63.3 | 1,800 |
+
+AIME 括号里的 pass@64 也在 OPD 后提高，而 RL 没提高，作者据此认为 teacher logits 扩展了 student exploration。
+
+但不能写成“Qwen3 的蒸馏端到端节省 10× 总训练”：
+
+- 表格只计同一 off-policy 起点之后的增量；
+- teacher pretraining/post-training 成本已沉没且未分摊；
+- GPUh 受硬件利用率和实现影响，不如 FLOPs 可移植；
+- OPD 要在线跑教师 logits，系统资源口径没有展开。
+
+这份 2025 报告的正面结果也与今天前沿雷达的 2026 OPD 审计形成有趣对照：Qwen3 使用强 external teacher、混合 off/on-policy recipe；后者审计的是 vanilla reverse-KL、matched FLOPs。两者并不直接矛盾，说明 objective、teacher provenance 与成本边界必须一起写。
+
+## 旗舰结果与 baseline 公平性
+
+Qwen3-235B-A22B thinking 报告 AIME’24 85.7、AIME’25 81.5、LiveCodeBench v5 70.7、CodeForces 2056、BFCL v3 70.8。它在多项任务超过 DeepSeek-R1，也在部分任务接近或超过 OpenAI-o1、Gemini 2.5 Pro。
+
+不过同一张表混合：
+
+- 厂商 API 与自部署 open weights；
+- 不同模型自己的 recommended reasoning mode；
+- AIME 每题 64 次采样取平均 accuracy；
+- CodeForces 每题最多 8 次尝试；
+- BFCL 的 FC / Prompt format 有时取 leaderboard 中较高者；
+- 闭源模型参数、输出上限与训练数据不可见。
+
+作者在 Qwen3 系列内部统一 temperature、top-$p$、top-$k$ 与 max length，这是公平性的加分项；跨厂商表应视为 capability snapshot，不是严格 controlled experiment。
+
+Base model 比较相对更干净：同一 evaluation pipeline，按相近参数/active params 对比 Qwen2.5、Gemma 3、Llama 4、DeepSeek-V3。报告称 32B Base 在 15 项中 10 项超过 Qwen2.5-72B-Base，30B-A3B 以约 3B active 达到接近 14B dense 与 Qwen2.5-32B 的结果。但训练 token、data freshness 与总 compute 不相等，“参数更少”不能单独归因于架构效率。
+
+## 局限与风险
+
+- 没有精确数据来源配比、dedup/contamination 审计与 synthetic ratio，难判断 benchmark 增益来自数据、训练阶段还是架构。
+- MoE 没给 expert utilization、drop rate、routing entropy、通信成本或 load-balance loss 消融。
+- Reasoning RL 只有高层原则和 3,995 pairs，没有足够超参复现。
+- thinking budget 由外部插入 stop instruction，可能截断错误中间状态；报告只展示平均曲线，没有 calibration、长尾和 token-efficiency frontier。
+- 安全只出现在数据 annotation 维度，没有系统 red-team、拒绝率、网络安全、Agent side-effect 或多语言安全结果。
+- 多项 in-house benchmark 不公开；闭源 baseline 的 judge 与 sampling 口径也难完全复核。
+- 128K context 是架构/推理 capacity，不代表所有尺寸在任意 128K 任务上可靠，RULER 也不是完整长文档应用评测。
+
+## 工程启示
+
+- 部署前先选 operating point，而不是只选型号：Dense/MoE、active params、context、thinking budget 与并发量共同决定成本。
+- `/think` 与 `/no_think` 是协议的一部分。网关、缓存和评测必须记录最终生效 flag，multi-turn 中尤其要防旧 flag 泄漏。
+- budget controller 应同时监控 token 上限、置信度、verifier progress 与 stop instruction 后 answer quality；只按固定 token 截断会制造不可见半成品推理。
+- MoE 容量规划不要用 A3B 当显存需求。总权重 30B 仍需存储/分片，expert parallel 通信可能成为瓶颈。
+- 小模型蒸馏应保留 teacher version、prompt、mode、logits temperature 和 student rollout provenance；否则无法定位模式退化来自哪个教师阶段。
+- 模型评测要拆成 base、thinking、non-thinking 与预算曲线；只报一个“Qwen3 分数”会混合完全不同的推理成本。
+- 报告未覆盖的安全与污染审计要在产品侧补齐，尤其是 tool call side effects 和 119 语言中的低资源安全一致性。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么 A3B 不等于“这就是一个 3B 模型”？</summary><div class="thought-answer">A3B 近似描述每 token 激活的 expert 参数，不包括全部权重存储、attention、embedding、router、通信和负载不均。模型仍有 30B 总参数，显存与分布式部署不能按 3B dense 估算。</div></details>
+
+<details class="thought-question"><summary>2. S2 Reasoning 预训练与 Reasoning RL 各解决什么？</summary><div class="thought-answer">S2 用 5T 高质量 STEM/code/reasoning 数据改变 base representation 与知识分布；RL 在 3,995 个可验证 query–verifier pair 上优化可获得 reward 的推理行为。前者提供能力底座，后者强化搜索与输出策略，二者不可只看最终 checkpoint 分离归因。</div></details>
+
+<details class="thought-question"><summary>3. thinking budget 为什么能在没有专门长度训练时工作？</summary><div class="thought-answer">Mode Fusion 让模型既见过完整 thinking，也见过空 thinking 后直接回答，形成从中间 reasoning prefix 转入 final answer 的能力。推理时插入 stop instruction 把任意 prefix 映射到“现在收束”。这是行为插值，不保证每个截断点都同样可靠。</div></details>
+
+<details class="thought-question"><summary>4. 表 21 能否证明 OPD 算法上比 RL 高效 10×？</summary><div class="thought-answer">不能做普遍证明。它显示在同一 8B off-policy distilled 起点、特定 math/code 数据与实现下，OPD 增量 GPUh 约为 RL 的 1/10 且分数更高；没有计 teacher 建设、完整 FLOPs和不同实现效率，也没有覆盖其他任务与目标函数。</div></details>
+
+<details class="thought-question"><summary>5. 为什么同一模型的 thinking 与 non-thinking 分数不应直接合成平均？</summary><div class="thought-answer">两种模式使用不同生成路径和 test-time compute；业务流量的任务难度、延迟约束和 flag policy 决定权重。固定 50/50 平均没有产品意义，更合理的是报告每种模式及 budget–quality Pareto curve。</div></details>
+
+<details class="thought-question"><summary>6. 若要复现 Qwen3，报告还缺哪些最关键的信息？</summary><div class="thought-answer">至少缺精确 data mixture 与过滤、tokenizer/packing 细节、每阶段 optimizer 和 LR/batch schedule、MoE routing 与负载 loss 参数、GRPO group/clip/KL/entropy 配方、总 FLOPs、distillation temperature、污染审计和完整 eval prompts。公开权重可复用，不等于训练可复现。</div></details>
+
+## 原始资料
+
+- [官方技术报告主页](https://arxiv.org/abs/2505.09388)
+- [官方 PDF](https://arxiv.org/pdf/2505.09388)
+- [Qwen3 官方代码与模型说明](https://github.com/QwenLM/Qwen3)
+- [Qwen 官方模型集合](https://huggingface.co/Qwen)
