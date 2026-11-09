@@ -1,0 +1,192 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-09T10:00:00+08:00
+title: "前沿雷达｜Nebula：把位置无关 KV Cache 变成分布式一等公民，RAG 与 Agent 的 Prefill 还能省多少"
+featured: true
+category: infra
+tags:
+  - llm-serving
+  - kv-cache
+  - position-independent-cache
+  - distributed-systems
+  - prefill-scheduling
+description: "从位置无关缓存、乐观+事件驱动目录、PC/PIC 自适应容量和联合完成时间模型拆解 Nebula，并核对 7P1D、四模型四工作负载下的 TTFT、命中率与基线边界。"
+paper:
+  title: "Nebula: Distributed Position-Independent Caching for LLM Serving"
+  venue: "arXiv preprint"
+  paperUrl: "https://arxiv.org/abs/2611.09474"
+  pdfUrl: "https://arxiv.org/pdf/2611.09474"
+  score: 94
+  scoreNote: "推荐理由：论文第一次把 PIC segment 同时纳入集群目录、容量管理与并行 prefill 调度，在四种模型/PIC backend 和真实 RAG/Agent trace 上做了端到端及三组组件对照；扣分在于只测两台 8×H20、输出限制为 1 token，PIC 精度沿用 backend 而未重新审计，论文承诺的 Nebula 仓库截至本文写作时仍为 404。"
+---
+
+> [!NOTE]
+> 论文于 **2026 年 11 月 6 日**首次公开，处于本次日更的 72 小时优先窗口。它被归入 `infra`：贡献主体不是新的模型或 Agent policy，而是让位置无关 KV cache 跨节点可寻址、可迁移、可调度的 serving control plane。
+
+## 一句话结论
+
+**Prefix cache 只能复用“从第一个 token 开始相同”的 KV，而 RAG 文档、工具返回和跨 Agent 消息经常在不同位置重现。Nebula 把这些片段标成一等分布式对象，用“乐观登记 + worker 事件确认”同时避免重复计算与假命中，用 ghost hit 动态分配 PC/PIC 容量，再用队列、计算、传输三项统一估算 prefill 完成时间；在论文的 7-prefill/1-decode 集群里，相对最强的 Local-PIC 基线平均降低 61.4% median TTFT，但这个数字不等于任意生产集群都能同幅提速。**
+
+<figure><img src="/paper-radar/images/nebula-pic/system.svg" alt="Nebula 从应用分段到分布式 PIC 缓存、调度和 combine prefill 的流程" width="1600" height="900" loading="eager"/><figcaption>图 1：依据论文 Figures 4–6 与 Sections 4–7 重绘。PIC backend 负责数值近似与必要重算；Nebula 负责跨节点目录、容量和执行计划。</figcaption></figure>
+
+## 背景：高 prefix hit 不代表剩余计算没有价值
+
+因果注意力下，第 $t$ 个 token 的 KV 依赖全部前缀。Prefix Caching（PC）因此要求严格的共同前缀：第一个 mismatch 之后的缓存全部失效。Position-Independent Caching（PIC）允许一个语义独立片段在不同前缀、不同位置复用，但缓存 KV 仍带着原位置与上下文影响，CacheBlend、A$^3$、EPIC、HYPIC 等 backend 要重算一部分 token 来压低数值误差。
+
+设一条请求中 PC、PIC 可复用 token 比例分别为 $h_{\mathrm{PC}}$ 和 $h_{\mathrm{PIC}}$，论文定义：
+
+$$
+\operatorname{NPHR}=h_{\mathrm{PIC}}-h_{\mathrm{PC}},
+\qquad
+\operatorname{PMRR}=\frac{h_{\mathrm{PIC}}-h_{\mathrm{PC}}}{1-h_{\mathrm{PC}}}.
+$$
+
+NPHR 是绝对新增命中率，PMRR 是“PC 没命中的 token 中，PIC 能救回多少”。二者不能混用：$\tau$-bench-Retail 的 PC 已达 92.62%，PIC 只多命中 4.07 个百分点，但这仍回收 55.1% 的 prefix miss；nebius-SWE-agent 的相应数字是 95.26%、2.23 个百分点和 47.0%。在 RAG 侧，ChatRAG-doc2dial 的 PC 只有 2.63%，PIC 理论命中 99.68%，PMRR 达 99.7%。
+
+这揭示两个不同场景：RAG 的主收益是复用被重新排序的文档；Agent 的绝对新增比例小，却集中在昂贵环境观测与数据库返回——论文测得它们分别占两个 Agent trace 非前缀复用的 85.4% 与 89.5%。
+
+## 为什么“本地 PIC + 现有路由器”还不够
+
+作者先把 PIC worker 接到 Dynamo 的 prefix-aware router 后面。问题有两层：
+
+1. router 不知道其他节点已缓存哪个 PIC segment，无法 remote reuse；
+2. 一条请求仍绑在一个 worker，冷片段不能散到空闲 GPU 并行 prefill。
+
+在 7 个 prefill worker、1 个 decode worker、8 req/s 冷启动回放中，这个组合比理论 PIC 上界低 10.6–56.7 个命中率百分点；ChatRAG-QuAC 只到 33.4%，理论上界是 90.0%。P99 TTFT 是 P50 的 2.1–10.2 倍。于是系统问题不再是“能否算出 PIC KV”，而是**谁知道它在哪里、有限缓存给谁、何时传输比重算更快**。
+
+## 接口与执行：应用显式标片段，系统安排 scatter / reuse / combine
+
+应用用 `<pic>...</pic>` 标记可独立处理的文档、工具输出、环境观测或跨 Agent 消息；未标记部分保持 regular segment。Nebula 先做整请求 prefix match，再对未被 prefix 覆盖的 PIC segment 做内容匹配。
+
+一个计划写作
+
+$$
+\pi=(c,a),\qquad a:\mathcal S\rightarrow\mathcal W,
+$$
+
+$\mathcal S$ 是本请求的 PIC segment 集合，$\mathcal W$ 是 worker 集合，$c$ 是 combine home，$a(i)$ 指定片段 $i$ 的缓存来源或计算节点。执行分三条可重叠路径：
+
+- **scatter prefill**：冷片段在不同 worker 独立计算，完成后直写 combine GPU；
+- **cache reuse**：本地或远端 PC/PIC KV 搬到 combine home；
+- **combine prefill**：所有 KV 到齐后，由 backend 进行必要重算并补齐 regular content。
+
+decode 仍走标准 prefill/decode 解耦路径，Nebula 只优化 TTFT。这里的工程边界很重要：`<pic>` 是 application contract；若错误地把上下文相关文本标成独立片段，Nebula 不负责证明语义或数值等价。
+
+## 机制一：为什么目录要“先相信计划，再相信事实”
+
+细粒度 PIC 让调度单位骤增：六个工作负载每请求片段数中位数为 11–106，P99 最高 413。纯乐观目录在调度时立刻假设片段会出现，及时却会产生 invalid hit；纯事件目录等 worker 报 `cache-store` 才登记，真实却让随后请求重复算同一 in-flight 片段。
+
+在 RAGPulse 与 $\tau$-bench 40 QPS 下，纯乐观方案的 invalid-hit tokens 分别是事件方案的 59.4×、114.3×；事件方案的重复计算 tokens 又是乐观方案的 77.3×、25.0×。
+
+Nebula 的组合方式是：
+
+- router 发计划时，立即写入**未确认**位置并预留计算负载；后续请求可以等待同一个 in-flight 结果；
+- worker 的 store/evict/completion 事件确认位置、删除失效项、释放负载；
+- 未确认位置设 TTL，过期删除；迟到的 store 仍可重新登记；
+- 负载 reservation 不因 TTL 自动释放，只在确定任务完成或不会执行时释放，且 completion 去重。
+
+TTL 只治理“缓存位置预测”，不能顺手拿来治理“计算是否还在跑”。这是一个很值得复用的分布式状态原则：**位置可以过期，资源债务必须由确定事件核销。**
+
+## 机制二：PC 与 PIC 共享容量，ghost hit 决定谁更缺
+
+同一个文本可能同时有 prefix 版 KV 和需重算的 PIC 表示。统一 LRU 会让某一类按短期 recency 挤掉另一类；固定 50/50 又不能适应 workload drift。论文在两个配置中观察到相反胜负：ChatRAG 上固定分区命中率 82.79%，统一 LRU 为 80.68%；RAGPulse 上统一 LRU 60.55%，固定分区 57.40%。
+
+Nebula 借鉴 ARC，为 PC/PIC 各维护 resident 队列 $T$ 与只存标识符的 ghost 队列 $B$。若被淘汰条目再次被请求，就说明该缓存类型缺容量。令窗口内 PC/PIC ghost revisit 覆盖 token 数为 $G_{\mathrm{PC}},G_{\mathrm{PIC}}$，PC 的目标软份额为 $p$：
+
+$$
+g=\frac{G_{\mathrm{PC}}-G_{\mathrm{PIC}}}
+{G_{\mathrm{PC}}+G_{\mathrm{PIC}}},
+\qquad
+p_{\mathrm{new}}=\operatorname{clip}_{[0,1]}(p+0.01g).
+$$
+
+默认每 $U=16$ 请求更新，单次最多移动 1 个百分点。worker 不立即驱逐，只在随后回收时检查
+
+$$
+R_{\mathrm{PC}}>p(R_{\mathrm{PC}}+R_{\mathrm{PIC}})
+$$
+
+来决定优先淘汰 PC 还是 PIC。软份额避免一次 noisy window 引发 cache storm；分层存储则每层独立维护反馈。
+
+## 机制三：局部性与负载不能二选一
+
+只追 cache locality 会把热点压在少数节点；只追空闲 worker 又会搬运大量 KV。Nebula 把三种时间统一成等价 prefill token：
+
+$$
+\widehat T(\pi)=
+\max_{w\in\mathcal W}
+\left[Q_w(\pi)+P_w(\pi)+D_w(w\to c;\pi)\right]+C.
+$$
+
+其中 $Q_w$ 是命中 miss worker 才计入的未完成队列，$P_w$ 是分给 $w$ 的冷片段 token 总量，$D_w=d(w\to c)\sum_{i\in\mathcal S_w}P_i$ 是离线 profile 后归一化的 KV 传输成本，$C$ 是各计划相同的 combine 工作。
+
+算法枚举每个 combine home：命中片段固定到缓存源，冷片段先放 combine home；再按长度降序，尝试把冷片段迁到使 $Q_w+P_w$ 最小的其他 worker，只有 $\widehat T$ 真下降才接受。它是启发式 greedy，不是全局最优证明；优势是开销可控：256 段/16 workers 的 median 规划时间 0.32 ms，16 段/256 workers 为 4.43 ms。
+
+<figure><img src="/paper-radar/images/nebula-pic/evidence.svg" alt="Nebula 的 PC/PIC 复用机会、端到端 TTFT 与组件消融证据" width="1600" height="900" loading="lazy"/><figcaption>图 2：依据论文 Table 1、Figures 10–16 与 Section 9 重绘。61.4% 是跨已测 setting 相对 Local-PIC + Dynamo 的 median TTFT 平均降幅，不是单一请求或峰值吞吐数字。</figcaption></figure>
+
+## 实验设置与主要结果
+
+硬件是两台同构服务器，共 8 张 H20-3e GPU、每台 4×200 Gbps RDMA；部署为 7P1D、TP1。四组模型/backend/workload 配对为：
+
+| Workload | Model | PIC backend |
+| --- | --- | --- |
+| ChatRAG-QuAC | DeepSeek-V2-Lite | CacheBlend |
+| RAGPulse | Qwen3.5-35B-A3B | HYPIC |
+| $\tau$-bench-Retail | Mistral-7B | EPIC |
+| ChatDev | Qwen3-30B-A3B | A$^3$ |
+
+请求保持原 trace 顺序，以 Poisson 到达；为隔离 prefill，输出限制为 1 token。基线是 PC-only 的 SGLang + Dynamo，以及有本地 PIC 但无远端复用/并行 scatter 的 Local-PIC + Dynamo。
+
+端到端结果：Nebula 相对 Local-PIC 平均降低 61.4% median TTFT，相对 PC-only 降低 76.7%。各 workload 最高测试 QPS 下，Nebula median TTFT 为 0.24/0.79/0.18/0.24 s；Local-PIC 为 1.26/2.39/3.64/9.57 s。相对 Local-PIC 的 P99 降幅为 93.5%、76.1%、97.3%、90.9%。1 秒 SLO 下，ChatRAG 12 QPS 的 goodput 为 11.66 req/s，而 Local-PIC 为 1.68。
+
+最高测试率下 CHR 是 84.82%、58.99%、93.67%、93.17%，比 Local-PIC 高 19.48–67.23 个百分点；相对 PC-only，四个 workload 分别回收其 miss token 的 84.7%、42.1%、86.3%、91.2%，平均 76.1%。
+
+组件实验也对应三种机制：组合目录相对纯乐观减少 98.4%/100% invalid-hit tokens，相对纯事件减少 96.1%/95.1% repeated-compute tokens；自调容量在 RAGPulse 48 QPS 相对统一 LRU/fixed partition 降 median TTFT 11.5%/14.7%；联合调度在 40 QPS 相对 locality-only 降 compute CV 93.6%/90.3%，相对 load-only 降网络流量 38.1%/12.3%。
+
+## 与基线的真实比较
+
+主对照是合理的：PC-only 代表现有生产组合，Local-PIC 隔离出“仅加算法、不改集群控制面”能达到什么；组件实验则一次只替换目录、容量或调度策略。四个模型配四个 backend，也比只对单一 PIC 算法调参更有说服力。
+
+但仍有四个口径不能越界：
+
+1. 每种 workload 只配一个模型/backend，无法区分交互项，也不是完整 4×4×4 factorial design。
+2. 输出只有 1 token，证明的是 TTFT/prefill；长生成下 decode 争用、KV 生命周期和端到端 latency 未覆盖。
+3. Local-PIC 的能力被故意限定，论文没有与所有最新分布式 prefix 系统逐一做原生优化后的公平实现比较。
+4. CacheBlend/A$^3$/EPIC/HYPIC 的重算精度由 backend 自己保证；本文没有统一质量指标或任务正确率审计。
+
+## 局限与风险
+
+- 应用手工标段会把数据依赖问题交给上层；错误分段可能造成 silent quality regression。
+- 目录控制面依赖高频 segment 事件。更大集群中 event fan-in、router 容错和 stale TTL 的稳定性仍待验证。
+- completion-time model 用离线每 token 传输系数，未显式建模拥塞、拓扑共享、GPU kernel interference 和大小片段非线性。
+- 两台 H20 的结果不足以证明 256-worker 调度下的端到端可扩展性；4.43 ms 只是在单 vCPU 上合成输入的 planner microbenchmark。
+- 论文声称约 19K LOC，并写明代码“will be released”；截至 2026-11-09，给出的 GitHub URL 返回 404，复现材料尚不完整。
+
+## 工程启示
+
+- 先同时报告 NPHR 与 PMRR。高 PC hit 的 Agent workload 仍可能有高价值的 tail miss，但不要用 PMRR 掩盖绝对收益很小。
+- 把 in-flight work 与 resident cache 分成不同状态；前者需要等待/去重语义，后者才适合 TTL 与 LRU。
+- 缓存配额最好是“软目标 + ghost feedback + 限速更新”，不要在负载切换时立即批量驱逐。
+- 调度模型至少要同时包含 queue、compute、transfer；只看 GPU 空闲率或 cache hit 都可能把瓶颈移到另一侧。
+- PIC 上线必须配 quality canary：比较 exact prefill 与 backend 重算版本的 logits、任务准确率和长程 Agent 成功率。
+- 对工具返回、检索文档建立稳定 content hash，同时带 schema/model/backend version，避免内容相同但语义版本不同的误复用。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么 Agent 的 NPHR 只有 2%–4%，PIC 仍可能值得做？</summary><div class="thought-answer">因为 PC 已覆盖九成以上 token，分母只剩很小一段；PMRR 显示 PIC 能回收其中约一半，而且这些 token 主要是工具/环境返回，往往较长、跨轮次反复出现。工程决策仍要把绝对 prefill FLOPs 与系统复杂度一起算，不能只看 PMRR。</div></details>
+
+<details class="thought-question"><summary>2. 为什么未确认缓存位置可设 TTL，负载 reservation 却不能同样过期？</summary><div class="thought-answer">位置预测过期只意味着“不再相信这里有可复用 KV”；任务本身可能仍在队列或计算中。若 reservation 自动释放，router 会把 worker 当空闲并继续派活，造成实际过载。负载债务必须由完成、取消或确定不会执行的事件核销。</div></details>
+
+<details class="thought-question"><summary>3. ghost hit 为什么比当前 hit ratio 更适合调容量？</summary><div class="thought-answer">当前 hit 只告诉你已有容量服务了什么，无法观察被淘汰内容的机会成本。ghost queue 保留标识符；再次访问说明“如果该类型多一点容量就能命中”，直接形成 PC 与 PIC 谁更缺空间的反事实反馈。</div></details>
+
+<details class="thought-question"><summary>4. 若远端传输比重算更慢，Nebula 的计划会怎样变化？</summary><div class="thought-answer">传输项 $D_w=d(w\to c)\sum P_i$ 会抬高远端方案的最大完成时间。枚举 combine home 和逐段迁移时，缓存 locality 不再自动胜出；冷算在 combine home 或较近 worker 可能更优。这也是必须把 transfer 纳入模型而不能只最大化命中率的原因。</div></details>
+
+<details class="thought-question"><summary>5. 为什么 61.4% median TTFT 降幅不能直接用于容量规划？</summary><div class="thought-answer">它是四个特定模型/backend/workload、多组 QPS setting 的平均相对降幅，且输出只有 1 token。真实容量规划还取决于 segment 分布、网络拓扑、backend 重算比例、decode 长度、缓存大小和 arrival burst；应回放自己的 trace 并报告绝对秒数与 SLO goodput。</div></details>
+
+<details class="thought-question"><summary>6. 应怎样验证 `<pic>` 分段不会破坏结果？</summary><div class="thought-answer">对同一批请求同时跑 exact prefill 与 PIC backend，比较逐层或最终 logits 偏差、生成一致性和任务级指标；按 segment 类型、长度、位置移动距离分桶。版本变化时 content hash 应绑定 tokenizer、模型、RoPE/position 处理和 backend 配置，任何一项变化都使旧缓存失效。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2611.09474)
+- [PDF](https://arxiv.org/pdf/2611.09474)
+- 作者在论文中给出 `https://github.com/redai-studio/Nebula` 并说明代码将发布；截至本文写作时该地址返回 404，因此不把它伪装成可复现代码仓库。

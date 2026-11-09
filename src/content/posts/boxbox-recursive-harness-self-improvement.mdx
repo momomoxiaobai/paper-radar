@@ -1,0 +1,210 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-09T10:10:00+08:00
+title: "Agent 工程｜BOXBOX：Agent 在四小时任务里怎样安全改写自己的 Harness，并让优化继续发生"
+featured: true
+category: harness
+tags:
+  - agent-harness
+  - recursive-self-improvement
+  - coding-agent
+  - agent-evaluation
+  - reliability
+description: "完整拆解 BOXBOX 的 agent-triggered review、kernel-managed hot reload、上下文保留与回滚，以及 PerfRace 100 个真实项目性能优化任务、四类基线、聚合指标和安全边界。"
+paper:
+  title: "BOXBOX: Recursive Harness Self-Improvement for Long-Running Performance Optimization"
+  venue: "arXiv preprint"
+  paperUrl: "https://arxiv.org/abs/2611.09218"
+  pdfUrl: "https://arxiv.org/pdf/2611.09218"
+  score: 95
+  scoreNote: "推荐理由：论文把 Harness 自改从离线 prompt search 推到正在执行的四小时真实任务中，给出独立 kernel、上下文迁移、验证与回滚，并用 50 个 held-out 任务×4 方法×3 runs 做匹配预算比较；扣分在于主实验仅 GPT-5.6 Luna + Terminus-KIRA，一般化实验仍被注释，14-task 消融较小，完整代码仓库尚未公开可访问。"
+---
+
+> [!NOTE]
+> 论文于 **2026 年 11 月 6 日**首次公开。它被放在「Agent 工程」并使用 `harness`，因为论文改变的是 prompt、tools、memory、control loop 与 runtime，而不是训练一个新的 Agent 模型。
+
+## 一句话结论
+
+**BOXBOX 允许正在做任务的 Agent 自己决定何时暂停，把完整可执行 Harness 交给独立 review session 修改；一个不可自改的 kernel 保存对话、终端和 workspace，验证新 runtime、热加载并在故障时回滚。相同 GPT-5.6 Luna、相同初始 Harness、每任务同为 4 小时预算时，它在 50 个 held-out PerfRace 任务达到 1.702× harmonic-mean speedup，高于 Frozen 的 1.442× 和最强 Harness Scaling 的 1.539×；但这证明的是“特定长程性能工程任务中，受保护的在线 Harness 适配有效”，不是任意 Agent 都应获得无边界自修改权。**
+
+<figure><img src="/paper-radar/images/boxbox-harness/mechanism.svg" alt="BOXBOX 的任务循环、独立 review、kernel 验证、上下文迁移和回滚机制" width="1600" height="900" loading="eager"/><figcaption>图 1：依据论文 Figure 3、Algorithm 1 与 Sections 5、Appendix C 重绘。kernel 不属于可编辑 Harness；review 只能改 Harness，project code 在 review 中只读。</figcaption></figure>
+
+## 为什么长任务让固定 Harness 暴露出来
+
+离线 Harness Evolution 在一批训练任务上总结失败、改 prompt/tool，再把一个固定版本用于测试。它隐含两个假设：训练经验能跨任务迁移；执行前就能预见四小时后会遇到的障碍。长程软件性能优化恰好会打破二者：
+
+- 某个项目的 build、benchmark、profile 与 correctness check 组合高度任务特定；
+- 早期成功或失败会暴露新的工具需求；
+- 单纯继续调用模型，可能把大量 token 花在等待、重复测量和恢复上下文上。
+
+BOXBOX 的主张不是“模型权重变强”，而是固定模型 $\mathcal M$ 通过改变执行接口 $H_k$，让同样的推理能力在后续轨迹中变得更有效。
+
+## 形式化：改 Harness 会同时改变“想做什么”和“怎样执行”
+
+设第 $k$ 步活动 Harness、环境状态、累计轨迹分别是 $H_k,e_k,\tau_k$：
+
+$$
+\begin{aligned}
+a_k&\sim p_{\mathcal M,H_k}(\cdot\mid\tau_k),
+\qquad a_k\in\mathcal A(H_k),\\
+(e_{k+1},o_{k+1})&\leftarrow
+\operatorname{Execute}_{H_k}(e_k,a_k),\\
+\tau_{k+1}&=\tau_k\oplus(a_k,o_{k+1}),\\
+H_{k+1}&=
+\begin{cases}
+H'_k,&\text{if revision is activated},\\
+H_k,&\text{otherwise}.
+\end{cases}
+\end{aligned}
+$$
+
+改 prompt/context construction 会改变 $p_{\mathcal M,H_k}$，也就是模型下一步更可能选什么动作；改 tool implementation / control loop 会改变 $\operatorname{Execute}_{H_k}$，即同一动作怎样执行、观测怎样返回。因此 Harness 不是一段静态系统提示，而是模型与环境之间完整的可执行转换层。
+
+以往限定编辑字段的方法只允许 $H'_k\in\mathcal H_{\mathrm{bounded}}$；BOXBOX 暴露完整实现，允许 $H'_k\in\mathcal H$。自由度更高也更危险，所以论文的关键不是“让 Agent 改代码”，而是**把自修改从自执行 runtime 移交给外部 kernel 管理**。
+
+## kernel-managed hot reload：自修改不能由旧 runtime 自己兜底
+
+活动 Harness 注册一个 `boxbox()` tool。Agent 调用它后：
+
+1. kernel 捕获 trap，暂停 task interaction loop；容器进程不一定停止；
+2. 保存 task conversation、review history、已审轨迹标记，保留 terminal session 与 project workspace；
+3. 启动独立 review session，读取累计轨迹和 Harness Git 历史；project code 只读；
+4. reviewer 可保留现状、加 guidance、改 prompt/tool/execution logic，并 commit；
+5. kernel 验证候选 runtime 是否能执行任务和导入 context；
+6. 成功则把同一 terminal session 交给新 runtime，失败则保留或恢复旧 runtime；
+7. 恢复同一条任务对话，从中断点继续。
+
+新 runtime 在到达下一次 Agent 主动 review 前仍是 provisional；若期间 fault，kernel 回滚到上一个 confirmed runtime，并带 fault evidence 再 review。runtime fault 恢复会新开 terminal，shell-local state 会丢，但 project files、Harness history 和执行记录保留。
+
+这个设计回答了递归自改最实际的一问：**如果改坏的是用来修自己的那套代码，谁来执行回滚？** BOXBOX 把 kernel 留在可编辑边界外，避免“飞行中换引擎，同时让旧引擎证明新引擎安全”的循环依赖。
+
+## 谁决定何时 review：预算也是策略的一部分
+
+Agent 与 review 共享四小时预算 $B$，目标是最大化时刻 $B$ 的最好正确 speedup $S(B)$。Agent 必须在两类收益间选择：继续改项目代码，或花时间改善以后怎样工作。
+
+默认 review skill 只给两个高层步骤：
+
+- **Diagnosis**：找执行失败、重复工作、可自动化的成功模式、缺失能力和昂贵交互；
+- **Revision**：依据剩余预算选择 prompt rule、skill、tool 或 execution logic 修改。
+
+初始 Harness 要求两次 review 间至少有任务活动，并设置 30 分钟 cooldown。它不是无限自递归：主实验中每 run 的 review 中位数为 5，92% run 在 3–6 次；review 只占时间预算中位数 2.1%，但占模型成本 13.8%。这也解释了为何“定时每 30 分钟 review”未必好：它可能打断正在进行的实现/测量，即使没有可改内容也会产生模型成本。
+
+## PerfRace：先把长程性能优化做成可信评测
+
+PerfRace 有 100 个真实项目 × 固定 end-to-end workload，覆盖 developer tools 30、data systems 25、scientific computing 15、media 9、geometry 8、ML 7、security 6。任务不给参考 patch，也没有已知最优答案；Agent 可反复把 workspace snapshot 交给外部 Judge。
+
+若第 $i$ 次 submission 的评测开始时间是 $t_i$，正确 speedup 为 $s_i$，错误则 $s_i=0$，基线项目记为 $(t_0,s_0)=(0,1)$：
+
+$$
+S(t)=\max_{i:t_i\le t}s_i.
+$$
+
+验证时间计入预算，最后五分钟提示 Agent 收尾。Judge 在另一容器用独立 workload 副本与 held-out correctness cases 做 shadow verification，Agent 看不到 verifier 与隐藏数据，减少删除工作、硬编码答案或篡改测量脚本的 reward hacking。
+
+任务构造同样值得注意：从 2026 年 5–8 月 coding-agent 活动发现 103,475 个项目，确定性许可/大小/可访问性筛到 7,257，模型基于源码评估 setup/workload/runtime/optimization potential 后剩 239，再经 agent-human Pair Verification 得到 100。每任务平均 9.1 小时人工/Agent 策展、12 次交互、\$11.35 Agent 成本，并审 Realism、Reliability、Integrity。
+
+这不是传统“从历史性能 PR 还原 patch”的 benchmark，而是 workload-first：Agent 要先 profile，再提出未知优化。
+
+## 聚合指标：为什么不是把所有 speedup 直接平均
+
+100 个任务分为 40 train、10 validation（只给离线 Harness Evolution）和 50 held-out test。每方法每测试任务 3 个独立 run。先对任务 $i$ 的三次最好速度取几何平均：
+
+$$
+\bar S_i=\left(\prod_{r=1}^{R}S_i^{(r)}(B)\right)^{1/R},\qquad R=3.
+$$
+
+再对 $N=50$ 个任务取调和平均，限制极端大 speedup 的支配：
+
+$$
+\operatorname{Speedup@4h}=
+\frac{N}{\sum_{i=1}^{N}\bar S_i^{-1}}.
+$$
+
+成本效率是逐任务 ratio 的算术平均，而不是“总平均 speedup / 总平均成本”：
+
+$$
+\operatorname{Speedup/\$}=
+\frac1N\sum_{i=1}^{N}
+\frac{\bar S_i}{\overline{\operatorname{Cost}}_i}.
+$$
+
+模型成本按记录 token 和论文给定 GPT-5.6 Luna 费率计，Harness 优化也纳入；环境 setup 排除。置信带在固定 50-task 集上对每任务三条 run 重采样 5,000 次，它反映 run 随机性，不反映“若换一批任务”的抽样不确定性。
+
+<figure><img src="/paper-radar/images/boxbox-harness/results.svg" alt="BOXBOX 与 Frozen、Harness Evolution、Harness Scaling 的速度、成本、消融与 review 预算比较" width="1600" height="900" loading="lazy"/><figcaption>图 2：依据论文 Table 1、Table 2、Figure 4 与 Appendix A 重绘。主结果用 50 test tasks×3 runs；消融只用随机抽取的 14 tasks，不能与主表混成同一精度。</figcaption></figure>
+
+## 主结果：在线任务特定适配胜过离线通用 Harness
+
+| Method | Speedup@4h | 平均模型成本/run | Speedup/$ |
+| --- | ---: | ---: | ---: |
+| Frozen Harness | 1.442× | \$23.22 | 0.2142 |
+| Harness Evolution | 1.281× | \$24.56 | 0.1243 |
+| Harness Scaling | 1.539× | \$12.98 | 0.2872 |
+| BOXBOX | **1.702×** | \$16.43 | **0.4886** |
+
+后两小时最能说明长程价值：Frozen 只从 1.410× 到 1.442×；Harness Scaling 从 1.431× 到 1.539×；BOXBOX 从 1.530× 到 1.702×。它不是靠更贵模型多烧 token：BOXBOX 比 Frozen 平均模型成本低 29.3%。
+
+离线 Harness Evolution 还有被主表低估的成本：训练 \$200.34、验证 \$1,176.12，分摊到 150 test runs 后至少把每 run 从 \$24.56 拉到 \$33.73，且测试 speedup 反而更低。附录给出一个很具体的 generalization failure：训练期加入 promotion gate 检查 Git repo 与性能证据，测试任务中却在错误的父目录找 repo，473 次 submission 被阻断，跨度约 3 小时 46 分。
+
+Harness Scaling 允许每个 attempt 结束后由外部 controller 改 Harness 并开新 Agent session。它成本最低，但 review 粒度太粗、会丢对话 context。一个 KitOps run 中，防重复检查只识别相同命令形式，Agent 换写法后连续执行 113 个没有新测量的检查；下一次 attempt 边界前无法再次修 Harness。
+
+## 消融：主动触发与完整编辑都贡献了收益
+
+14 个随机 test task 上：定时 30 分钟 review 的 `w/o Agent Triggering` 为 1.508×、\$21.58；Agent 主动但只允许预定义编辑范围的 `w/o Full Editing` 为 1.349×、\$16.07；完整 BOXBOX 为 1.584×、\$15.07。
+
+620 个非空 applied updates 横跨 prompt rules、skills、tools、execution logic 与 fault handling。案例不只是“重写系统提示”：
+
+- CCC 编译优化：加入成对 A/B 重复测量与阶段 timing helper，识别一次表面 9.4% 改善其实来自批次噪声；
+- FluidSynth：把普通命令内部等待延长到 180 秒，少用模型回合轮询；随后加 `benchmark_matrix` 批量跑构建、渲染和 hash check；
+- context 管理：按 message count 新增压缩路径；
+- terminal fault：把 shell exit exception 换成 session recovery。
+
+这说明有效 Harness update 同时在改善搜索方向、测量方法和交互成本。
+
+## 基线是否公平
+
+论文做对了几件关键事：四种方法同一初始 Terminus-KIRA、同一 GPT-5.6 Luna high reasoning、同一 4 小时时钟，Harness 修改与 Judge 验证都计时计费；所有方法在相同 50 held-out tasks 做 3 runs。HS 与 HE 也按原思想适配，不是简单弱 prompt。
+
+但公平不等于结论无限外推：
+
+1. 主实验只有一个模型和一个初始 Harness；论文中 Pi、mini-swe-agent、Gemini、Grok 的 generalization 表被注释，不能声称跨模型成立。
+2. HE 使用 45 分钟训练 run、5-task mini-batch 是为控制 965-step 长轨迹而做的适配，可能不等于其理论最佳配置。
+3. BOXBOX 的主动触发能力依赖模型本身能诊断“现在需要改 Harness”；弱模型可能不会正确分配元认知预算。
+4. PerfRace 目标是速度且有可靠 Judge；开放式研究、GUI、真实生产 incident 不一定有同样密集反馈。
+
+## 局限与风险
+
+- 完整 Harness 编辑可以改工具权限、过滤器、日志和上下文逻辑；kernel 验证当前只保证 runtime 可加载/迁移，不是形式化安全证明。
+- Agent 同时接触不可信 repo code 与可编辑执行层，存在 prompt injection、依赖投毒、权限扩张和隐藏持久化风险。
+- rollback 保护 runtime 连续性，却不能自动撤销 Harness 在外部系统已造成的 side effect。
+- shadow Judge 保护评测完整性，但生产中不存在天然隐藏 verifier；自改 Harness 可能把“优化业务”退化为“优化可观测指标”。
+- 代码和实验仓库在 source 中只出现注释的匿名链接，当前不可公开访问；100-task 资产和 600-run 轨迹尚不能独立复现。
+- 成本按论文内模型价格表计算，不能直接当作其他 provider 或未来费率下的经济结论。
+
+## 工程启示
+
+- 自修改边界必须把 kernel / supervisor 留在 Harness 外：候选验证、context snapshot、activation、rollback 与 audit log 不能由候选自己覆盖。
+- 将 Harness 版本、task code 版本与每次评测结果分别 commit，避免改工具后无法解释 speedup 来源。
+- review 入口应是显式 tool，并受 cooldown、剩余预算和 intervening activity 约束；定时自省会打断有效工作。
+- activation 前至少跑 interface contract、权限 diff、tool schema diff、secret access 和 sandbox smoke tests；生产还需人工批准高风险修改。
+- 保存对话只是 context preservation 的一部分：terminal、process、workspace、artifact、network session 分别定义迁移与回滚语义。
+- 对 Harness 更新做任务级反事实：同一 project snapshot 在新旧 Harness 下各跑短 probe，验证修改减少的是重复交互而非绕过检查。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么改 Harness 即使模型权重固定，也能提高任务结果？</summary><div class="thought-answer">Harness 同时构造模型输入、暴露动作空间并执行工具。改 prompt 会改变动作分布，改工具可把多次等待/测量压成一次可靠操作，改 context logic 能减少遗忘。模型能力上限不变，但有效搜索深度、反馈质量和每美元交互数都会变。</div></details>
+
+<details class="thought-question"><summary>2. kernel 为什么必须与可编辑 Harness 分离？</summary><div class="thought-answer">候选 Harness 可能无法启动、无法导入状态，甚至破坏自己的恢复路径。若验证和回滚也由候选实现，失败时没有可信执行主体。独立 kernel 保留最后确认版本与原 snapshot，形成最小可信计算基。</div></details>
+
+<details class="thought-question"><summary>3. BOXBOX 的主动触发为何可能同时省时间又省模型成本？</summary><div class="thought-answer">它只在轨迹已暴露具体摩擦时 review，避免定时 review 的空转；一次工具改进又能减少以后每次等待、重复 benchmark 或 context 重建所需的模型回合。review 本身虽昂贵，但摊到后续长任务可以净节省。</div></details>
+
+<details class="thought-question"><summary>4. 1.702× 为什么用调和平均，而不是普通平均？</summary><div class="thought-answer">性能优化的少数超大 speedup 会显著抬高算术平均。论文先对同任务三 run 取几何平均，再跨任务取调和平均，使多个普通或失败任务对总分更敏感。它仍是一种编辑选择，所以应同时看 per-task 曲线与正确性。</div></details>
+
+<details class="thought-question"><summary>5. rollback 能否解决 Harness 自改的全部安全问题？</summary><div class="thought-answer">不能。rollback 只能恢复 runtime 与本地状态；已经发出的 API 请求、删除的远端资源、泄露的 secret 无法自动回滚。安全部署还需最小权限、side-effect transaction、审批、不可变审计和外部 policy enforcement。</div></details>
+
+<details class="thought-question"><summary>6. 若把 BOXBOX 用于 20 分钟短任务，预期会怎样？</summary><div class="thought-answer">review 的固定成本可能来不及摊薄，且轨迹尚未暴露稳定重复模式。合理策略是让触发门槛随剩余预算和预计复用次数变化：只有修改的期望节省大于 review、验证和迁移成本才进入自改。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2611.09218)
+- [PDF](https://arxiv.org/pdf/2611.09218)
+- 当前公开 PDF 没有给出可访问代码仓库；LaTeX source 注释中出现的匿名 artifact URL 返回 401，因此本文不把它列为已发布代码。

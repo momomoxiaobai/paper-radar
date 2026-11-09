@@ -1,0 +1,355 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-09T10:20:00+08:00
+title: "算法重访｜Sinkhorn–Knopp：交替归一化为何全局收敛，谱隙、缩放距离与紧下界怎样拼成一张图"
+featured: true
+category: classic-algorithms
+tags:
+  - sinkhorn-knopp
+  - matrix-scaling
+  - optimal-transport
+  - spectral-gap
+  - convergence-analysis
+description: "从矩阵缩放与熵正则 OT 出发，推导 Sinkhorn 的尺度不变势函数、全局谱收缩、缩放半径 D、输入与端点谱证书，以及常数谱隙下 D 线性依赖的紧下界。"
+paper:
+  title: "Global Sinkhorn Convergence and Spectral Stability of Matrix Scaling"
+  venue: "arXiv preprint"
+  paperUrl: "https://arxiv.org/abs/2611.08963"
+  pdfUrl: "https://arxiv.org/pdf/2611.08963"
+  score: 94
+  scoreNote: "推荐理由：论文把经典 Sinkhorn 的局部谱收敛推进到从标准初始化成立的全局界，显式分离端点混合 g 与到缩放解的对数距离 D，并给出常数谱隙、D=Θ(n) 的匹配构造和输入可检验的谱证书；扣分在于 71 页证明高度理论化，没有数值实验或实现，常数与谱证书的实际估计成本尚未工程评估。"
+---
+
+> [!NOTE]
+> 论文于 **2026 年 11 月 6 日**首次公开。它属于「算法重访」：对象是 1960 年代的 Sinkhorn–Knopp / RAS / iterative proportional fitting，新贡献是解释经典交替归一化从初始化到局部谱区间的整个轨迹，而不是提出一个只在 LLM 场景有效的新技巧。
+
+## 一句话结论
+
+**Sinkhorn–Knopp 每步只是交替把行和列归一化，但收敛速度不能只看最终双随机矩阵的谱隙：端点是否混合得快由 $g=1-s_2(B)^2$ 控制，从输入走到该端点还要支付对数缩放半径 $D$。论文构造尺度不变势函数并证明全局收缩，得到总边缘 $\ell_1$ 误差 $\varepsilon$ 所需迭代数 $O((D+\log n+\log(1/\varepsilon))/g)$；同时给出 $g=1/2$、$D=\Theta(n)$ 且确实需要 $\Theta(n)$ 步的正矩阵族，说明 $D$ 不是证明松弛。**
+
+<figure><img src="/paper-radar/images/sinkhorn-global/algorithm.svg" alt="Sinkhorn 交替行列归一化、缩放表示、尺度不变势函数与谱收缩关系" width="1600" height="900" loading="eager"/><figcaption>图 1：依据论文 Theorem 1、Section 3 与 Introduction technique overview 重绘。论文把一个 column–row cycle 记为 $t$，而“iteration”有时按单次行/列归一化计；本文在数字处明确区分。</figcaption></figure>
+
+## 从矩阵缩放重新看 Sinkhorn
+
+给定非负矩阵 $A\in\mathbb R_{\ge0}^{n\times n}$，矩阵缩放寻找正对角矩阵 $X,Y$，使
+
+$$
+B=XAY
+$$
+
+的行和列都为 $\mathbf 1$。$B$ 就是 doubly stochastic matrix。经典应用是把 contingency table 调到给定 marginals；现代应用中，熵正则最优传输把 kernel 对角缩放到目标边缘，Sinkhorn 因每步 $O(\operatorname{nnz}(A))$、易并行而成为标准子程序。
+
+设
+
+$$
+r_i(P)=\sum_jP_{ij},\qquad c_j(P)=\sum_iP_{ij},
+$$
+
+论文目标是输出 $P$ 满足
+
+$$
+\|r(P)-\mathbf1\|_1+\|c(P)-\mathbf1\|_1\le\varepsilon.
+$$
+
+从已 row-normalized 的 $A^{(0)}$ 出发，算法交替：
+
+$$
+A^{(2t+1)}=A^{(2t)}\operatorname{diag}(c(A^{(2t)}))^{-1},
+$$
+
+$$
+A^{(2t+2)}=\operatorname{diag}(r(A^{(2t+1)}))^{-1}A^{(2t+1)}.
+$$
+
+一列一行算一个完整 cycle。问题从来不是“它会不会收敛”，而是能否用解的结构解释**全局需要多少步**。
+
+## 两个参数：端点混合与到端点的距离
+
+设精确缩放是
+
+$$
+B=\operatorname{diag}(e^u)A\operatorname{diag}(e^{-v}).
+$$
+
+同一个 $B$ 有多个 $(u,v)$ 表示，因为可把常数同时平移。论文定义最优对数缩放半径：
+
+$$
+D(A;B)=
+\min_{B=\operatorname{diag}(e^u)A\operatorname{diag}(e^{-v})}
+\max\{\|u\|_\infty,\|v\|_\infty\}.
+$$
+
+$D$ 衡量输入要做多大的 multiplicative correction 才到 $B$。如果所有缩放乘积满足
+
+$$
+T^{-1}\le x_i y_j\le T,
+$$
+
+居中后便有 $D\le\log T$。
+
+端点谱参数是
+
+$$
+g=1-s_2(B)^2,
+$$
+
+$s_2(B)$ 为第二大奇异值。$B^\top B$ 是列侧两步随机游走，$g$ 越大，偏离常数向量的模式越快衰减。过去结果已知局部每 cycle 的渐近因子由 $s_2(B)^2$ 控制，却没有简洁回答进入该局部区间前要多久。新论文的核心是把 $D$ 与 $g$ 放到同一全局界里。
+
+## 把实际迭代改写成一个正向量的动力系统
+
+固定双随机端点 $B$，对任意 $w>0$ 定义
+
+$$
+\mathcal A(w)=\operatorname{diag}((Bw)^{-1})B\operatorname{diag}(w),
+$$
+
+$$
+\mathcal F(w)=\left[B^\top(Bw)^{-1}\right]^{-1},
+$$
+
+逆和乘除都逐坐标进行。一个完整 column–row cycle 恰好把 $\mathcal A(w)$ 送到 $\mathcal A(\mathcal F(w))$。若 $B=XAY$，从
+
+$$
+w_0=Y^{-1}\mathbf1
+$$
+
+开始便有 $\mathcal A(w_0)=A$，所以真实 Sinkhorn 偶数步满足
+
+$$
+A^{(2t)}=\mathcal A(w_t),\qquad w_{t+1}=\mathcal F(w_t).
+$$
+
+这个参数化消除了每次显式追踪两组对角因子的麻烦，把算法变成正向量上的迭代。
+
+## 势函数：同时惩罚过大与过小坐标
+
+定义均值 $\langle z\rangle=n^{-1}\sum_j z_j$，势函数为
+
+$$
+\Phi(w)=\langle w^2\rangle\langle w^{-2}\rangle-1.
+$$
+
+它有两个关键性质：
+
+1. **尺度不变**：$\Phi(cw)=\Phi(w)$，与缩放表示的全局平移自由一致；
+2. 同时看到 $w$ 和 $w^{-1}$，所以某坐标极大或极小都会付费，不能用平均值掩盖。
+
+令 $P_B=B^\top B$。由 Cauchy–Schwarz / 算术–调和平均不等式，作者证明逐坐标
+
+$$
+\mathcal F(w)\le P_Bw,
+\qquad
+\mathcal F(w)^{-1}\le P_B(w^{-1}).
+$$
+
+而 $P_B$ 在 $\mathbf1^\perp$ 上的 $\ell_2$ 算子范数是 $s_2(B)^2$。结合
+
+$$
+\langle w\rangle^2\langle w^{-1}\rangle^2
+\le
+\frac{\langle w^2\rangle\langle w^{-2}\rangle+1}{2},
+$$
+
+得到从任意 $w>0$ 成立的全局收缩：
+
+$$
+\Phi(\mathcal F(w))
+\le
+\frac{1+s_2(B)^4}{2}\Phi(w).
+$$
+
+注意不是“足够靠近解才成立”。这是把局部谱信息提升为全局定量界的关键。
+
+## 从初始势到边缘误差
+
+选取达到半径 $D$ 的缩放向量可得
+
+$$
+\frac{\max_j w_{0,j}}{\min_j w_{0,j}}\le e^{2D},
+\qquad
+\Phi(w_0)\le e^{4D}.
+$$
+
+迭代后
+
+$$
+\Phi(w_t)
+\le e^{4D}
+\exp\left(-\frac{1-s_2(B)^4}{2}t\right).
+$$
+
+当势小于 $\varepsilon^2/(16n^3)$，把 $w_t$ 归一到 $\langle w_t\rangle=1$，Jensen 与坐标界推出每个 column marginal 距 1 至多 $\varepsilon/n$；偶数步本来已 row-stochastic，于是总误差满足要求。
+
+论文给出的显式充分条件是
+
+$$
+t\ge
+\left\lceil\frac{2}{g}
+\left(8D+\log\frac{16n^3}{\varepsilon^2}\right)
+\right\rceil,
+$$
+
+从而完整 cycle 数为
+
+$$
+O\left(\frac{D+\log n+\log(1/\varepsilon)}{g}\right).
+$$
+
+这里用 $1-s_2^4=g(1+s_2^2)$ 把分母写成 $g$。与论文对比的近期通用界
+
+$$
+O\left(\frac{nD^2}{g^4}+
+\frac{\log n+\log(1+D)+\log(1/\varepsilon)}g\right)
+$$
+
+相比，当 $D=O(\log n)$、$g=\Omega(1)$ 时，新界从约 $O(n\log^2n)$ 改成 $O(\log n)$。
+
+## 为什么 $D$ 不能从结论里删掉
+
+作者构造严格正的 row-stochastic 矩阵族，列和最小 $1/2$、最大 $2$，所以 imbalance ratio $K=4$；归一化输入与精确缩放的第二奇异值都为
+
+$$
+s_2=\frac1{\sqrt2},\qquad g=\frac12.
+$$
+
+看起来输入和端点都“谱上混合良好”。但精确 entrywise distortion 是
+
+$$
+\max_{i,j}\frac{B_{ij}}{A_{ij}}
+=
+\max_{i,j}\frac{A_{ij}}{B_{ij}}
+=1+\frac{2^n}{3},
+$$
+
+所以 $D=\Theta(n)$。块矩阵把真实 Sinkhorn 轨迹降成两个标量 $p_t,q_t$ 的 Möbius 更新；极小块的 odds 每 cycle 最多常数倍增长，达到误差 $n^{-2}$ 必须 $\Omega(n)$ 步。全局上界在同一族给 $O(n)$，于是
+
+$$
+T(n^{-2})=\Theta(n).
+$$
+
+这回答了一个容易误判的问题：**常数谱隙只保证到了正确尺度后混合快，不保证从初始尺度到正确尺度的位移小。**
+
+<figure><img src="/paper-radar/images/sinkhorn-global/theorems.svg" alt="Sinkhorn 全局定理、输入和混合谱证书、边界反例与稠密矩阵推论" width="1600" height="900" loading="lazy"/><figcaption>图 2：依据论文 Theorems 1–4、Propositions 1–2 与 dense-input corollaries 重绘。严格不等式是定理条件；边界等号处存在指数 distortion 和多项式慢收敛族。</figcaption></figure>
+
+## 怎样在不知道缩放解时证明 $D$ 小
+
+全局定理仍含未知的 $B,D$。论文进一步给输入可检验的证书。设 $A$ row-stochastic，列和向量为 $c$，
+
+$$
+K=\frac{\max_j c_j}{\min_j c_j},
+\qquad
+M=A\operatorname{diag}(c)^{-1/2},
+\qquad
+\sigma=s_2(M).
+$$
+
+若严格满足
+
+$$
+\sqrt K\,\sigma<1,
+$$
+
+则论文不仅证明精确双随机缩放存在，还证明存在常数 $C_0,\beta$（只依赖 $K$ 与谱裕量）使
+
+$$
+T^{-1}\le x_i y_j\le T,
+\qquad T=C_0n^\beta,
+$$
+
+因而 $D=O(\log n)$。这比“先假设可缩放，再分析”更强：strict spectral margin 本身给出 scalability。
+
+若精确端点 $B$ 已知或只做理论分析，可用更弱的混合条件：
+
+$$
+\sqrt K\,\sigma\,s_2(B)<1.
+$$
+
+为什么是两个奇异值的乘积？令 $P=B^\top A$，可分解非平凡方向：
+
+$$
+P\operatorname{diag}(c)^{-1/2}-ef^\top
+=(B^\top-ee^\top)(M-ef^\top),
+$$
+
+因此 $s_2(P\operatorname{diag}(c)^{-1/2})\le\sigma s_2(B)$。这个辅助矩阵的 buffered expansion 传播缩放因子的上下界，最终把所有 $y_j/y_k$ 控制在多项式范围。
+
+严格小于不能改成小于等于：在 $\sqrt K\sigma s_2(B)=1$ 的边界族上 distortion 可达 $\Theta(2^n)$，Sinkhorn 需 $\Omega(n)$；只看输入的边界 $\sigma=1/\sqrt K$，还有需 $\Omega_K(n^3)$ 达到误差 $n^{-2}$ 的族。
+
+## 稠密矩阵：为什么 $1/2$ 是结构阈值
+
+若 $D\in[0,1]^{n\times n}$ 每行每列至少有 $\gamma n$ 个条目不小于 $\rho$，称 $(\gamma,\rho)$-dense。$\gamma>1/2$ 时任意两行的大条目邻域必有至少 $(2\gamma-1)n$ 重叠，得到归一化矩阵 $E$ 的谱界：
+
+$$
+s_2(E)\le\sqrt{1-(2\gamma-1)\rho^2}<1.
+$$
+
+线性大小的 seed 让 buffered expansion 只需常数轮就传播到全图，给 $D=O(1)$；Dirichlet form 比较再把输入谱隙传到端点：
+
+$$
+1-s_2(B)^2
+\ge
+\frac{(\gamma\rho)^5}{T^2}
+(1-s_2(E)^2).
+$$
+
+于是固定 $\gamma>1/2,\rho>0$ 时，Sinkhorn 用
+
+$$
+O_{\gamma,\rho}(\log n+\log(1/\varepsilon))
+$$
+
+步。任意固定正密度下，若 $s_2(E)<\gamma\rho-\tau$ 也成立。边界 $\gamma=1/2,\rho=1,s_2(E)=1/2$ 则有需 $\Omega(n^2)$ 步达到 $1/(400n)$ 误差的正矩阵族，说明严格裕量不是装饰。
+
+## “实验设置”与结果边界：这是一篇证明论文
+
+论文没有随机 seed、数据集、硬件、wall-clock 或数值曲线；71 页主体是定理、势函数证明、谱到 expansion 的结构论证和显式反例。它的“评测”是三种数学压力测试：
+
+1. 与已有非渐近上界做同一 $\ell_1$ 精度口径的符号比较；
+2. 构造固定端点 gap、$D=\Theta(n)$ 的族，给与上界匹配的 $\Theta(n)$ 轨迹；
+3. 在输入谱证书和 dense threshold 的等号边界构造多项式慢实例。
+
+因此不能把 $O(\cdot)$ 当成实测速度，不能声称它在 GPU 上必然比 Newton/Greenkhorn 快。每步虽然是 $O(\operatorname{nnz}(A))$，求或估 $s_2$、$D$、证书常数本身也有成本；论文没有端到端实现比较。
+
+## 与基线的真实比较
+
+论文对比的是理论保证，而非同代码 benchmark。它把早期 Hilbert projective metric 的 input cross-ratio 收缩、端点局部因子 $s_2(B)^2$、近期含 $nD^2/g^4$ global phase 的界，统一到一个更简洁全局势函数框架。
+
+优化型矩阵缩放算法仍有独立价值：若证书给 $D=O(\log n)$，已有 box-constrained Newton 的总时间可到 $\widetilde O(\ell\log^2(n/\varepsilon))$，另有 $\widetilde O(\ell+n^{4/3})$ 算法（$\ell=\operatorname{nnz}(A)$）。新结果为这些算法提供结构 promise，却没有证明 Sinkhorn 在所有参数区间支配它们。
+
+## 局限与风险
+
+- 主定理针对方阵、单位行列和；一般矩形/非均匀 marginals 虽可类比，本文定理不能直接无条件套用。
+- 需 finite positive diagonal scaling 且 $s_2(B)<1$；支持图不连通或不完全可缩放时，参数与结论会退化。
+- 显式常数很保守，例如势到坐标误差引入 $n^3$；实际 convergence 可能远快于 worst case。
+- 输入谱证书是充分非必要条件；证书失败不表示 Sinkhorn 慢，更不表示不可缩放。
+- 论文没有 numerical stability 分析。极端缩放因子实际应在 log-domain 更新，浮点下 overflow/underflow 可能先于理论误差出现。
+- 反例证明某些参数依赖不可删，却不证明 $D,g,n,\varepsilon$ 的联合依赖全都最优。
+
+## 工程启示
+
+- 在 OT / balancing 系统中同时监控 marginal residual、log scaling range 和估计谱隙；只看 residual slope 会把长 global phase 误判成实现故障。
+- 用 log-domain 保存 $u,v$，周期性减去公共常数；这正对应 $D$ 定义里对表示的最优居中。
+- warm-start 不只减少初始误差，更可能直接降低有效 $D$；相邻 OT 问题复用 dual potentials 的价值可由此理解。
+- 若列和 ratio $K$ 大，先做简单预条件化可改善输入谱证书，但必须跟踪它是否只是把 distortion 转移到别处。
+- benchmark 应同时覆盖“端点谱隙小”和“端点谱隙常数但缩放距离大”的族；二者慢的机制不同。
+- 理论界适合做停止规则与异常诊断上界；实际算法选型仍需比较 sparse matvec、并行通信、Greenkhorn 坐标选择和 Newton 线性求解成本。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么只知道 $s_2(B)$ 小，仍不能推出从标准初始化很快？</summary><div class="thought-answer">$s_2(B)$ 描述精确缩放附近或由 $B^\top B$ 主导的混合；若输入到 $B$ 需要指数 multiplicative distortion，算法要先移动很远的 log-scale。反例里 $g=1/2$ 固定但 $D=\Theta(n)$，因此仍需线性步数。</div></details>
+
+<details class="thought-question"><summary>2. 势函数为什么要乘 $\langle w^2\rangle$ 与 $\langle w^{-2}\rangle$？</summary><div class="thought-answer">单看方差会依赖整体尺度，并可能只对大坐标敏感；乘上倒数二阶矩后既尺度不变，又同时惩罚接近 0 与过大的坐标。它与对角缩放表示的 gauge freedom 精确匹配。</div></details>
+
+<details class="thought-question"><summary>3. 若 $D=O(\log n)$、$g=\Omega(1)$，把误差从 $10^{-3}$ 降到 $10^{-6}$ 多付多少？</summary><div class="thought-answer">界中精度只通过 $\log(1/\varepsilon)$ 出现，因此额外完整 cycle 是 $O(\log 10^3)=O(1)$（相对 $n$ 的渐近意义），常数再除以固定 $g$。这体现进入谱收缩区后误差几何下降。</div></details>
+
+<details class="thought-question"><summary>4. 输入证书 $\sqrt K\sigma<1$ 失败，能否断言矩阵不可缩放？</summary><div class="thought-answer">不能。它是充分条件，不是必要条件；失败可能只是列和不平衡或谱估计太松。应改用 Hall/support 条件、直接运行带诊断的 scaling，或使用含端点信息的混合证书。</div></details>
+
+<details class="thought-question"><summary>5. 为什么 dense threshold 出现在 $\gamma>1/2$？</summary><div class="thought-answer">两个各含超过半数列的大条目邻域必有线性重叠，形成统一的两步随机游走下界和常数谱隙；等于或低于半数时可以把邻域分隔，密度本身不再保证全局连接与快速传播。</div></details>
+
+<details class="thought-question"><summary>6. warm-start dual potentials 最直接改善哪个参数？</summary><div class="thought-answer">它缩小当前迭代到新精确缩放的有效 log-distance，也就是类似 $D$ 的初始势上界；若新旧问题端点谱隙相近，就能减少 global displacement 阶段。它未必改变 $g$，所以混合慢的实例仍可能慢。</div></details>
+
+## 原始资料
+
+- [论文主页](https://arxiv.org/abs/2611.08963)
+- [PDF](https://arxiv.org/pdf/2611.08963)
+- 论文没有发布专用代码仓库；其贡献是定理、证明与显式反例构造。

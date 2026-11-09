@@ -1,0 +1,270 @@
+---
+author: Yanjie Liang
+pubDatetime: 2026-11-09T10:30:00+08:00
+title: "DeepSeek‑V3 模型档案：671B MoE、MLA、无辅助损失路由、MTP 与 FP8 系统怎样协同"
+featured: true
+category: foundation-models
+tags:
+  - deepseek-v3
+  - foundation-model
+  - mixture-of-experts
+  - fp8-training
+  - multi-token-prediction
+description: "系统拆解 DeepSeek‑V3 官方 53 页技术报告：MLA 与 256 routed experts、无辅助损失负载均衡、MTP、DualPipe/FP8、14.8T token 预训练、R1 蒸馏、GRPO、评测和部署边界。"
+paper:
+  title: "DeepSeek-V3 Technical Report"
+  venue: "Official technical report"
+  paperUrl: "https://arxiv.org/abs/2412.19437"
+  pdfUrl: "https://arxiv.org/pdf/2412.19437"
+  codeUrl: "https://github.com/deepseek-ai/DeepSeek-V3"
+  score: 96
+  scoreNote: "推荐理由：53 页官方报告把 671B/37B-active 架构、MLA/MoE/MTP 公式、2048×H800 并行拓扑、FP8 数值细节、14.8T token schedule、128K 扩展、SFT/RL、部署单元、消融与统一评测连成可审计系统档案；扣分在于训练语料配比、完整 RL 超参、安全评测与真实美元成本仍不透明，部分闭源基线依赖 API 和非同时期版本。"
+---
+
+> [!NOTE]
+> arXiv v1 于 **2024 年 12 月 27 日**公开，当前 v2 更新于 **2025 年 2 月 18 日**。今天选择这份较早的官方技术报告，而不是近期信息稀薄的模型公告，是因为它完整记录架构、训练系统、数据规模、超参、消融、评测和部署；与本站已收录的 DeepSeek‑V4.1‑Flash 相比，V3 还是理解 MLA、aux-loss-free MoE、MTP、FP8 与 DualPipe 如何首次被整合到 671B 训练的基础档案。
+
+## 一句话结论
+
+**DeepSeek‑V3 的“低成本”不是某一个稀疏技巧：61 层、671B 总参数/37B 每 token 激活的 DeepSeekMoE 降低计算，MLA 把 KV cache 压到 latent + decoupled RoPE key，无辅助损失的 bias routing 保持 batch-level 负载，MTP 增加未来 token 监督并可复用于 speculative decoding；系统侧再用 16-way PP、64-way EP、DualPipe、定制 all-to-all 和细粒度 FP8，最终以 2.788M H800 GPU-hours 完成 14.8T token 预训练、上下文扩展与后训练。这个数字是 GPU 计费口径，不等于能被外部团队按 \$5.576M 复刻。**
+
+<figure><img src="/paper-radar/images/deepseek-v3-report/architecture.svg" alt="DeepSeek-V3 从 MLA、DeepSeekMoE、无辅助损失路由到 MTP 的模型架构" width="1600" height="900" loading="eager"/><figcaption>图 1：依据官方报告 Figures 2–3、Sections 2.1–2.2 与 model hyper-parameters 重绘。37B active 包括 attention、shared expert 与每 token 选中的 8 个 routed experts，不等同于一台 37B Dense 的通信与显存成本。</figcaption></figure>
+
+## 为什么 V3 仍值得单独做模型档案
+
+模型发布页通常告诉你权重、许可证与推理命令；完整技术报告应回答：
+
+- total / active parameters 怎样形成，KV cache 和 MoE communication 如何约束部署；
+- 14.8T token 到底用什么 schedule、batch、sequence length 与 optimizer；
+- 低精度训练如何避免只是“能跑”却悄悄损失质量；
+- post-training 的 reasoning 来自 base、SFT、R1 distillation 还是 RL；
+- leaderboard 是否同 prompt、同 output budget、同评测框架。
+
+DeepSeek‑V3 对前四项披露度很高，尤其给出 FP8 累加与跨节点 kernel 的工程细节；对数据版权/配比、RL 规模、安全和污染审计仍不足。它是一份“系统可解释、数据不可复现”的典型工业报告。
+
+## 家族定位：671B 总容量，37B 每 token 激活
+
+模型为 61 层 Transformer，hidden size 7168，128 attention heads，每头维度 128。除前三层外，FFN 均替换为 MoE：每层 1 个 shared expert、256 个 routed experts，每 routed expert intermediate size 2048；每 token 选 8 个 routed expert，并限制最多发往 4 个节点。总参数 671B，激活参数约 37B。
+
+MoE 的收益来自每 token 只运行一小部分专家，代价是：所有 671B 权重仍要存储/分片，router 与 all-to-all 仍要运行，热点专家会形成 straggler。因此“37B active”不能直接推导单卡 37B 模型的推理门槛。报告给出的推荐最小部署单元已经说明现实：prefill 为 4 节点/32 GPU，decode 为 40 节点/320 GPU。
+
+## MLA：缓存 latent，不缓存每个 head 的完整 K/V
+
+对 token $t$ 的层输入 $h_t\in\mathbb R^d$，MLA 先把 key/value 联合压到低维 latent：
+
+$$
+c_t^{KV}=W^{DKV}h_t,
+$$
+
+$$
+k_t^C=W^{UK}c_t^{KV},\qquad
+v_t^C=W^{UV}c_t^{KV}.
+$$
+
+位置部分单独生成共享 RoPE key：
+
+$$
+k_t^R=\operatorname{RoPE}(W^{KR}h_t),
+\qquad
+k_{t,i}=[k_{t,i}^C;k_t^R].
+$$
+
+query 也先降维到 $c_t^Q=W^{DQ}h_t$，再升维成内容与 RoPE 分量。最终每头：
+
+$$
+o_{t,i}=\sum_{j=1}^{t}
+\operatorname{Softmax}_j\left(
+\frac{q_{t,i}^\top k_{j,i}}
+{\sqrt{d_h+d_h^R}}
+\right)v_{j,i}^C.
+$$
+
+生成时只需 cache $c_t^{KV}$ 与 $k_t^R$，而不是所有 head 的展开 K/V。V3 的 $d_c=512$、query compression $d'_c=1536$、decoupled RoPE head dim $d_h^R=64$。MLA 的价值不只是显存：decode 更常是 memory-bandwidth bound，缩小每 token 读取量会直接影响并发与吞吐。但 report 没有给同规模 MHA 的独立端到端消融，V3 最终性能不能全归因于 MLA。
+
+## DeepSeekMoE：shared + fine-grained routed experts
+
+令 $u_t$ 为 FFN 输入，输出为：
+
+$$
+h'_t=u_t+
+\sum_{i=1}^{N_s}\operatorname{FFN}^{(s)}_i(u_t)
++\sum_{i=1}^{N_r}g_{i,t}\operatorname{FFN}^{(r)}_i(u_t).
+$$
+
+基础 affinity 使用 sigmoid：
+
+$$
+s_{i,t}=\operatorname{Sigmoid}(u_t^\top e_i),
+$$
+
+只保留 top-$K_r$ 后再按被选原始 affinity 归一化为 $g_{i,t}$。shared expert 始终执行，试图吸收公共知识；256 个细粒度 routed experts 提供组合容量。
+
+### 无辅助损失负载均衡的细节
+
+传统 MoE 把 balance loss 加进训练目标，梯度可能为了均匀而牺牲 token–expert 匹配。V3 为每个 expert 维护 bias $b_i$，top-k 依据 $s_{i,t}+b_i$，但真正乘 expert 输出的 gate 仍来自原始 $s_{i,t}$：
+
+$$
+g'_{i,t}=
+\begin{cases}
+s_{i,t},&s_{i,t}+b_i\in\operatorname{TopK}(\{s_{j,t}+b_j\},K_r),\\
+0,&\text{otherwise}.
+\end{cases}
+$$
+
+每个 training step 后，过载 expert 的 $b_i$ 减 $\gamma$，欠载的加 $\gamma$。这类似控制器在 routing decision 上施加慢速偏置，而不直接把均匀目标写进 representation gradient。
+
+“auxiliary-loss-free”不是完全没有 balance loss：报告仍以极小 $\alpha=10^{-4}$ 加 sequence-wise loss，防单序列极端不均；主 balance 在 batch level。bias update speed 前 14.3T tokens 为 0.001，最后 500B 设为 0。训练与推理都不丢 token。
+
+小/大规模对照中，去掉纯 auxiliary loss、改用 bias routing 在多数 benchmark 更好；但更重要的诊断是同等 batch-level balance 下，batch-wise auxiliary loss 与无辅助损失法能达到相似 validation loss：1B 模型 2.253 vs 2.253，3B 模型 2.080 vs 2.080。论文自己因此把核心解释收窄为**balance scope**，而不是“任何辅助损失天生有害”。
+
+## MTP：把未来一个 token 变成额外训练目标
+
+V3 的 MTP depth $D=1$：主模型预测 next token，额外模块顺序预测再下一个 token，并保留因果链。第 $k$ 层 MTP 输入把上一个 depth 的隐藏状态与真实未来 token embedding 拼接：
+
+$$
+h_i^{\prime k}=M_k[
+\operatorname{RMSNorm}(h_i^{k-1});
+\operatorname{RMSNorm}(\operatorname{Emb}(t_{i+k}))],
+$$
+
+经独立 Transformer block 后用与主模型共享的 embedding/output head 得到 $P_{i+k+1}^k$。损失为
+
+$$
+\mathcal L_{\mathrm{MTP}}=
+\frac{\lambda}{D}\sum_{k=1}^{D}
+\left(-\frac1T\sum_{i=2+k}^{T+1}\log P_i^k[t_i]\right).
+$$
+
+$\lambda$ 前 10T tokens 为 0.3，后 4.8T 为 0.1。推理可直接丢弃 MTP module，所以主模型 FLOPs 不变；也可把它当 draft head 做 speculative decoding。报告称额外第二 token 接受率 85%–90%，解码可到 1.8× TPS。
+
+消融不是只在最终模型上“开/关一个 flag”：15.7B/1.33T token 与 228.7B/540B token 两个受控配对保持数据与其他架构相同，MTP 在多数 benchmark 提升。它支持因果归因，但不能保证收益在任意 $D$、数据或模型规模单调。
+
+## 训练系统：MoE 的瓶颈不在算力，而在把通信藏起来
+
+集群是 2048 张 H800，每节点 8 GPU，节点内 NVLink/NVSwitch，跨节点 InfiniBand。并行为 16-way pipeline parallel、64-way expert parallel（跨 8 nodes）与 ZeRO-1 data parallel，不用 tensor parallel 训练。
+
+cross-node expert parallel 的 compute:communication 约 1:1。DualPipe 把 backward 再拆成 input-gradient 与 weight-gradient，让前后方向 micro-batch 相向流动，并把 attention/MLP 与 dispatch/combine 重叠。对 $PP$ stages，其 bubble 表达式由 1F1B 的
+
+$$
+(PP-1)(F+B)
+$$
+
+变成 DualPipe 的
+
+$$
+\left(\frac{PP}{2}-1\right)(F\&B+B-3W),
+$$
+
+代价是两份模型参数、activation 从 $PP$ 增为 $PP+1$。大 EP 已把每个 rank 的参数份额压低，使双参数副本可接受。
+
+通信 kernel 利用 IB 50 GB/s 与 NVLink 160 GB/s 的 3.2× 比例：token 先经 IB 到目标节点相同 local GPU index，再用 NVLink 转给 expert；每 token 最多 4 节点。20/132 个 H800 SM 被分成 10 个通信 channel，并与 compute stream 重叠。报告说这最多可在相同通信成本下支持约 $4\times3.2\approx13$ experts，实际只选 8。
+
+## FP8：真正困难的是 scale 与累加，不是把 dtype 改成 8 bit
+
+Fprop、Dgrad、Wgrad 三类 GEMM 输入用 FP8，输出 BF16/FP32；embedding、output head、MoE gate、normalization 与 attention 仍保留高精度。所有张量统一 E4M3，而非 forward E4M3 / backward E5M2。
+
+V3 用细粒度 scale：activation 1×128 tile、weight 128×128 block。若量化块为 $X$、E4M3 最大有限值为 $f_{\max}$，典型 scale 可理解为
+
+$$
+s_X=\frac{\max|X|}{f_{\max}},
+\qquad
+\widehat X=s_X\cdot\operatorname{FP8}(X/s_X).
+$$
+
+关键硬件限制是 H800 Tensor Core 的 FP8 累加约只保留 14 bit。团队每 128 次 FP8×FP8 MMA 把 partial sum 提升到 CUDA core 的 FP32 累加，避免大值累加误差；scale 尽量用 2 的幂，减少乘法开销。activation cache 和 MoE dispatch 也用 FP8，optimizer state 则以 BF16 低精度保存。
+
+16B/1.33T tokens 与约 230B/0.9T tokens 的 BF16 对照中，FP8 relative loss error 始终低于 0.25%。附录也报告一个失败边界：activation gradient 若用 block-wise 而非 token-wise scaling，16B MoE 训练约 300B token 后会发散，推测来自 token-correlated outliers。这个负结果比“成功训练”更能说明方案不是任意 FP8 配方。
+
+<figure><img src="/paper-radar/images/deepseek-v3-report/pipeline-evidence.svg" alt="DeepSeek-V3 训练流水线、并行与 FP8 系统、成本和关键评测边界" width="1600" height="900" loading="lazy"/><figcaption>图 2：依据报告 Table 1、Sections 3–5、Tables 3/4/6/7 与 Appendix B 重绘。\$5.576M 是按 \$2/H800 GPU-hour 乘出的假设租赁价，不含数据、研发、失败试验、网络、存储、电力与推理。</figcaption></figure>
+
+## 预训练：14.8T token 的明确 schedule 与模糊数据账本
+
+语料提高数学、编程与多语言比例，去重同时保留多样性；document packing 不做 cross-sample attention mask。FIM 以 10% 比例应用于文档级 Prefix–Suffix–Middle。tokenizer 为 128K byte-level BPE，并随机拆一部分“标点+换行”合并 token，缓解 few-shot 多行 prompt 的 token boundary bias。
+
+训练超参披露得很完整：AdamW $\beta_1=0.9,\beta_2=0.95$，weight decay 0.1，gradient clip 1.0，sequence length 4K。learning rate 前 2K steps warmup 到 $2.2\times10^{-4}$，保持到 10T tokens，随后 4.3T cosine decay 到 $2.2\times10^{-5}$；最后 500B tokens 中先 333B 保持该值，再 167B 降到 $7.3\times10^{-6}$。batch size 前 469B tokens 从 3,072 增到 15,360，之后保持。
+
+长上下文用 YaRN 两阶段各 1,000 steps：4K→32K（batch 1,920），再到 128K（batch 480），learning rate 都是 $7.3\times10^{-6}$。YaRN 只作用于 decoupled shared RoPE key。NIAH 图显示到 128K 保持良好，但 needle retrieval 不等于长文推理完整评测。
+
+缺失的是数据 mixture 百分比、来源清单、过滤器、版权与 benchmark contamination。14.8T 是规模，不是可重建 corpus。
+
+## 后训练：R1 蒸馏、1.5M SFT 与 GRPO
+
+SFT 共 1.5M instances。数学、竞赛代码、逻辑等 reasoning data 来自内部 DeepSeek‑R1：先让领域 expert 通过 SFT+RL 学 R1 pattern，再 rejection sample 出兼顾准确与简洁的 final SFT data；非 reasoning 内容由 DeepSeek‑V2.5 生成并由人核验。base model 做 2 epochs SFT，learning rate $5\times10^{-6}$ cosine 到 $1\times10^{-6}$，packing 时用 sample mask 隔离样本。
+
+RL 同时用 rule-based RM（数学格式、compiler tests）与 model-based RM（有/无 ground truth 的开放任务）；后者从 V3 SFT checkpoint 训练，并生成 reward chain-of-thought 以降低 reward hacking。策略优化为 GRPO，组内 advantage：
+
+$$
+A_i=\frac{r_i-\operatorname{mean}(r_1,\ldots,r_G)}
+{\operatorname{std}(r_1,\ldots,r_G)}.
+$$
+
+报告给出 clipped policy ratio 与 reference KL 目标，但没有 $G$、$\epsilon$、$\beta$、RL prompts 数、steps、总 rollout tokens 等关键超参，所以后训练远未达到可复现配方。
+
+R1 distillation 的受控证据基于 DeepSeek‑V2.5：LiveCodeBench-CoT 31.1→37.4，平均长度 718→783；MATH-500 74.6→83.2，但长度 769→1510。能力提升伴随推理成本翻倍，V3 因此选择折中，而不是把“更长”当免费收益。
+
+## 成本账本：2.788M H800 GPU-hours 应怎样读
+
+| 阶段 | H800 GPU-hours |
+| --- | ---: |
+| 14.8T pre-training | 2.664M |
+| 32K/128K context extension | 119K |
+| post-training | 5K |
+| 合计 | **2.788M** |
+
+每 1T token 约 180K H800 GPU-hours；2048 GPU 上约 3.7 天。按报告假设 \$2/GPU-hour 得 \$5.576M。
+
+这张表的优点是把 context extension 与 post-training 纳入，不只报主预训练。边界也很清楚：未计早期 ablation、失败 run、数据处理、人员、CPU/网络/存储、集群折旧、电力，也假定 H800 以 \$2/h 可获得。它是**最终成功 run 的计算账本**，不是组织总研发成本。
+
+## 评测设置与主要结果
+
+Base model 对 DeepSeek‑V2 Base、Qwen2.5‑72B Base、Llama‑3.1‑405B Base 统一使用内部框架；按任务 0–25 shot，并用 BPB 比较不同 tokenizer 的 language modeling。V3 Base 的代表结果：MMLU 87.1、MMLU-Pro 64.4、HumanEval 65.2、LiveCodeBench-Base 19.4、MATH 61.6、MMMLU non-English 79.4。它并非全胜：Pile-test BPB 0.548 略逊 Llama 0.542，RACE 与 WinoGrande 等也有落后。
+
+Chat model 与 Qwen2.5‑72B、Llama‑3.1‑405B、Claude‑3.5 Sonnet、GPT‑4o 等比较，所有模型 max output 8192。AIME/CNMO 用 temperature 0.7、16 runs 平均，MATH-500 greedy；SWE-bench Verified 用 Agentless，Aider 用 diff format。代表结果：MMLU-Redux 89.1、DROP 91.6、LongBench v2 48.7、LiveCodeBench CoT 40.5、SWE Verified 42.0、AIME 39.2、MATH-500 90.2、C-SimpleQA 64.8。
+
+真实比较应保留：闭源 API model 是 2024 年不同日期版本；prompt 虽尽量统一，provider tokenizer、system behavior 与采样实现不完全同质。Arena-Hard/AlpacaEval 用 GPT-4-Turbo judge，存在 style/judge bias。报告说小于 1000 样本的 benchmark 多温度重复，但没有统一给置信区间；大量表格也没有 contamination audit。
+
+## 部署：active parameters 小，最小服务单元仍很大
+
+prefill 最小 32 GPU：attention TP4+SP、DP8，MoE EP32；额外复制 32 个热点 routed experts，每 GPU 在原 8 个之外再放 1 个 redundant expert。decode 最小 320 GPU：attention TP4+SP、DP80，MoE EP320，每 GPU 只放 1 expert，另有 64 GPU 承担 redundant/shared experts。
+
+这说明 MoE 的总吞吐可以很高，但单请求/小团队部署不是自然优势。报告也把“推荐部署单元过大”列为主要限制。权重开源不等于生产 serving 廉价；量化、expert placement、all-to-all、容错和低流量利用率决定实际 TCO。
+
+## 局限与风险
+
+- 数据来源、领域配比、合成比例、去重与 contamination 缺失，不能复刻 14.8T corpus 或公平审计版权。
+- RL 只披露目标形式，不披露核心规模与超参；安全、有害内容、偏见、越狱与 agentic risk 评测几乎不在报告中。
+- 多数架构一起变化：模型规模、token 数、数据质量、MTP、routing 与系统 co-design 同时出现，最终性能不能由单项消融相加解释。
+- FP8 成功依赖 H800 特性与定制 kernel；换硬件或 compiler 后 0.25% loss gap 不能直接继承。
+- 2.788M GPU-hours 不含失败实验和组织成本；\$5.576M 是假设租赁价，不是经审计账单。
+- 671B 权重与 EP 通信让最小部署单元很大；37B active 容易被市场叙事误读成 37B 模型的服务成本。
+- self-rewarding 用模型自己投票形成奖励，可能放大已有偏好；报告没有独立人类盲评验证其长期稳定性。
+
+## 工程启示
+
+- MoE router 的“选谁”与“给多大权重”可以解耦：bias 只改 top-k selection，原 affinity 保留表示梯度；控制器更新应比模型步慢。
+- 宣称 aux-loss-free 时必须披露残余 sequence loss、balance 粒度与 token dropping；名称不能代替实现。
+- FP8 验证至少同时覆盖 Fprop/Dgrad/Wgrad、长期 loss curve、不同 scale granularity 和一个会失败的压力案例。
+- all-to-all 优化应与拓扑和 routing co-design；限制每 token 节点数可能比盲目加网络带宽更有效。
+- MTP 应分别报告训练收益、推理丢弃后的净性能、draft acceptance 与 TPS；三者是不同价值来源。
+- 成本表要拆成功训练、扩上下文、后训练、失败 run 和数据管线；GPU-hour 与美元之间明确硬件、价格和利用率假设。
+- 评测表必须附 max output、temperature、runs、prompt framework 与 model version；否则 reasoning 分数不可比较。
+
+## 思考题
+
+<details class="thought-question"><summary>1. 为什么 37B active 不能把 DeepSeek‑V3 当成普通 37B Dense？</summary><div class="thought-answer">每 token 只计算约 37B 参数，但 671B 权重仍需存储和跨 GPU 放置；8 个 routed experts 触发 all-to-all，shared expert、attention、router 与冗余副本也有成本。Dense 37B 没有同样的 expert communication 和大部署单元。</div></details>
+
+<details class="thought-question"><summary>2. bias routing 为什么可能比 balance loss 少伤害模型？</summary><div class="thought-answer">bias 只影响 top-k 选择，不直接作为额外目标反向推动 affinity 变均匀；被选后 gate 仍用原始 $s_{i,t}$。因此负载控制与表示学习部分解耦。但序列级极端不均仍用很小辅助损失约束，不能理解为完全无正则。</div></details>
+
+<details class="thought-question"><summary>3. MLA 的 KV cache 为什么只需 $c_t^{KV}$ 与 $k_t^R$？</summary><div class="thought-answer">各 head 的内容 K/V 都能由共享低维 latent 通过 up-projection 重建，位置部分则由独立 RoPE key 保留。缓存展开后的每头 K/V 是冗余的；代价是推理 kernel 必须融合或吸收重建运算。</div></details>
+
+<details class="thought-question"><summary>4. MTP 在推理时被丢弃，为何仍能提升主模型？</summary><div class="thought-answer">训练时额外未来 token loss 通过共享主干提供更密集信号，迫使当前表示包含对更远未来有用的信息。MTP module 只是训练头；共享主干已被梯度改变，所以删除头后收益可保留。</div></details>
+
+<details class="thought-question"><summary>5. \$5.576M 训练成本最容易漏掉什么？</summary><div class="thought-answer">它只是 2.788M H800 GPU-hours 乘 \$2/h，主要对应最终成功流水线；不含探索/失败实验、数据获取清洗、CPU/网络/存储、电力、研发人力和推理部署，也未证明外部团队能按同价获得 2048 张 H800。</div></details>
+
+<details class="thought-question"><summary>6. 若换成不支持细粒度 scale 的 GPU，FP8 配方怎样退化？</summary><div class="thought-answer">需在 kernel 中显式读写/广播 scale，activation outlier 会被较粗 per-tensor scale 放大，累加精度也可能不同。应重新做长期 BF16 对照，必要时保留 Dgrad 或敏感层高精度，而不是直接复用“FP8 relative loss &lt;0.25%”结论。</div></details>
+
+## 原始资料
+
+- [官方技术报告主页](https://arxiv.org/abs/2412.19437)
+- [PDF](https://arxiv.org/pdf/2412.19437)
+- [官方权重与代码仓库](https://github.com/deepseek-ai/DeepSeek-V3)
