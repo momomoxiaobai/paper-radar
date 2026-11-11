@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-10T08:40:09.209648+00:00",
+  "generated_at": "2026-11-11T08:00:39.860004+00:00",
   "note": "Heuristic queues by editorial track. PDF research and article publication require a later verified generation stage.",
   "lanes": [
     {
@@ -8,33 +8,62 @@
       "cadence": "周一至周五",
       "candidates": [
         {
-          "arxiv_id": "2611.12791",
-          "title": "Large Language Models as a Universal Searcher for Open-World Automated Machine Learning",
+          "arxiv_id": "2611.14515",
+          "title": "AutoScaffold: AI-Guided Scaffolding for Reinforcement Learning of Language Models",
           "authors": [
-            "Yuxuan Hu",
-            "Jihao Liu",
-            "Weikang Shi",
-            "Xijie Huang",
-            "Linda Wei",
-            "Mingjie Zhan",
-            "Aojun Zhou",
-            "Rui Liu",
-            "Hongsheng Li"
+            "Zijian Zhang",
+            "Rizhen Hu",
+            "Jiangweizhi Peng",
+            "Shiyang Li",
+            "Sujay Bhatt",
+            "Sihan Zeng",
+            "Mingyi Hong"
           ],
-          "abstract": "Developing effective machine learning models requires complex manual tuning, while current Automated Machine Learning (AutoML) frameworks remain domain-specific and isolate model architecture, training hyperparameter, and data ratio optimization. Here, we bridge this gap by proposing a universal, large language model (LLM)-based AutoML framework that jointly optimizes these configurations for the first time without the need for task-specific fine-tuning. We propose NCode, a unified numerical encoding scheme that translates diverse AutoML design choices into universal discrete sequences and effectively reframes the optimization process as a unified ranking task. Trained solely on optimization trajectories derived from a limited, single-domain vision task, the proposed LLM-based searcher demonstrates impressive cross-task, cross-modality and joint search-space optimization generalizability, achieving state-of-the-art performance across image classification, image segmentation, speaker verification and text-to-image benchmarks. Crucially, it exhibits superior scalability in the large-scale training and joint optimization of a billion-parameter Diffusion Transformer, requiring 896 GPU-days and attaining a state-of-the-art GenEval score of 0.91. By leveraging reinforcement learning to instill Chain-of-Thought reasoning, we provide a systematic way to interpret the LLM-based searcher's internal decision-making mechanisms, revealing its optimization strategy shifted from the early-stage diversity-driven exploration to the late-stage anchor exploitation. Our proposed framework provides a scalable, generalizable, and interpretable pathway toward general-purpose open-world machine learning optimization.",
+          "abstract": "Reinforcement learning with verifiable rewards (RLVR) produces rich training experience, yet outcome rewards reduce each attempt to a single number and leave most of this information unused. Training-time scaffolds, such as strategies or hints added to the prompt during training, offer a natural way to turn this information into guidance, but their design and adaptation are largely left to humans and tailored to specific domains. We introduce AutoScaffold, a unified AI-for-AI framework that turns a student's training experience into adaptive scaffolds, with minimal domain-specific information and no human intervention during training. A frozen teacher periodically examines this experience, diagnoses bottlenecks, and designs scaffolds in two forms: (i) strategies shared across a class of tasks and (ii) hints for individual hard tasks, adjusting the content and amount of support as the student learns. The scaffolds are removed at evaluation. We apply the same framework to ALFWorld, search-based QA, mathematical reasoning, and GPU kernel generation. When evaluated without scaffolds, students trained with AutoScaffold outperform those trained with the corresponding RL baselines in all four domains, with gains of 7.2 points in ALFWorld success and 4.0 points in average QA exact match. On GPU kernel generation, AutoScaffold increases the fraction of tasks with a correct kernel that runs faster than the PyTorch reference by up to 5.0 points. On math, our student surpasses QuestA's reported accuracy using approximately one-third as many student training steps. Analyses show that the teacher identifies a different failure in each task class and shifts its scaffolds from step-by-step workflows to targeted fixes as the student improves, and that its revised scaffolds help the student learn more than keeping the previous scaffold or using no scaffold.",
           "categories": [
+            "cs.LG",
             "cs.CL"
           ],
-          "published": "2026-11-09T17:58:38Z",
-          "paper_url": "http://arxiv.org/abs/2611.12791v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.12791v1.pdf",
+          "published": "2026-11-10T18:58:46Z",
+          "paper_url": "http://arxiv.org/abs/2611.14515v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.14515v1.pdf",
+          "score": 100,
+          "score_reasons": [
+            "分类：RL",
+            "标题命中：reinforcement learning",
+            "摘要命中：ppo",
+            "摘要命中：rlvr",
+            "摘要命中：verifiable reward",
+            "cs.CL"
+          ],
+          "category": "rl",
+          "category_label": "RL",
+          "track": "frontier"
+        },
+        {
+          "arxiv_id": "2611.14333",
+          "title": "AI Isn't Getting Dumber, We're Getting Pickier: Rising Standards in Human Evaluation of Large Language Models",
+          "authors": [
+            "Zihan Chen",
+            "Lei Nico Zheng",
+            "Di Zhu"
+          ],
+          "abstract": "Users often complain that AI assistants such as ChatGPT are getting worse. Some versions do change, but human evaluation leaves a second possibility untested: the people judging may change. We separate the two on Chatbot Arena, a public platform where people compare answers from two anonymous large language models (LLMs) and pick the better one or say both are bad. We study 1,260,967 blind votes cast from May 2023 to August 2024 on pairs of models whose versions are fixed: dated vendor snapshots and models with fixed open weights. For the same pair of unchanged models, the share of votes saying \"both are bad\" rises by 1.71 percentage points a month on a mean of 17.1%, and by 1.91 points a month in 2024. In fourteen pairs observed often in both 2023 and 2024, it rose in every one, from 15.5% to 23.3%. The ranking does not trend: in 2024, the stronger model's share of decisive votes is flat. The rise holds within the same voter and on the same pair, and across arrival cohorts from their first recorded vote. It holds with prompt controls, in every major language, for dated vendor snapshots, open-weight models and models with stable answer length, and between interface changes. The drift is shared across models: month effects estimated from other models' pairs remove it from each model's own pairs. Platform-wide, the average model would be expected to score 78% against the 2023 average, yet the share of \"both are bad\" votes ended near where it began. The pattern fits a standard that follows the category's progress, so a product that stands still is judged as declining. Absolute verdicts on AI drifted while relative comparisons held steady, an evaluation drift that matters for LLM leaderboards and for the human feedback used to train models.",
+          "categories": [
+            "cs.HC",
+            "cs.AI",
+            "cs.CL",
+            "cs.CY"
+          ],
+          "published": "2026-11-10T16:56:16Z",
+          "paper_url": "http://arxiv.org/abs/2611.14333v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.14333v1.pdf",
           "score": 100,
           "score_reasons": [
             "分类：LLM",
             "标题命中：large language model",
             "标题命中：language model",
-            "摘要命中：reasoning",
-            "摘要命中：benchmark",
+            "标题命中：evaluation",
             "cs.CL"
           ],
           "category": "llm",
@@ -42,32 +71,63 @@
           "track": "frontier"
         },
         {
-          "arxiv_id": "2611.12728",
-          "title": "Safe Reinforcement Learning for Multi-Turn Clinical Agents: When Dense Rewards Beat Outcome Rewards",
+          "arxiv_id": "2611.14285",
+          "title": "LM-SimBench: A Unified Framework, Dataset, and Benchmark for Large Language Model Training Simulation",
           "authors": [
-            "Brendan P. Murphy",
-            "Agustina Saenz"
+            "Yu Dong",
+            "Hong Li",
+            "Qiang Sun",
+            "Xu Zhou",
+            "Jinbiao Huo",
+            "Qixiu Cheng",
+            "Zhiyuan Liu"
           ],
-          "abstract": "Reinforcement learning with verifiable rewards is increasingly used to improve language model reasoning, yet its effects on sequential decision procedures remain poorly understood. We study this problem in clinical multi-turn agents that must decide what information to request, when to stop gathering evidence, and which action to take. We introduce three controlled environments: medication refill triage, acute diagnostic work-up, and dosing titration, each with hidden clinical states, query costs, exact adaptive oracles, and deterministic outcome verifiers. Across these tasks, outcome-only group relative policy optimization often improves aggregate reward while producing undesirable procedures, including premature commitment, one-question collapse, and failures on rare high-risk cases. In diagnostics, assigning dense credit to questions that reduce uncertainty improves held-out value and moderate-case support across three training seeds relative to outcome-only reinforcement learning, without the high-risk seed collapse observed under outcome-only training. Separating exploration from exploitation further increases high-risk support at its best checkpoint, but at the cost of excessive information gathering on low-acuity cases. Additional experiments show that the optimal strength of process credit is task-dependent; that after a supervised warmup that already gathers carefully, reinforcement learning raises aggregate reward by trimming questions while degrading high-risk performance; and that reinforcement learning does not reliably repair rare behavior gaps inherited from biased supervised data. Verifiable final outcomes are therefore insufficient for training reliable multi-turn agents: reward design must account for the procedure used to reach an answer, and evaluation must distinguish adaptive information gathering from reward-exploiting shortcuts.",
+          "abstract": "Evaluating candidate parallelization strategies through distributed training runs makes strategy selection prohibitively expensive at scale. Performance simulation offers a lower cost alternative, yet controlled comparisons among existing simulators remain difficult because they differ in the training stages they model and the workloads on which they are evaluated. We introduce LM-SimBench, a unified framework, profiling dataset, and benchmark for evaluating LLM training simulators. The framework decomposes simulation into functional stages from model compilation to schedule level aggregation, connecting execution representations and cost estimators to measurable evaluation targets. Following this framework, we profile 23 model settings from 10 dense and Mixture-of-Experts (MoE) LLM families on an Ascend Neural Processing Unit (NPU) cluster. The resulting dataset contains 348 feasible configurations that jointly vary five parallelism dimensions and activation recomputation, with six views spanning configuration, rank, operator, event, and kernel granularity. Evaluations of representative training simulators demonstrate how LM-SimBench supports comparisons of prediction accuracy, assessment of configuration selection, and diagnosis of prediction errors. Matched GPU-NPU experiments validate the cross-platform applicability of the collection and evaluation protocol and demonstrate NPU-guided GPU configuration selection.",
           "categories": [
-            "cs.LG",
-            "cs.AI",
-            "cs.CL"
+            "cs.AI"
           ],
-          "published": "2026-11-09T17:14:40Z",
-          "paper_url": "http://arxiv.org/abs/2611.12728v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.12728v1.pdf",
+          "published": "2026-11-10T16:26:19Z",
+          "paper_url": "http://arxiv.org/abs/2611.14285v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.14285v1.pdf",
           "score": 100,
           "score_reasons": [
-            "分类：RL",
-            "标题命中：reinforcement learning",
-            "摘要命中：policy optimization",
-            "摘要命中：ppo",
-            "摘要命中：verifiable reward",
-            "cs.CL"
+            "分类：LLM",
+            "标题命中：large language model",
+            "标题命中：language model",
+            "标题命中：benchmark",
+            "摘要命中：evaluation"
           ],
-          "category": "rl",
-          "category_label": "RL",
+          "category": "llm",
+          "category_label": "LLM",
+          "track": "frontier"
+        },
+        {
+          "arxiv_id": "2611.14263",
+          "title": "Chain of Physics: Supporting Fault Diagnosis with Engineering-Inspired Large Language Model Reasoning",
+          "authors": [
+            "Wenqi Zhou",
+            "Leonardo Baldo",
+            "Kai Goebel",
+            "Manuel Arias Chao"
+          ],
+          "abstract": "Fault diagnosis in complex systems requires linking observed changes in physical quantities to the failure mechanisms that produce them. Experienced engineers perform this task by combining sensor information with knowledge of system behavior and fault propagation. Large Language Models (LLMs) can support this process, but their diagnostic reasoning depends on the availability of asset-specific engineering knowledge and on how this knowledge is represented and used during inference. This work introduces Chain of Physics (CoP), an LLM-based fault-diagnosis framework built around a Constrained Knowledge Graph (CKG) generated automatically from asset-specific reference documentation. CoP addresses failure-sensor association from textual engineering knowledge. The CKG stores diagnostic chains connecting failure modes, changes in physical quantities, and monitoring sensors. During inference, semantically similar graph paths are retrieved for each question and used as both information and in-context examples for the reasoning process. Candidate failure modes are extracted from the question and analysed independently through dedicated LLM calls, which generate plausible failure-to-observation chains. A final decision module compares these chains with the available answer choices. CoP is evaluated on the FailureSensorIQ benchmark across four industrial asset classes and three LLMs. Compared with direct prompting and conventional Retrieval-Augmented Generation (RAG), CoP improves diagnostic accuracy across all evaluated models, with gains ranging from 7.8 to 19.6 percentage points and from 11.7 to 18.2 percentage points, respectively. The results show that structured engineering knowledge can improve LLM-based diagnostic reasoning when graph retrieval is combined with in-context examples of fault propagation.",
+          "categories": [
+            "cs.LG",
+            "eess.SP"
+          ],
+          "published": "2026-11-10T16:09:44Z",
+          "paper_url": "http://arxiv.org/abs/2611.14263v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.14263v1.pdf",
+          "score": 100,
+          "score_reasons": [
+            "分类：LLM",
+            "标题命中：large language model",
+            "标题命中：language model",
+            "标题命中：reasoning",
+            "摘要命中：benchmark"
+          ],
+          "category": "llm",
+          "category_label": "LLM",
           "track": "frontier"
         },
         {
@@ -107,34 +167,6 @@
           "track": "frontier"
         },
         {
-          "arxiv_id": "2611.11752",
-          "title": "Spectral Rank and Step-Direction Dynamics in Language-Model Post-Training",
-          "authors": [
-            "Khurram Khalil",
-            "Khaza Anuarul Hoque"
-          ],
-          "abstract": "Language-model post-training modifies weights through cumulative updates and successive displacements, yet existing studies report seemingly conflicting spectral properties: nearly full-rank updates and low stable-rank changes. We show these observations are compatible and characterize update directions during training. For singular values following $σ_i \\propto i^{-α}$ with $0 < α\\leq 1/2$, we prove that stable rank becomes negligible relative to fixed-energy rank as dimension increases. Full singular value decompositions of selected OLMo-2-7B updates confirm this separation: three proximal policy optimization (PPO) attention updates have stable ranks of 9.6-18.3 but require 532-1,222 singular components to capture 80% of their energy. We next compute consecutive checkpoint-displacement cosines from full-model inner products. Across nine publicly released reinforcement learning from verifiable rewards (RLVR) stages, all 131 adjacent pairs have negative cosines on their native checkpoint grids, including PPO and Group Relative Policy Optimization (GRPO) trajectories. Supervised fine-tuning comparisons across four model families show configuration-dependent alignment, including negative late-training cosines for Mistral and FP32 Llama. Finally, a controlled OLMo-2-1B study with three paired seeds and a 2,048-token response cap compares group-relative advantages against a learned critic with generalized advantage estimation (GAE). At matched 60-rollout windows, late-training mean cosines are +0.259 and +0.012, respectively; the paired critic-minus-group difference is -0.247 (seed-level 95% interval [-0.358, -0.137]). These findings distinguish spectral concentration, energy coverage, and trajectory direction, and demonstrate that the advantage system influences directional alignment under matched training conditions.",
-          "categories": [
-            "cs.LG",
-            "cs.AI"
-          ],
-          "published": "2026-11-09T01:43:20Z",
-          "paper_url": "http://arxiv.org/abs/2611.11752v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.11752v1.pdf",
-          "score": 100,
-          "score_reasons": [
-            "分类：RL",
-            "摘要命中：reinforcement learning",
-            "摘要命中：policy optimization",
-            "摘要命中：ppo",
-            "摘要命中：grpo",
-            "摘要命中：rlvr"
-          ],
-          "category": "rl",
-          "category_label": "RL",
-          "track": "frontier"
-        },
-        {
           "arxiv_id": "2611.11541",
           "title": "Safeguarding Agentic AI in Radiology Workflows: A Multimodel Evaluation of Rule-based and Large Language Model-based Verification",
           "authors": [
@@ -167,81 +199,56 @@
           "track": "frontier"
         },
         {
-          "arxiv_id": "2611.10844",
-          "title": "What Broke & Why: Practical Lessons from Reinforcement Learning Post-Training",
+          "arxiv_id": "2611.13196",
+          "title": "From Process Models to Composable Agentic Workflows: Combining BPMN, Agents and Enterprise Knowledge",
           "authors": [
-            "Luv Verma"
+            "Christian Fillies",
+            "Jan Fillies",
+            "Frauke Weichhardt",
+            "Gay Anne Wood-Albrecht"
           ],
-          "abstract": "Reinforcement learning with verifiable rewards (RLVR) has become an important way to improve how language models reason, solve problems, and use tools. But getting it to work in practice is not always straightforward. Training can fail because a model receives no useful reward, learns to exploit the reward system, stops exploring, or appears to improve when the evaluation itself is misleading. In this book, we give a practical introduction to reinforcement learning post-training for language models, focusing on what works, what fails, and why. We begin with the foundations of post-training, explain GRPO and the training loop step by step, and then follow five training programs covering math reasoning, search agents, training stability, mixture-of-experts models, and software engineering tasks. Each program shows the problems encountered, the changes made, and the lessons learned. The book also examines what reinforcement learning actually changes inside a model. The remaining chapters provide a practical reference for reward design, evaluation, training tool-using agents, debugging common failures, reproducibility, rollout engines, and hardware. Written for researchers and practitioners working with open models, the book aims to help readers understand how to train models, recognize when something goes wrong, and decide what to try next.",
+          "abstract": "LLM-based agents can reason, use tools and collaborate. However, coordinating increasingly complex agentic applications becomes difficult to understand, monitor and improve. Decisions distributed across prompts, tool calls and application logic make workflows implicit. We introduce **Recursive Capability Composition**, enabling agents to execute business processes and expose them as reusable Agentic Tools. This paper presents a BPMN-based approach to Agentic Workflows, combining explicit orchestration with autonomous reasoning. SemTalk BPMN models are transformed into executable workflows using a LangGraph/Pregel runtime. Agentic Tasks introduce LLM reasoning at selected activities, while conventional BPMN controls process flows, deterministic decisions, system interactions and human approvals. Agentic Participants provide reusable interfaces for agent behavior or other executable processes. BPMN orchestration makes multi-agent systems more understandable and manageable. Explicit process models provide developers and operators with a shared view of workflow structures and execution progress, facilitating debugging, monitoring and optimization. Enterprise agents also need organization-specific context. Process Models and Knowledge Graphs describe activities, participants, information objects, decisions and relationships between processes. They provide structured knowledge of how an organization operates, supporting informed agent decisions and actions. Our contributions are threefold: 1. **Model-Driven Execution:** Transforming BPMN models into executable Agentic Workflows. 2. **Recursive Capability Composition:** Exposing agents and executable business processes as reusable tools for other agents. 3. **Enterprise Context:** Using Process Models and Ontologies to provide organization-specific knowledge for agent reasoning.",
           "categories": [
-            "cs.AI"
+            "cs.AI",
+            "cs.MA"
           ],
-          "published": "2026-11-07T16:43:27Z",
-          "paper_url": "http://arxiv.org/abs/2611.10844v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.10844v1.pdf",
-          "score": 100,
-          "score_reasons": [
-            "分类：RL",
-            "标题命中：reinforcement learning",
-            "摘要命中：grpo",
-            "摘要命中：rlvr",
-            "摘要命中：verifiable reward"
-          ],
-          "category": "rl",
-          "category_label": "RL",
-          "track": "frontier"
-        },
-        {
-          "arxiv_id": "2611.10612",
-          "title": "An Agentic Multi-Agent Framework for System Log Anomaly Detection",
-          "authors": [
-            "Ngoc-Son Le",
-            "Huy-Hoang Mac Nguyen",
-            "Ngoc Hong Tran"
-          ],
-          "abstract": "As enterprise systems grow in scale and complexity, manual log analysis and conventional SIEM tools struggle to keep pace with the volume and diversity of incidents. To address this challenge, this paper proposed a multi-agent AI framework supporting in analyzing the system log to trace the attack forensic in the system more effectively and efficiently. The framework is designed using n8n platform and Gemini large language model. The framework consists of 7 AI agent layers. Each agent work on a specific task. When the task is done, the agent will forward the result to the output-associated agent of the next layer. The multi agent model improves the analysis velocity, so it is able to support numerous log analysis requirement at the same time. We deployed 16 test cases to test operation of the multi agent workflow, and evaluate the accuracy per test case and the operative performance. The result findings are very promising.",
-          "categories": [
-            "cs.CR"
-          ],
-          "published": "2026-11-07T09:30:17Z",
-          "paper_url": "http://arxiv.org/abs/2611.10612v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.10612v1.pdf",
-          "score": 100,
+          "published": "2026-11-09T20:18:32Z",
+          "paper_url": "http://arxiv.org/abs/2611.13196v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.13196v1.pdf",
+          "score": 97,
           "score_reasons": [
             "分类：Agent",
-            "标题命中：multi-agent",
+            "摘要命中：multi-agent",
             "标题命中：agentic",
-            "标题命中：agent"
+            "标题命中：agent",
+            "摘要命中：autonomous"
           ],
           "category": "agent",
           "category_label": "Agent",
           "track": "frontier"
         },
         {
-          "arxiv_id": "2611.12635",
-          "title": "Beyond Sunny Skies: Using Large Language Models to Predict Urban Traffic in Adverse Weather",
+          "arxiv_id": "2611.13926",
+          "title": "Beyond Proxy Metrics: MLLMs as Human Surrogates for Explainable AI Evaluation",
           "authors": [
-            "Zhu Xiao",
-            "Kuan Feng",
-            "Tong Li",
-            "Chenxi Liu",
-            "Gang Wang",
-            "Zhuo Tang",
-            "Kenli Li"
+            "Eoin M. Kenny",
+            "Salim I. Amoukou",
+            "Tom Bewley"
           ],
-          "abstract": "Urban traffic flow prediction is a cornerstone of intelligent transportation systems, yet accurate forecasting under adverse weather conditions remains a significant challenge. Existing data-driven models, while effective for routine patterns, often struggle with the sparse data and complex non-linear shifts associated with rare meteorological events. These methods typically treat environmental contexts as shallow numerical features, failing to capture the underlying semantic reasoning-why and how specific adverse conditions alter mobility behaviors across regions with different functional compositions. To address this limitation, we propose Multi-STG, a unified framework that integrates Large Language Model (LLM)-derived semantic priors with graph-based spatiotemporal learning. Multi-STG introduces an LLM-empowered semantic enhancement module that transforms comprehensive context descriptions such as weather, POIs, and holidays into high-level semantic embeddings, effectively providing a knowledge-driven complement to data scarcity. Furthermore, we design a multimodal attentional fusion mechanism to dynamically weigh heterogeneous inputs and a semantic-enhanced prediction head with gated residual calibration to robustly adjust forecasts based on semantic guidance. Extensive experiments on real-world multi-city private car datasets demonstrate that Multi-STG outperforms state-of-the-art baselines, reducing MAE by 11.82\\% on average relative to the strongest baseline across three cities, while maintaining stable performance under sparse and non-stationary conditions.",
+          "abstract": "Explainable AI (XAI) has expanded into a broad and impactful research area, but the fundamental question of how best to evaluate explanation techniques has proven frustratingly elusive. Methodologies typically revolve around either proxy metrics which tell us little about the utility of an explanation, or human evaluation which---while generally considered the gold standard---is expensive, difficult to scale, and challenging to reproduce. In this paper, we investigate if Multimodal Large Language Models (MLLMs) can act as surrogate human participants to automate the evaluation of XAI. To do this, we first propose a ``purpose-grounded'' evaluation framework with metrics applicable to both MLLMs and human users alike. Then, we offer some conceptual insights as to why and when we can trust these models to automate this process. Lastly, we conduct extensive empirical testing across five purpose-grounded areas such as model improvement and fourteen popular MLLMs. Results indicate that all models trend positively, but OpenAI and Qwen models generally show higher alignment compared to other variants, which would be the recommended choices in practice. We expect our insights not to replace user testing, but rather to help XAI researchers complement their current evaluation methodologies and move the field away from heavy reliance on proxy metrics for measuring explanation utility.",
           "categories": [
             "cs.AI"
           ],
-          "published": "2026-11-09T16:12:51Z",
-          "paper_url": "http://arxiv.org/abs/2611.12635v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.12635v1.pdf",
-          "score": 99,
+          "published": "2026-11-10T11:15:28Z",
+          "paper_url": "http://arxiv.org/abs/2611.13926v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.13926v1.pdf",
+          "score": 92,
           "score_reasons": [
             "分类：LLM",
-            "标题命中：large language model",
-            "标题命中：language model",
-            "摘要命中：reasoning",
+            "摘要命中：large language model",
+            "摘要命中：language model",
+            "摘要命中：alignment",
+            "标题命中：evaluation",
             "摘要命中：multimodal"
           ],
           "category": "llm",
@@ -308,34 +315,6 @@
           "track": "harness"
         },
         {
-          "arxiv_id": "2611.10748",
-          "title": "REINS: A Self-Evolving Agent Harness for Real-Time Trajectory Planning",
-          "authors": [
-            "Zhihong Cui",
-            "Hengyu Liu",
-            "Haoran Tang",
-            "Shijun Liu",
-            "Amir Taherkordi",
-            "Tor Skeie"
-          ],
-          "abstract": "Agent harnesses -- runtime scaffolds that wrap an LLM's reasoning loop with tool dispatch, verification, and persistent memory -- have become the standard substrate for deploying LLMs as autonomous agents, as demonstrated by Claude Code and Codex in software engineering. In trajectory planning, however, this paradigm has not taken hold: existing LLM-based trajectory planning methods either keep the LLM in the decision loop, exceeding the millisecond-level control budget, or offload it to offline rules or training-time supervision -- leaving the runtime planner non-evolving. Intermediate hybrids still lack the verification-and-consolidation loop that makes harnesses reliable. We ask: what runtime harness would let an LLM planner meet real-time constraints while self-evolving into a deployable one? We propose REINS, a harness built on three LLM-planner couplings: LLM outputs are (i) grounded to a learned variable-level dynamics model, (ii) verified via calibrated predicates and forward rollout, and (iii) consolidated into an indexed rule memory that serves future scenes in O(log n) without re-invoking the LLM. The harness closes a self-evolution loop: familiar scenes resolve by memory lookup; novel scenes invoke the LLM, whose verified outputs enrich the memory. Without modifying LLM weights, REINS attains 98%+ compliance, nearly 50% collision reduction, and 1.9-4.6 ms latency on simulated and real-world benchmarks at the tactical decision layer, with LLM invocation rate monotonically declining as memory matures. Code: https://github.com/ZhihongCui/REINS",
-          "categories": [
-            "cs.RO",
-            "cs.AI"
-          ],
-          "published": "2026-11-07T14:11:16Z",
-          "paper_url": "http://arxiv.org/abs/2611.10748v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.10748v1.pdf",
-          "score": 85,
-          "score_reasons": [
-            "分类：Harness",
-            "标题命中：agent harness"
-          ],
-          "category": "harness",
-          "category_label": "Harness",
-          "track": "harness"
-        },
-        {
           "arxiv_id": "2611.11971",
           "title": "Harness Matters: Measuring and Dissecting Security Resilience in Web Agents",
           "authors": [
@@ -361,34 +340,6 @@
             "分类：Harness",
             "摘要命中：agent harness",
             "标题命中：web agent"
-          ],
-          "category": "harness",
-          "category_label": "Harness",
-          "track": "harness"
-        },
-        {
-          "arxiv_id": "2611.10926",
-          "title": "DeepFinance: Can AI Diligence a $100MM Deal?",
-          "authors": [
-            "Drew Hahn",
-            "Tyler Shibata",
-            "Jackson Grove",
-            "Rahul Sonwalkar"
-          ],
-          "abstract": "Existing evaluations of AI models on high-finance work focus on retrieving answers from financial documents and producing numerically correct outputs. Real private equity (PE) and investment banking (IB) work also depends on choosing between conflicting sources, making sound assumptions, and keeping every step auditable. We introduce DeepFinance, an ultra long-horizon benchmark of 21 end-to-end PE and IB tasks that take a human professional an average of 27.1 hours. Each task pairs a request with a data room averaging 19 files and is graded against an average of 84 expert-written rubric criteria covering output, workflow, and judgment. We evaluate 22 model configurations, each in its native agent harness. The best configuration, GPT-6 Astra with max reasoning, satisfies 57.6% of rubric criteria, and the top four configurations are not statistically distinguishable. Frontier models often calculate correctly from the wrong inputs and find decision-relevant evidence without acting on it.",
-          "categories": [
-            "cs.CL",
-            "cs.AI",
-            "q-fin.GN"
-          ],
-          "published": "2026-11-07T19:31:09Z",
-          "paper_url": "http://arxiv.org/abs/2611.10926v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.10926v1.pdf",
-          "score": 63,
-          "score_reasons": [
-            "分类：Harness",
-            "摘要命中：agent harness",
-            "cs.CL"
           ],
           "category": "harness",
           "category_label": "Harness",
@@ -421,6 +372,56 @@
           ],
           "category": "skill",
           "category_label": "Skill",
+          "track": "harness"
+        },
+        {
+          "arxiv_id": "2611.14505",
+          "title": "Continual-ARC: Measuring Skill Acquisition over a Working Lifetime",
+          "authors": [
+            "Daniel Lenton"
+          ],
+          "abstract": "Agent harnesses have emerged as a promising mechanism for continual learning, alongside test-time parametric learning. However, the current benchmarks have several limitations: they generally focus on a single applied domain, serve each instance only once, and assume a single family of learner, so memory-based and weight-based systems are rarely compared on the same scale. We propose Continual-ARC, a lifelong stream built from the three ARC-AGI editions, whose tasks need no domain knowledge. The same tasks return after dormant gaps with fresh instances, while new tasks keep arriving. On each instance, the learner may pay for demonstrations, submit answers, or act inside the harness, with retries permitted on incorrect submissions, which are paid for. Each instance is scored based on the share of this feedback budget consumed. Since a learner may keep anything between instances, memory-based and weight-based systems are scored on the same scale. After the stream, the learner is frozen and tested on fresh instances of the tasks it met, which measures memorization, and on unseen tasks, which measures generalization. We run an agent harness with frozen weights, with and without persistence, on Qwen3.5-9B and GLM-5.3 Flash, comparing them with two prompting floors, a program-induction method and Qwen3.5-9B's weights trained to imitate GLM-5.3 Flash. Persistence in the harness generally does not improve memorization unless provided with explicit expert guidance. Most harness-based methods still learn less than a floor that simply caches each task's demonstrations, across all models we tested. No harness-based method gains on unseen tasks, whereas weight-based learning shows substantial gains. This opens the door to future weight-based continual learning that could teach models to drive harnesses in new domains.",
+          "categories": [
+            "cs.LG"
+          ],
+          "published": "2026-11-10T18:55:01Z",
+          "paper_url": "http://arxiv.org/abs/2611.14505v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.14505v1.pdf",
+          "score": 55,
+          "score_reasons": [
+            "分类：Harness",
+            "摘要命中：agent harness"
+          ],
+          "category": "harness",
+          "category_label": "Harness",
+          "track": "harness"
+        },
+        {
+          "arxiv_id": "2611.13336",
+          "title": "Veritas: A Verifier Generation Harness for Agent Tasks",
+          "authors": [
+            "Daoan Zhang",
+            "Qinbo Bai",
+            "Dehai Min",
+            "Xingyu Mu",
+            "Ziyi Chen",
+            "Jianing Yin"
+          ],
+          "abstract": "The effectiveness of a self-improving system relies heavily on the quality of its verifier, which judges the outcome of each improvement round. However, the verifiers of most tasks are written by hand, which is expensive and does not scale to tasks that come without one. We propose Veritas, a harness that generates verifiers automatically. Unlike general-purpose agent harnesses, Veritas adds three mechanisms for verifier generation: an evidence header stating what the verifier will observe, a library of domain rules that tasks leave unstated, and authoring principles, partly refined by a self-improvement loop. We evaluate on six benchmarks: four scored by execution, whose official verifiers we first certify, and two that compare pairs of responses. With the model fixed, the verifiers Veritas generates agree better with the official verdicts than those of seven other harnesses on all four execution-scored benchmarks. On the two pairwise benchmarks they are at or near the best. They also agree better than those of the vendor's own harness for two of three other model families. Its mechanisms also improve 9 of 12 harness-benchmark pairs scored by execution across three harnesses.",
+          "categories": [
+            "cs.AI",
+            "cs.CR"
+          ],
+          "published": "2026-11-09T23:01:40Z",
+          "paper_url": "http://arxiv.org/abs/2611.13336v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.13336v1.pdf",
+          "score": 55,
+          "score_reasons": [
+            "分类：Harness",
+            "摘要命中：agent harness"
+          ],
+          "category": "harness",
+          "category_label": "Harness",
           "track": "harness"
         }
       ]
@@ -505,6 +506,33 @@
           "track": "classic-algorithms"
         },
         {
+          "arxiv_id": "2611.13565",
+          "title": "Investigating Composite Modeling in Multi-Objective Bayesian Optimization for Scientific Design",
+          "authors": [
+            "Ricky Ye",
+            "Sahas Goli",
+            "Muhammad Ali",
+            "Poompol Buathong",
+            "Peter I. Frazier"
+          ],
+          "abstract": "Scientific design often requires balancing competing objectives that are expensive to evaluate through experiments or simulations. Multi-objective Bayesian optimization (MOBO) addresses this challenge by using probabilistic models to guide the selection of promising designs. In many applications, tunable inputs map to observable intermediate responses, which are then combined through known functions to compute the final objectives. Prior work on Bayesian optimization of composite functions shows that learning from these intermediate responses, which we call Composite modeling, can substantially improve sampling efficiency in single-objective optimization, compared to methods that condition only on black-box observations of the objective function. The benefits of Composite modeling in MOBO, however, remain understudied. In this work, we study the benefits of Composite modeling in MOBO and investigate the factors driving variation in its gains. We first establish single-objective conditions under which intermediate observations provide no additional predictive information beyond objective values, where composite and black box methods use the same warped Gaussian process prior. Controlled numerical experiments with versions of four MOBO methods across eight synthetic and application-inspired scientific-design benchmarks examine how these conditions relate to optimization gains in the multi-objective setting, where the black box approach models the objective functions with a standard multi-output Gaussian process. Both investigations support the claim that composite modeling tends to help more when the function mapping intermediate responses to final objectives is non-bijective and non-affine.",
+          "categories": [
+            "cs.LG",
+            "stat.ML"
+          ],
+          "published": "2026-11-10T04:32:34Z",
+          "paper_url": "http://arxiv.org/abs/2611.13565v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.13565v1.pdf",
+          "score": 53,
+          "score_reasons": [
+            "分类：经典算法",
+            "标题命中：bayesian optimization"
+          ],
+          "category": "classic-algorithms",
+          "category_label": "经典算法",
+          "track": "classic-algorithms"
+        },
+        {
           "arxiv_id": "2611.12591",
           "title": "TRACE: Adaptive Trust-Region Bayesian Optimization for Open-Ended Molecular Design",
           "authors": [
@@ -558,32 +586,6 @@
           "category": "classic-algorithms",
           "category_label": "经典算法",
           "track": "classic-algorithms"
-        },
-        {
-          "arxiv_id": "2611.12057",
-          "title": "AscendMOEA: An Ascend NPU-Accelerated Platform for Tensorized Multi-Objective Evolutionary Algorithms",
-          "authors": [
-            "Qianlong Dang",
-            "Zhiyang Zhang",
-            "Baosheng Li",
-            "Tianqing Zhu",
-            "Junhu Ruan"
-          ],
-          "abstract": "Multi-objective evolutionary optimization increasingly involves large populations, expensive problem evaluations, and diverse algorithmic structures. These workloads expose the limited parallelism of loop-based implementations, while rewrites for accelerator execution can alter selection order, tie handling, and population updates. AscendMOEA is presented as a scalable platform that executes multi-objective evolutionary algorithms (MOEAs) on Huawei Ascend neural processing units (NPUs) and conventional central processing units (CPUs). The platform represents the decision vectors, objectives, constraints, and auxiliary states as tensors and provides reusable interfaces for algorithms, problems, population operators, quality indicators, monitoring, and repeated experiments. Dense computations are executed in batches, such as dominance, distance, variation, and problem-evaluation calculations. Short recurrences with causal dependencies retain their prescribed order and consume precomputed tensor results, which preserves the behavior of the original algorithms. AscendMOEA contains 18 algorithms, 155 benchmark and application problems, 19 public operator interfaces, and 11 quality indicators. Experiments on eight Ascend NPUs and 192 physical CPU cores evaluate operator throughput, end-to-end runtime, memory consumption, numerical agreement, and implementation ablation. Tensorized operators obtain a median acceleration of 1.58 times on the NPU. At large population scales, complete algorithms achieve a median acceleration of 5.76 times while retaining the recorded quality indicators. Moreover, the results identify the workload scale and ordered computation that determine whether accelerator execution is beneficial. AscendMOEA is open-sourced at https://github.com/dqlme/AscendMOEA.",
-          "categories": [
-            "cs.NE"
-          ],
-          "published": "2026-11-09T08:33:16Z",
-          "paper_url": "http://arxiv.org/abs/2611.12057v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.12057v1.pdf",
-          "score": 48,
-          "score_reasons": [
-            "分类：经典算法",
-            "标题命中：evolutionary algorithm"
-          ],
-          "category": "classic-algorithms",
-          "category_label": "经典算法",
-          "track": "classic-algorithms"
         }
       ]
     },
@@ -593,22 +595,26 @@
       "cadence": "按价值收录",
       "candidates": [
         {
-          "arxiv_id": "2611.12628",
-          "title": "Adapting Small Language Models to Romanized Nepali: Tokenizer Fertility, Reference Likelihood, and Generation Metrics",
+          "arxiv_id": "2611.13855",
+          "title": "Beyond Passive Imitation: On-Policy Mid-Training Distillation for Language Models",
           "authors": [
-            "Pujan Pant",
-            "Sagar Newpane",
-            "Hari Sitaula",
-            "Manish Sakhakarmy"
+            "Ruize Zheng",
+            "Xuyang Liu",
+            "Siyu Ren",
+            "Xiaobing Tu",
+            "Yinggui Wang",
+            "Jinkui Ren",
+            "Xiantao Zhang",
+            "Linfeng Zhang"
           ],
-          "abstract": "Romanized Nepali, Nepali written in Latin script, is common in digital communication but has no standard spelling and few resources, and it is unclear how reliably small open language models can be adapted to it. We adapt three 2-3B base models from different families, Llama-3.2-3B, Qwen2.5-3B, and Gemma-2-2B, with QLoRA on 9,000 instruction examples produced by deterministic transliteration of Nepali instruction data. Each model is trained with one shared recipe and three seeds and evaluated on 1,000 held-out examples with reference-overlap metrics, byte-normalized reference likelihood (bits per byte, BPB), and an output audit, against zero-shot baselines under two prompts. Fine-tuning raises chrF++ from 10-14 to 29.0-30.6 and lowers BPB from 2.23-2.41 to 0.78-0.84; most zero-shot outputs (54-92%) are English-like. Likelihood and overlap disagree on how far apart the models are. Llama-3.2-3B has the lowest BPB in every seed, 0.042 below Qwen2.5-3B (95% CI 0.039-0.046), yet the two cannot be separated on chrF++ (30.51 and 30.61) or BLEU, even with paired item-level tests. Gemma-2-2B, whose tokenizer splits Romanized Nepali words least (2.72 tokens per word), scores worst on every measure. Which model gains most over its zero-shot baseline depends on the zero-shot prompt. In a supplementary comparison with an identical tokenizer, Llama-3.1-8B lowers BPB by 0.053 (0.050-0.056) relative to Llama-3.2-3B, while chrF++ and BLEU rise by only 0.68 and 0.58 points. Lower fertility and higher reference likelihood therefore did not identify the model whose outputs were closest to the references.",
+          "abstract": "Continual pre-training (CPT) adapts large language models (LLMs) to specialized domains, yet its standard next-token prediction (NTP) objective treats every corpus token as a fixed target, regardless of its utility to the current model. In a controlled study on the same 1B-token mathematical corpus, we observe sharply different outcomes across base models: NTP improves Llama-3.2-3B's performance on mathematical benchmarks but substantially degrades Qwen3-1.7B-Base's performance, indicating that, under a fixed training recipe, the same training sequences can have model-dependent effects. To address this problem, we introduce On-Policy Mid-Training Distillation (OPMD), which reformulates mid-training from offline text imitation into active, query-driven knowledge acquisition. At selected anchor positions, OPMD samples trajectories from the evolving student policy and applies dense token-level reverse-KL rewards from a frozen teacher, training the model on states it actually visits rather than only on ground-truth prefixes. This on-policy objective reduces the training-generation mismatch of teacher-forced NTP. On MATH-500 and Minerva, OPMD improves the Qwen student over its base performance and outperforms the evaluated NTP baseline, which degrades on both benchmarks. OPMD integrates into CPT pipelines without added inference-time overhead and offers a model-aware alternative to passive domain adaptation.",
           "categories": [
             "cs.CL",
-            "cs.AI"
+            "cs.LG"
           ],
-          "published": "2026-11-09T16:10:12Z",
-          "paper_url": "http://arxiv.org/abs/2611.12628v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.12628v1.pdf",
+          "published": "2026-11-10T10:15:20Z",
+          "paper_url": "http://arxiv.org/abs/2611.13855v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.13855v1.pdf",
           "score": 81,
           "score_reasons": [
             "分类：基座模型",
@@ -622,24 +628,18 @@
           "track": "foundation-models"
         },
         {
-          "arxiv_id": "2611.11650",
-          "title": "FlowEval: How Much Adaptation Does an Embodied Foundation Model Need at Deployment?",
+          "arxiv_id": "2611.14117",
+          "title": "Fine-Tuning an Order-Flow Foundation Model for Sub-Second Forecasting",
           "authors": [
-            "Zhang Xi-Jia",
-            "Roman Yakunin",
-            "Shivang Chopra",
-            "Chengyue Huang",
-            "Che Chen",
-            "Siddharth Karamcheti",
-            "Zsolt Kira"
+            "Fedor Shabashev"
           ],
-          "abstract": "Large-scale pretraining is reducing the amount of adaptation required to deploy embodied foundation models, but it is not guaranteed that a pretrained model already provide the level of performance required in every deployment. Practitioners therefore need to understand how well a pretrained model matches a target deployment and how much adaptation data is left to be collected. We study whether a small set of successful target-domain demonstrations can reveal whether and how much target-domain data will be required before any adaptation. We introduce FlowEval, a set of training-free metrics that use the flow-matching objective to probe an embodied foundation model with a set of demonstrations. FlowEval quantifies predictive disagreement on successful target demonstrations to assess how well a pretrained model fits a target deployment. Across four embodied foundation model families: Pi-0.5, MolmoAct2, GR00T, and DreamZero, FlowEval distinguishes seen from unseen deployments across real-world and simulated manipulation. Further, by finetuning Pi-0.5 and GR00T on 17 RoboCasa365 manipulation tasks, we showed that FlowEval correlates with how success rate improves as additional adaptation data is provided. Together, these results suggest that FlowEval can serve as a lightweight, training-free diagnostic of how much model--deployment adaptation may be required.",
+          "abstract": "Generative models have become the standard approach in language and vision. These models are typically pretrained first and then fine-tuned. Recent work demonstrates how to pretrain an autoregressive generative model on Level-3 order-flow data. However, to our knowledge, no one has fine-tuned such a model yet for downstream tasks. Here we first pretrain a 300M-parameter generative model on Level-3 order-flow data collected from two crypto exchanges, Bitstamp and Bitfinex. Then we fine-tune the pretrained model to predict the microprice return and its realized volatility. We show that our fine-tuned model outperforms classical baselines, such as gradient boosting on handcrafted features, in predicting microprice returns over sub-second horizons. Furthermore, the predictive ability of the model transfers zero-shot to assets it was never fine-tuned on. Due to the short-term nature of these forecasts, the predicted microprice moves are smaller than the bid-ask spread plus fees, so the natural applications are in execution and market making. These results indicate that a pretrained generative model can be turned into a competitive short-horizon price forecaster via fine-tuning.",
           "categories": [
-            "cs.RO"
+            "q-fin.TR"
           ],
-          "published": "2026-11-08T22:15:51Z",
-          "paper_url": "http://arxiv.org/abs/2611.11650v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.11650v1.pdf",
+          "published": "2026-11-10T14:07:39Z",
+          "paper_url": "http://arxiv.org/abs/2611.14117v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.14117v1.pdf",
           "score": 72,
           "score_reasons": [
             "分类：基座模型",
@@ -651,53 +651,43 @@
           "track": "foundation-models"
         },
         {
-          "arxiv_id": "2611.12864",
-          "title": "Is Persona Generalization Predictable?",
+          "arxiv_id": "2611.14519",
+          "title": "Medical Image Segmentation: Foundation Model Adaptation versus Task-Specific Training",
           "authors": [
-            "Olina Mukherjee",
-            "Arnav Goel",
-            "Aditi Raghunathan",
-            "Jacob Mitchell Springer"
+            "Emre Kutlusan",
+            "Yongmin Li"
           ],
-          "abstract": "Persona generalization occurs when fine-tuning a language model in one domain induces behavioral changes in others -- for example, the broadly unsafe behavior observed in emergent misalignment. We discover a surprising \"on-the-line\" phenomenon in persona generalization: in-domain and out-of-domain persona rates across various fine-tuning hyperparameters follow an approximately probit-linear relationship, and the specific probit-linear relationship is surprisingly shared even across model families and model sizes, including Qwen and Llama. Training choices that leave the set of trainable parameters unchanged, such as learning rate, weight decay, and training duration, largely move models along the same line, reducing transfer mainly by weakening in-domain learning. Changing which layers are fine-tuned, however, can change the slope. For unsafe behavior, fine-tuning only later layers yields shallower slopes, retaining strong in-domain learning while reducing out-of-domain misalignment. This \"on-the-line\" phenomenon unifies unexpected, isolated observations of persona generalization within a quantitative framework for predicting and controlling behavioral transfer.",
+          "abstract": "Foundation models pretrained on large natural-image collections are increasingly adapted for medical image segmentation, in the expectation that they will replace models trained for each task. Most comparisons, however, use data from the training distribution and a single task-specific baseline whose configuration is rarely justified, and therefore provide limited evidence of performance at new clinical sites. It also remains unclear how much of a foundation model must be adapted, and what determines this. We adapted a foundation model, DINOv2, with strategies ranging from tuning only its bias terms to full fine-tuning, and compared it with U-Nets and ResU-Nets trained from scratch. Experiments covered colonoscopy, breast ultrasound and dermoscopy, with testing on held-out data from the training source and on independent datasets from other institutions. The adapted foundation model generalised better on every external dataset. Within the training distribution, the task-specific models remained competitive when training data were abundant, and delineated boundaries more precisely, while the foundation model more often missed small lesions. Only a small fraction of the foundation model required adaptation, and the capacity needed was determined by the imaging domain rather than by the adaptation method. A widely used polyp test set was also found to duplicate images from another benchmark. Foundation-model adaptation is therefore warranted where models must work across sites, with capacity selected on the target domain.",
           "categories": [
-            "cs.CL",
-            "cs.LG"
+            "cs.CV",
+            "cs.AI"
           ],
-          "published": "2026-11-09T18:51:03Z",
-          "paper_url": "http://arxiv.org/abs/2611.12864v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.12864v1.pdf",
+          "published": "2026-11-10T18:59:54Z",
+          "paper_url": "http://arxiv.org/abs/2611.14519v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.14519v1.pdf",
           "score": 65,
           "score_reasons": [
             "分类：基座模型",
-            "摘要命中：qwen",
-            "摘要命中：llama",
-            "cs.CL"
+            "标题命中：foundation model"
           ],
           "category": "foundation-models",
           "category_label": "基座模型",
           "track": "foundation-models"
         },
         {
-          "arxiv_id": "2611.12491",
-          "title": "Out-of-the-Box Tabular Foundation Models for Bayesian Optimization in Materials Discovery",
+          "arxiv_id": "2611.14504",
+          "title": "Emergent Biological Capabilities in a Foundation Model for Molecular Interactions",
           "authors": [
-            "Klemens Flöge",
-            "Simon Bing",
-            "Leo Grinsztajn",
-            "Eliott Kalfon",
-            "Lennart Purucker",
-            "Noah Hollmann",
-            "Frank Hutter"
+            "Adi Mashiach"
           ],
-          "abstract": "Bayesian optimization is widely used in active learning loops for materials science. Gaussian processes serve as the de-facto surrogate model family, but require task-dependent kernel choices and can lack the modeling capacity for complex relationships. Tabular foundation models (TFMs) have recently emerged as the state-of-the-art for predictive tasks on structured data, without requiring bespoke kernels or hyperparameter tuning. We evaluate two TFMs, TabPFN and TabICL, as out-of-the-box surrogate models on two standard materials science benchmarks, comparing against a large field of baselines encompassing Gaussian processes, random forests, and CatBoost. Our findings indicate that TFMs are highly competitive surrogate models across the two benchmarks, without task-specific training for active learning or GP kernel selection. Our results motivate developing TFMs further as surrogates for active learning in materials discovery.",
+          "abstract": "Foundation models trained on large unlabeled corpora develop emergent capabilities, tasks that go beyond the training objective. We extend this paradigm to multimodal biology with Bonbon, a foundation model for molecular interactions trained on approximately 3.2 trillion tokens of paired protein-ligand sequences. From a single representation space, Bonbon exhibits three zero-shot emergent capabilities at hierarchical levels of resolution: functional (mechanism of action), residue (binding site localization, including orthosteric/allosteric discrimination), and bond (covalent versus non-covalent engagement). All three capabilities generalize to out-of-distribution complexes. Bonbon was trained on protein-ligand sequences alone, without any task-specific supervision and without structural coordinates. We conducted controlled scaling experiments across six model scales from 42M to 1.6B parameters; every capability evaluated shows a sharp jump at the largest scale on continuous metrics, even as pretraining loss decreases smoothly. This demonstrates that loss-based scaling laws alone are insufficient to predict when zero-shot emergent capabilities become available. The capabilities reported here emerge after training at a 1:2,000 parameter-to-token ratio to accommodate the sparsity of paired biological interaction data. The same frozen representations achieve state-of-the-art binding and affinity prediction at five orders of magnitude greater speed than co-folding methods. In prospective wet-lab validation across nine disease targets spanning seven protein families, Bonbon achieves a 61.5% dose-response hit rate on de novo compounds, yielding structurally novel molecules not previously reported to inhibit these proteins, including for out-of-distribution targets.",
           "categories": [
             "cs.LG",
-            "stat.ML"
+            "q-bio.BM"
           ],
-          "published": "2026-11-09T14:40:10Z",
-          "paper_url": "http://arxiv.org/abs/2611.12491v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.12491v1.pdf",
+          "published": "2026-11-10T18:53:01Z",
+          "paper_url": "http://arxiv.org/abs/2611.14504v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.14504v1.pdf",
           "score": 65,
           "score_reasons": [
             "分类：基座模型",
@@ -708,21 +698,21 @@
           "track": "foundation-models"
         },
         {
-          "arxiv_id": "2611.12466",
-          "title": "Prediction with Foundation Models under Deployment Budgets",
+          "arxiv_id": "2611.14462",
+          "title": "Accurate predictions of properties of energetic materials with tabular foundation models",
           "authors": [
-            "Zhaohui Xu",
-            "Xiaofei Xu",
-            "Doudou Zhou"
+            "Vagn Krister Nes Glomsrud",
+            "Mathias Bynke",
+            "Lars Henry Berge Olsen",
+            "Dennis Christensen"
           ],
-          "abstract": "Foundation models can supply predictions for a downstream task that draw on knowledge from extensive pretraining, but they differ in task-specific accuracy and query cost. We develop a framework that improves prediction for the task under a budget on the average query cost per input, using training data to learn which models to query and how to combine their outputs with features available without querying. The first method queries the same models for every input; the second lets them vary across inputs and uses Q-learning to decide which model to query next and when to stop. For the first method, we show that several individually inaccurate outputs can jointly outperform the best single one. It attains the minimax rate when the regression function depends on the outputs only through models within the budget. Otherwise, any method within the budget can be forced to a slower rate, which the first method attains. For the second method, we show when varying the queried models across inputs strictly improves on querying the same models for every input, and bound its prediction risk and average cost in finite samples. In simulations and a multimodal laptop price application, both methods outperform existing methods.",
+          "abstract": "We use TabPFN, a recently developed tabular foundation model, to predict three properties of energetic materials: impact sensitivity, decomposition temperature and crystal density. Without any hyperparameter tuning, TabPFN outperforms the best published models for all three properties. It also substantially outperforms a wide range of established machine-learning models, including tuned gradient boosting (XGBoost), random forests and Gaussian processes. This holds both when the models are given hand-crafted molecular descriptors and when they are given learned representations from Chemprop's message-passing neural network. In particular, for all three properties, TabPFN applied to Chemprop's own embedding is more accurate than Chemprop's predictions. TabPFN is also among the fastest models we consider, more than an order of magnitude faster than XGBoost. As TabPFN predicts the entire distribution of the target rather than just a single value, it offers built-in uncertainty quantification, which we compare with the empirical distributions of compounds with repeated measurements. Finally, we interpret the predictions using Shapley values, which rank the features by their importance.",
           "categories": [
-            "stat.ML",
             "cs.LG"
           ],
-          "published": "2026-11-09T14:15:18Z",
-          "paper_url": "http://arxiv.org/abs/2611.12466v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.12466v1.pdf",
+          "published": "2026-11-10T18:29:37Z",
+          "paper_url": "http://arxiv.org/abs/2611.14462v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.14462v1.pdf",
           "score": 65,
           "score_reasons": [
             "分类：基座模型",
@@ -733,18 +723,24 @@
           "track": "foundation-models"
         },
         {
-          "arxiv_id": "2611.12141",
-          "title": "Do Time-Series Foundation Models Forecast Index-Futures Returns? A Preregistered Evaluation of Models, Metrics, and Input Representations",
+          "arxiv_id": "2611.14425",
+          "title": "Quantifying the Sampling Frequency Invariance of Time-Series Foundation Models for Sensor Data Applications",
           "authors": [
-            "Rishabh Upadhyay"
+            "Sourish Gunesh Dhekane",
+            "Abinaya Kumar",
+            "Torsten Woertwein",
+            "Yan-Bo Lin",
+            "Thomas Ploetz",
+            "Shabnam Ghaffarzadegan"
           ],
-          "abstract": "We ask whether the apparent forecasting skill of frozen time-series foundation models (TSFMs) on intraday index-futures returns is incremental skill. In a pre-registered evaluation on E-mini Nasdaq-100 (NQ) and E-mini S&P 500 (ES) futures, a common panel of five zero-shot models (Chronos-Bolt, Chronos-2, TimesFM 2.5, Moirai 2.0 and TiRex), plus separate experiments with Kronos, is compared with a no-change forecast at 5-120 minutes, using native prices, log returns, volatility-standardised returns and a volume clock as inputs. On a blind set opened once, 0 of 160 model-representation-horizon-market cells beat no-change, and a Hansen SPA test gives p = 1.000 on both markets; a later retrospective hold-out, scored as a descriptive check, gives 0 of 120. Input representations change forecast magnitude but not accuracy, and a transformation-aware ridge regression does as well. Several standard measures nevertheless suggest skill. Price-level correlation exceeds 0.9996, but no-change scores higher. Within-day RankIC across forecast origins rewards a trivial revert-to-mean rule (+0.35 at 30 minutes); we derive the expected within-day covariance under a random walk in closed form, and a sign-randomised null reproduces about 95% of the observed value. One model beats HAR for 5-minute volatility, but not the EWMA its input already contains. On strongly planted synthetic signals the models recover part of the signal at 5 minutes, and recovery deteriorates at 30 minutes. Benchmark-level success of TSFMs should therefore not be assumed to carry over to low-signal domains such as intraday returns.",
+          "abstract": "Time-Series Foundation Models (TSFMs) are increasingly used in sensor applications, where sampling frequency (SF) varies across sensors, devices, and operating modes (e.g., power saving). Ideally, TSFMs must remain effective during such SF changes, provided the SF retains task-critical bandwidth. In this paper, we stress-test 4 prominent TSFMs: MOMENT, Chronos-2, Moirai-MoE, and TimesFM, to quantify their SF-invariance and investigate whether their behavior tracks the resulting loss of information bandwidth rather than the SF value itself. Our stress-test probes 3 dimensions: (i) the shift in embeddings, (ii) the degradation in forecasting performance, and (iii) the degradation in downstream performance, quantified by three novel metrics: FSI, FDI, and CDI, respectively. To our knowledge, this is the first study to place SF-invariance at the core of TSFM evaluations. Our results characterize: (i) how SF-invariance depends on the margin between signal's native-SF and the bandwidth its task requires, (ii) how much of that invariance the choice of TSFM explains, and (iii) how much of TSFM's performance degradation under a lower SF reflects information loss rather than a limitation of their abilities. These findings reframe SF-invariance as a measurable, signal-aware property of the (signal X TSFM) pair, and guide practitioners on when TSFMs display SF-invariance.",
           "categories": [
-            "cs.LG"
+            "cs.LG",
+            "cs.AI"
           ],
-          "published": "2026-11-09T09:53:19Z",
-          "paper_url": "http://arxiv.org/abs/2611.12141v1",
-          "pdf_url": "http://arxiv.org/pdf/2611.12141v1.pdf",
+          "published": "2026-11-10T18:01:23Z",
+          "paper_url": "http://arxiv.org/abs/2611.14425v1",
+          "pdf_url": "http://arxiv.org/pdf/2611.14425v1.pdf",
           "score": 65,
           "score_reasons": [
             "分类：基座模型",
@@ -759,33 +755,62 @@
   ],
   "candidates": [
     {
-      "arxiv_id": "2611.12791",
-      "title": "Large Language Models as a Universal Searcher for Open-World Automated Machine Learning",
+      "arxiv_id": "2611.14515",
+      "title": "AutoScaffold: AI-Guided Scaffolding for Reinforcement Learning of Language Models",
       "authors": [
-        "Yuxuan Hu",
-        "Jihao Liu",
-        "Weikang Shi",
-        "Xijie Huang",
-        "Linda Wei",
-        "Mingjie Zhan",
-        "Aojun Zhou",
-        "Rui Liu",
-        "Hongsheng Li"
+        "Zijian Zhang",
+        "Rizhen Hu",
+        "Jiangweizhi Peng",
+        "Shiyang Li",
+        "Sujay Bhatt",
+        "Sihan Zeng",
+        "Mingyi Hong"
       ],
-      "abstract": "Developing effective machine learning models requires complex manual tuning, while current Automated Machine Learning (AutoML) frameworks remain domain-specific and isolate model architecture, training hyperparameter, and data ratio optimization. Here, we bridge this gap by proposing a universal, large language model (LLM)-based AutoML framework that jointly optimizes these configurations for the first time without the need for task-specific fine-tuning. We propose NCode, a unified numerical encoding scheme that translates diverse AutoML design choices into universal discrete sequences and effectively reframes the optimization process as a unified ranking task. Trained solely on optimization trajectories derived from a limited, single-domain vision task, the proposed LLM-based searcher demonstrates impressive cross-task, cross-modality and joint search-space optimization generalizability, achieving state-of-the-art performance across image classification, image segmentation, speaker verification and text-to-image benchmarks. Crucially, it exhibits superior scalability in the large-scale training and joint optimization of a billion-parameter Diffusion Transformer, requiring 896 GPU-days and attaining a state-of-the-art GenEval score of 0.91. By leveraging reinforcement learning to instill Chain-of-Thought reasoning, we provide a systematic way to interpret the LLM-based searcher's internal decision-making mechanisms, revealing its optimization strategy shifted from the early-stage diversity-driven exploration to the late-stage anchor exploitation. Our proposed framework provides a scalable, generalizable, and interpretable pathway toward general-purpose open-world machine learning optimization.",
+      "abstract": "Reinforcement learning with verifiable rewards (RLVR) produces rich training experience, yet outcome rewards reduce each attempt to a single number and leave most of this information unused. Training-time scaffolds, such as strategies or hints added to the prompt during training, offer a natural way to turn this information into guidance, but their design and adaptation are largely left to humans and tailored to specific domains. We introduce AutoScaffold, a unified AI-for-AI framework that turns a student's training experience into adaptive scaffolds, with minimal domain-specific information and no human intervention during training. A frozen teacher periodically examines this experience, diagnoses bottlenecks, and designs scaffolds in two forms: (i) strategies shared across a class of tasks and (ii) hints for individual hard tasks, adjusting the content and amount of support as the student learns. The scaffolds are removed at evaluation. We apply the same framework to ALFWorld, search-based QA, mathematical reasoning, and GPU kernel generation. When evaluated without scaffolds, students trained with AutoScaffold outperform those trained with the corresponding RL baselines in all four domains, with gains of 7.2 points in ALFWorld success and 4.0 points in average QA exact match. On GPU kernel generation, AutoScaffold increases the fraction of tasks with a correct kernel that runs faster than the PyTorch reference by up to 5.0 points. On math, our student surpasses QuestA's reported accuracy using approximately one-third as many student training steps. Analyses show that the teacher identifies a different failure in each task class and shifts its scaffolds from step-by-step workflows to targeted fixes as the student improves, and that its revised scaffolds help the student learn more than keeping the previous scaffold or using no scaffold.",
       "categories": [
+        "cs.LG",
         "cs.CL"
       ],
-      "published": "2026-11-09T17:58:38Z",
-      "paper_url": "http://arxiv.org/abs/2611.12791v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.12791v1.pdf",
+      "published": "2026-11-10T18:58:46Z",
+      "paper_url": "http://arxiv.org/abs/2611.14515v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.14515v1.pdf",
+      "score": 100,
+      "score_reasons": [
+        "分类：RL",
+        "标题命中：reinforcement learning",
+        "摘要命中：ppo",
+        "摘要命中：rlvr",
+        "摘要命中：verifiable reward",
+        "cs.CL"
+      ],
+      "category": "rl",
+      "category_label": "RL",
+      "track": "frontier"
+    },
+    {
+      "arxiv_id": "2611.14333",
+      "title": "AI Isn't Getting Dumber, We're Getting Pickier: Rising Standards in Human Evaluation of Large Language Models",
+      "authors": [
+        "Zihan Chen",
+        "Lei Nico Zheng",
+        "Di Zhu"
+      ],
+      "abstract": "Users often complain that AI assistants such as ChatGPT are getting worse. Some versions do change, but human evaluation leaves a second possibility untested: the people judging may change. We separate the two on Chatbot Arena, a public platform where people compare answers from two anonymous large language models (LLMs) and pick the better one or say both are bad. We study 1,260,967 blind votes cast from May 2023 to August 2024 on pairs of models whose versions are fixed: dated vendor snapshots and models with fixed open weights. For the same pair of unchanged models, the share of votes saying \"both are bad\" rises by 1.71 percentage points a month on a mean of 17.1%, and by 1.91 points a month in 2024. In fourteen pairs observed often in both 2023 and 2024, it rose in every one, from 15.5% to 23.3%. The ranking does not trend: in 2024, the stronger model's share of decisive votes is flat. The rise holds within the same voter and on the same pair, and across arrival cohorts from their first recorded vote. It holds with prompt controls, in every major language, for dated vendor snapshots, open-weight models and models with stable answer length, and between interface changes. The drift is shared across models: month effects estimated from other models' pairs remove it from each model's own pairs. Platform-wide, the average model would be expected to score 78% against the 2023 average, yet the share of \"both are bad\" votes ended near where it began. The pattern fits a standard that follows the category's progress, so a product that stands still is judged as declining. Absolute verdicts on AI drifted while relative comparisons held steady, an evaluation drift that matters for LLM leaderboards and for the human feedback used to train models.",
+      "categories": [
+        "cs.HC",
+        "cs.AI",
+        "cs.CL",
+        "cs.CY"
+      ],
+      "published": "2026-11-10T16:56:16Z",
+      "paper_url": "http://arxiv.org/abs/2611.14333v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.14333v1.pdf",
       "score": 100,
       "score_reasons": [
         "分类：LLM",
         "标题命中：large language model",
         "标题命中：language model",
-        "摘要命中：reasoning",
-        "摘要命中：benchmark",
+        "标题命中：evaluation",
         "cs.CL"
       ],
       "category": "llm",
@@ -793,32 +818,63 @@
       "track": "frontier"
     },
     {
-      "arxiv_id": "2611.12728",
-      "title": "Safe Reinforcement Learning for Multi-Turn Clinical Agents: When Dense Rewards Beat Outcome Rewards",
+      "arxiv_id": "2611.14285",
+      "title": "LM-SimBench: A Unified Framework, Dataset, and Benchmark for Large Language Model Training Simulation",
       "authors": [
-        "Brendan P. Murphy",
-        "Agustina Saenz"
+        "Yu Dong",
+        "Hong Li",
+        "Qiang Sun",
+        "Xu Zhou",
+        "Jinbiao Huo",
+        "Qixiu Cheng",
+        "Zhiyuan Liu"
       ],
-      "abstract": "Reinforcement learning with verifiable rewards is increasingly used to improve language model reasoning, yet its effects on sequential decision procedures remain poorly understood. We study this problem in clinical multi-turn agents that must decide what information to request, when to stop gathering evidence, and which action to take. We introduce three controlled environments: medication refill triage, acute diagnostic work-up, and dosing titration, each with hidden clinical states, query costs, exact adaptive oracles, and deterministic outcome verifiers. Across these tasks, outcome-only group relative policy optimization often improves aggregate reward while producing undesirable procedures, including premature commitment, one-question collapse, and failures on rare high-risk cases. In diagnostics, assigning dense credit to questions that reduce uncertainty improves held-out value and moderate-case support across three training seeds relative to outcome-only reinforcement learning, without the high-risk seed collapse observed under outcome-only training. Separating exploration from exploitation further increases high-risk support at its best checkpoint, but at the cost of excessive information gathering on low-acuity cases. Additional experiments show that the optimal strength of process credit is task-dependent; that after a supervised warmup that already gathers carefully, reinforcement learning raises aggregate reward by trimming questions while degrading high-risk performance; and that reinforcement learning does not reliably repair rare behavior gaps inherited from biased supervised data. Verifiable final outcomes are therefore insufficient for training reliable multi-turn agents: reward design must account for the procedure used to reach an answer, and evaluation must distinguish adaptive information gathering from reward-exploiting shortcuts.",
+      "abstract": "Evaluating candidate parallelization strategies through distributed training runs makes strategy selection prohibitively expensive at scale. Performance simulation offers a lower cost alternative, yet controlled comparisons among existing simulators remain difficult because they differ in the training stages they model and the workloads on which they are evaluated. We introduce LM-SimBench, a unified framework, profiling dataset, and benchmark for evaluating LLM training simulators. The framework decomposes simulation into functional stages from model compilation to schedule level aggregation, connecting execution representations and cost estimators to measurable evaluation targets. Following this framework, we profile 23 model settings from 10 dense and Mixture-of-Experts (MoE) LLM families on an Ascend Neural Processing Unit (NPU) cluster. The resulting dataset contains 348 feasible configurations that jointly vary five parallelism dimensions and activation recomputation, with six views spanning configuration, rank, operator, event, and kernel granularity. Evaluations of representative training simulators demonstrate how LM-SimBench supports comparisons of prediction accuracy, assessment of configuration selection, and diagnosis of prediction errors. Matched GPU-NPU experiments validate the cross-platform applicability of the collection and evaluation protocol and demonstrate NPU-guided GPU configuration selection.",
       "categories": [
-        "cs.LG",
-        "cs.AI",
-        "cs.CL"
+        "cs.AI"
       ],
-      "published": "2026-11-09T17:14:40Z",
-      "paper_url": "http://arxiv.org/abs/2611.12728v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.12728v1.pdf",
+      "published": "2026-11-10T16:26:19Z",
+      "paper_url": "http://arxiv.org/abs/2611.14285v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.14285v1.pdf",
       "score": 100,
       "score_reasons": [
-        "分类：RL",
-        "标题命中：reinforcement learning",
-        "摘要命中：policy optimization",
-        "摘要命中：ppo",
-        "摘要命中：verifiable reward",
-        "cs.CL"
+        "分类：LLM",
+        "标题命中：large language model",
+        "标题命中：language model",
+        "标题命中：benchmark",
+        "摘要命中：evaluation"
       ],
-      "category": "rl",
-      "category_label": "RL",
+      "category": "llm",
+      "category_label": "LLM",
+      "track": "frontier"
+    },
+    {
+      "arxiv_id": "2611.14263",
+      "title": "Chain of Physics: Supporting Fault Diagnosis with Engineering-Inspired Large Language Model Reasoning",
+      "authors": [
+        "Wenqi Zhou",
+        "Leonardo Baldo",
+        "Kai Goebel",
+        "Manuel Arias Chao"
+      ],
+      "abstract": "Fault diagnosis in complex systems requires linking observed changes in physical quantities to the failure mechanisms that produce them. Experienced engineers perform this task by combining sensor information with knowledge of system behavior and fault propagation. Large Language Models (LLMs) can support this process, but their diagnostic reasoning depends on the availability of asset-specific engineering knowledge and on how this knowledge is represented and used during inference. This work introduces Chain of Physics (CoP), an LLM-based fault-diagnosis framework built around a Constrained Knowledge Graph (CKG) generated automatically from asset-specific reference documentation. CoP addresses failure-sensor association from textual engineering knowledge. The CKG stores diagnostic chains connecting failure modes, changes in physical quantities, and monitoring sensors. During inference, semantically similar graph paths are retrieved for each question and used as both information and in-context examples for the reasoning process. Candidate failure modes are extracted from the question and analysed independently through dedicated LLM calls, which generate plausible failure-to-observation chains. A final decision module compares these chains with the available answer choices. CoP is evaluated on the FailureSensorIQ benchmark across four industrial asset classes and three LLMs. Compared with direct prompting and conventional Retrieval-Augmented Generation (RAG), CoP improves diagnostic accuracy across all evaluated models, with gains ranging from 7.8 to 19.6 percentage points and from 11.7 to 18.2 percentage points, respectively. The results show that structured engineering knowledge can improve LLM-based diagnostic reasoning when graph retrieval is combined with in-context examples of fault propagation.",
+      "categories": [
+        "cs.LG",
+        "eess.SP"
+      ],
+      "published": "2026-11-10T16:09:44Z",
+      "paper_url": "http://arxiv.org/abs/2611.14263v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.14263v1.pdf",
+      "score": 100,
+      "score_reasons": [
+        "分类：LLM",
+        "标题命中：large language model",
+        "标题命中：language model",
+        "标题命中：reasoning",
+        "摘要命中：benchmark"
+      ],
+      "category": "llm",
+      "category_label": "LLM",
       "track": "frontier"
     },
     {
@@ -858,34 +914,6 @@
       "track": "frontier"
     },
     {
-      "arxiv_id": "2611.11752",
-      "title": "Spectral Rank and Step-Direction Dynamics in Language-Model Post-Training",
-      "authors": [
-        "Khurram Khalil",
-        "Khaza Anuarul Hoque"
-      ],
-      "abstract": "Language-model post-training modifies weights through cumulative updates and successive displacements, yet existing studies report seemingly conflicting spectral properties: nearly full-rank updates and low stable-rank changes. We show these observations are compatible and characterize update directions during training. For singular values following $σ_i \\propto i^{-α}$ with $0 < α\\leq 1/2$, we prove that stable rank becomes negligible relative to fixed-energy rank as dimension increases. Full singular value decompositions of selected OLMo-2-7B updates confirm this separation: three proximal policy optimization (PPO) attention updates have stable ranks of 9.6-18.3 but require 532-1,222 singular components to capture 80% of their energy. We next compute consecutive checkpoint-displacement cosines from full-model inner products. Across nine publicly released reinforcement learning from verifiable rewards (RLVR) stages, all 131 adjacent pairs have negative cosines on their native checkpoint grids, including PPO and Group Relative Policy Optimization (GRPO) trajectories. Supervised fine-tuning comparisons across four model families show configuration-dependent alignment, including negative late-training cosines for Mistral and FP32 Llama. Finally, a controlled OLMo-2-1B study with three paired seeds and a 2,048-token response cap compares group-relative advantages against a learned critic with generalized advantage estimation (GAE). At matched 60-rollout windows, late-training mean cosines are +0.259 and +0.012, respectively; the paired critic-minus-group difference is -0.247 (seed-level 95% interval [-0.358, -0.137]). These findings distinguish spectral concentration, energy coverage, and trajectory direction, and demonstrate that the advantage system influences directional alignment under matched training conditions.",
-      "categories": [
-        "cs.LG",
-        "cs.AI"
-      ],
-      "published": "2026-11-09T01:43:20Z",
-      "paper_url": "http://arxiv.org/abs/2611.11752v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.11752v1.pdf",
-      "score": 100,
-      "score_reasons": [
-        "分类：RL",
-        "摘要命中：reinforcement learning",
-        "摘要命中：policy optimization",
-        "摘要命中：ppo",
-        "摘要命中：grpo",
-        "摘要命中：rlvr"
-      ],
-      "category": "rl",
-      "category_label": "RL",
-      "track": "frontier"
-    },
-    {
       "arxiv_id": "2611.11541",
       "title": "Safeguarding Agentic AI in Radiology Workflows: A Multimodel Evaluation of Rule-based and Large Language Model-based Verification",
       "authors": [
@@ -918,81 +946,56 @@
       "track": "frontier"
     },
     {
-      "arxiv_id": "2611.10844",
-      "title": "What Broke & Why: Practical Lessons from Reinforcement Learning Post-Training",
+      "arxiv_id": "2611.13196",
+      "title": "From Process Models to Composable Agentic Workflows: Combining BPMN, Agents and Enterprise Knowledge",
       "authors": [
-        "Luv Verma"
+        "Christian Fillies",
+        "Jan Fillies",
+        "Frauke Weichhardt",
+        "Gay Anne Wood-Albrecht"
       ],
-      "abstract": "Reinforcement learning with verifiable rewards (RLVR) has become an important way to improve how language models reason, solve problems, and use tools. But getting it to work in practice is not always straightforward. Training can fail because a model receives no useful reward, learns to exploit the reward system, stops exploring, or appears to improve when the evaluation itself is misleading. In this book, we give a practical introduction to reinforcement learning post-training for language models, focusing on what works, what fails, and why. We begin with the foundations of post-training, explain GRPO and the training loop step by step, and then follow five training programs covering math reasoning, search agents, training stability, mixture-of-experts models, and software engineering tasks. Each program shows the problems encountered, the changes made, and the lessons learned. The book also examines what reinforcement learning actually changes inside a model. The remaining chapters provide a practical reference for reward design, evaluation, training tool-using agents, debugging common failures, reproducibility, rollout engines, and hardware. Written for researchers and practitioners working with open models, the book aims to help readers understand how to train models, recognize when something goes wrong, and decide what to try next.",
+      "abstract": "LLM-based agents can reason, use tools and collaborate. However, coordinating increasingly complex agentic applications becomes difficult to understand, monitor and improve. Decisions distributed across prompts, tool calls and application logic make workflows implicit. We introduce **Recursive Capability Composition**, enabling agents to execute business processes and expose them as reusable Agentic Tools. This paper presents a BPMN-based approach to Agentic Workflows, combining explicit orchestration with autonomous reasoning. SemTalk BPMN models are transformed into executable workflows using a LangGraph/Pregel runtime. Agentic Tasks introduce LLM reasoning at selected activities, while conventional BPMN controls process flows, deterministic decisions, system interactions and human approvals. Agentic Participants provide reusable interfaces for agent behavior or other executable processes. BPMN orchestration makes multi-agent systems more understandable and manageable. Explicit process models provide developers and operators with a shared view of workflow structures and execution progress, facilitating debugging, monitoring and optimization. Enterprise agents also need organization-specific context. Process Models and Knowledge Graphs describe activities, participants, information objects, decisions and relationships between processes. They provide structured knowledge of how an organization operates, supporting informed agent decisions and actions. Our contributions are threefold: 1. **Model-Driven Execution:** Transforming BPMN models into executable Agentic Workflows. 2. **Recursive Capability Composition:** Exposing agents and executable business processes as reusable tools for other agents. 3. **Enterprise Context:** Using Process Models and Ontologies to provide organization-specific knowledge for agent reasoning.",
       "categories": [
-        "cs.AI"
+        "cs.AI",
+        "cs.MA"
       ],
-      "published": "2026-11-07T16:43:27Z",
-      "paper_url": "http://arxiv.org/abs/2611.10844v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.10844v1.pdf",
-      "score": 100,
-      "score_reasons": [
-        "分类：RL",
-        "标题命中：reinforcement learning",
-        "摘要命中：grpo",
-        "摘要命中：rlvr",
-        "摘要命中：verifiable reward"
-      ],
-      "category": "rl",
-      "category_label": "RL",
-      "track": "frontier"
-    },
-    {
-      "arxiv_id": "2611.10612",
-      "title": "An Agentic Multi-Agent Framework for System Log Anomaly Detection",
-      "authors": [
-        "Ngoc-Son Le",
-        "Huy-Hoang Mac Nguyen",
-        "Ngoc Hong Tran"
-      ],
-      "abstract": "As enterprise systems grow in scale and complexity, manual log analysis and conventional SIEM tools struggle to keep pace with the volume and diversity of incidents. To address this challenge, this paper proposed a multi-agent AI framework supporting in analyzing the system log to trace the attack forensic in the system more effectively and efficiently. The framework is designed using n8n platform and Gemini large language model. The framework consists of 7 AI agent layers. Each agent work on a specific task. When the task is done, the agent will forward the result to the output-associated agent of the next layer. The multi agent model improves the analysis velocity, so it is able to support numerous log analysis requirement at the same time. We deployed 16 test cases to test operation of the multi agent workflow, and evaluate the accuracy per test case and the operative performance. The result findings are very promising.",
-      "categories": [
-        "cs.CR"
-      ],
-      "published": "2026-11-07T09:30:17Z",
-      "paper_url": "http://arxiv.org/abs/2611.10612v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.10612v1.pdf",
-      "score": 100,
+      "published": "2026-11-09T20:18:32Z",
+      "paper_url": "http://arxiv.org/abs/2611.13196v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.13196v1.pdf",
+      "score": 97,
       "score_reasons": [
         "分类：Agent",
-        "标题命中：multi-agent",
+        "摘要命中：multi-agent",
         "标题命中：agentic",
-        "标题命中：agent"
+        "标题命中：agent",
+        "摘要命中：autonomous"
       ],
       "category": "agent",
       "category_label": "Agent",
       "track": "frontier"
     },
     {
-      "arxiv_id": "2611.12635",
-      "title": "Beyond Sunny Skies: Using Large Language Models to Predict Urban Traffic in Adverse Weather",
+      "arxiv_id": "2611.13926",
+      "title": "Beyond Proxy Metrics: MLLMs as Human Surrogates for Explainable AI Evaluation",
       "authors": [
-        "Zhu Xiao",
-        "Kuan Feng",
-        "Tong Li",
-        "Chenxi Liu",
-        "Gang Wang",
-        "Zhuo Tang",
-        "Kenli Li"
+        "Eoin M. Kenny",
+        "Salim I. Amoukou",
+        "Tom Bewley"
       ],
-      "abstract": "Urban traffic flow prediction is a cornerstone of intelligent transportation systems, yet accurate forecasting under adverse weather conditions remains a significant challenge. Existing data-driven models, while effective for routine patterns, often struggle with the sparse data and complex non-linear shifts associated with rare meteorological events. These methods typically treat environmental contexts as shallow numerical features, failing to capture the underlying semantic reasoning-why and how specific adverse conditions alter mobility behaviors across regions with different functional compositions. To address this limitation, we propose Multi-STG, a unified framework that integrates Large Language Model (LLM)-derived semantic priors with graph-based spatiotemporal learning. Multi-STG introduces an LLM-empowered semantic enhancement module that transforms comprehensive context descriptions such as weather, POIs, and holidays into high-level semantic embeddings, effectively providing a knowledge-driven complement to data scarcity. Furthermore, we design a multimodal attentional fusion mechanism to dynamically weigh heterogeneous inputs and a semantic-enhanced prediction head with gated residual calibration to robustly adjust forecasts based on semantic guidance. Extensive experiments on real-world multi-city private car datasets demonstrate that Multi-STG outperforms state-of-the-art baselines, reducing MAE by 11.82\\% on average relative to the strongest baseline across three cities, while maintaining stable performance under sparse and non-stationary conditions.",
+      "abstract": "Explainable AI (XAI) has expanded into a broad and impactful research area, but the fundamental question of how best to evaluate explanation techniques has proven frustratingly elusive. Methodologies typically revolve around either proxy metrics which tell us little about the utility of an explanation, or human evaluation which---while generally considered the gold standard---is expensive, difficult to scale, and challenging to reproduce. In this paper, we investigate if Multimodal Large Language Models (MLLMs) can act as surrogate human participants to automate the evaluation of XAI. To do this, we first propose a ``purpose-grounded'' evaluation framework with metrics applicable to both MLLMs and human users alike. Then, we offer some conceptual insights as to why and when we can trust these models to automate this process. Lastly, we conduct extensive empirical testing across five purpose-grounded areas such as model improvement and fourteen popular MLLMs. Results indicate that all models trend positively, but OpenAI and Qwen models generally show higher alignment compared to other variants, which would be the recommended choices in practice. We expect our insights not to replace user testing, but rather to help XAI researchers complement their current evaluation methodologies and move the field away from heavy reliance on proxy metrics for measuring explanation utility.",
       "categories": [
         "cs.AI"
       ],
-      "published": "2026-11-09T16:12:51Z",
-      "paper_url": "http://arxiv.org/abs/2611.12635v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.12635v1.pdf",
-      "score": 99,
+      "published": "2026-11-10T11:15:28Z",
+      "paper_url": "http://arxiv.org/abs/2611.13926v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.13926v1.pdf",
+      "score": 92,
       "score_reasons": [
         "分类：LLM",
-        "标题命中：large language model",
-        "标题命中：language model",
-        "摘要命中：reasoning",
+        "摘要命中：large language model",
+        "摘要命中：language model",
+        "摘要命中：alignment",
+        "标题命中：evaluation",
         "摘要命中：multimodal"
       ],
       "category": "llm",
@@ -1052,34 +1055,6 @@
       "track": "harness"
     },
     {
-      "arxiv_id": "2611.10748",
-      "title": "REINS: A Self-Evolving Agent Harness for Real-Time Trajectory Planning",
-      "authors": [
-        "Zhihong Cui",
-        "Hengyu Liu",
-        "Haoran Tang",
-        "Shijun Liu",
-        "Amir Taherkordi",
-        "Tor Skeie"
-      ],
-      "abstract": "Agent harnesses -- runtime scaffolds that wrap an LLM's reasoning loop with tool dispatch, verification, and persistent memory -- have become the standard substrate for deploying LLMs as autonomous agents, as demonstrated by Claude Code and Codex in software engineering. In trajectory planning, however, this paradigm has not taken hold: existing LLM-based trajectory planning methods either keep the LLM in the decision loop, exceeding the millisecond-level control budget, or offload it to offline rules or training-time supervision -- leaving the runtime planner non-evolving. Intermediate hybrids still lack the verification-and-consolidation loop that makes harnesses reliable. We ask: what runtime harness would let an LLM planner meet real-time constraints while self-evolving into a deployable one? We propose REINS, a harness built on three LLM-planner couplings: LLM outputs are (i) grounded to a learned variable-level dynamics model, (ii) verified via calibrated predicates and forward rollout, and (iii) consolidated into an indexed rule memory that serves future scenes in O(log n) without re-invoking the LLM. The harness closes a self-evolution loop: familiar scenes resolve by memory lookup; novel scenes invoke the LLM, whose verified outputs enrich the memory. Without modifying LLM weights, REINS attains 98%+ compliance, nearly 50% collision reduction, and 1.9-4.6 ms latency on simulated and real-world benchmarks at the tactical decision layer, with LLM invocation rate monotonically declining as memory matures. Code: https://github.com/ZhihongCui/REINS",
-      "categories": [
-        "cs.RO",
-        "cs.AI"
-      ],
-      "published": "2026-11-07T14:11:16Z",
-      "paper_url": "http://arxiv.org/abs/2611.10748v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.10748v1.pdf",
-      "score": 85,
-      "score_reasons": [
-        "分类：Harness",
-        "标题命中：agent harness"
-      ],
-      "category": "harness",
-      "category_label": "Harness",
-      "track": "harness"
-    },
-    {
       "arxiv_id": "2611.11971",
       "title": "Harness Matters: Measuring and Dissecting Security Resilience in Web Agents",
       "authors": [
@@ -1105,34 +1080,6 @@
         "分类：Harness",
         "摘要命中：agent harness",
         "标题命中：web agent"
-      ],
-      "category": "harness",
-      "category_label": "Harness",
-      "track": "harness"
-    },
-    {
-      "arxiv_id": "2611.10926",
-      "title": "DeepFinance: Can AI Diligence a $100MM Deal?",
-      "authors": [
-        "Drew Hahn",
-        "Tyler Shibata",
-        "Jackson Grove",
-        "Rahul Sonwalkar"
-      ],
-      "abstract": "Existing evaluations of AI models on high-finance work focus on retrieving answers from financial documents and producing numerically correct outputs. Real private equity (PE) and investment banking (IB) work also depends on choosing between conflicting sources, making sound assumptions, and keeping every step auditable. We introduce DeepFinance, an ultra long-horizon benchmark of 21 end-to-end PE and IB tasks that take a human professional an average of 27.1 hours. Each task pairs a request with a data room averaging 19 files and is graded against an average of 84 expert-written rubric criteria covering output, workflow, and judgment. We evaluate 22 model configurations, each in its native agent harness. The best configuration, GPT-6 Astra with max reasoning, satisfies 57.6% of rubric criteria, and the top four configurations are not statistically distinguishable. Frontier models often calculate correctly from the wrong inputs and find decision-relevant evidence without acting on it.",
-      "categories": [
-        "cs.CL",
-        "cs.AI",
-        "q-fin.GN"
-      ],
-      "published": "2026-11-07T19:31:09Z",
-      "paper_url": "http://arxiv.org/abs/2611.10926v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.10926v1.pdf",
-      "score": 63,
-      "score_reasons": [
-        "分类：Harness",
-        "摘要命中：agent harness",
-        "cs.CL"
       ],
       "category": "harness",
       "category_label": "Harness",
@@ -1165,6 +1112,56 @@
       ],
       "category": "skill",
       "category_label": "Skill",
+      "track": "harness"
+    },
+    {
+      "arxiv_id": "2611.14505",
+      "title": "Continual-ARC: Measuring Skill Acquisition over a Working Lifetime",
+      "authors": [
+        "Daniel Lenton"
+      ],
+      "abstract": "Agent harnesses have emerged as a promising mechanism for continual learning, alongside test-time parametric learning. However, the current benchmarks have several limitations: they generally focus on a single applied domain, serve each instance only once, and assume a single family of learner, so memory-based and weight-based systems are rarely compared on the same scale. We propose Continual-ARC, a lifelong stream built from the three ARC-AGI editions, whose tasks need no domain knowledge. The same tasks return after dormant gaps with fresh instances, while new tasks keep arriving. On each instance, the learner may pay for demonstrations, submit answers, or act inside the harness, with retries permitted on incorrect submissions, which are paid for. Each instance is scored based on the share of this feedback budget consumed. Since a learner may keep anything between instances, memory-based and weight-based systems are scored on the same scale. After the stream, the learner is frozen and tested on fresh instances of the tasks it met, which measures memorization, and on unseen tasks, which measures generalization. We run an agent harness with frozen weights, with and without persistence, on Qwen3.5-9B and GLM-5.3 Flash, comparing them with two prompting floors, a program-induction method and Qwen3.5-9B's weights trained to imitate GLM-5.3 Flash. Persistence in the harness generally does not improve memorization unless provided with explicit expert guidance. Most harness-based methods still learn less than a floor that simply caches each task's demonstrations, across all models we tested. No harness-based method gains on unseen tasks, whereas weight-based learning shows substantial gains. This opens the door to future weight-based continual learning that could teach models to drive harnesses in new domains.",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-11-10T18:55:01Z",
+      "paper_url": "http://arxiv.org/abs/2611.14505v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.14505v1.pdf",
+      "score": 55,
+      "score_reasons": [
+        "分类：Harness",
+        "摘要命中：agent harness"
+      ],
+      "category": "harness",
+      "category_label": "Harness",
+      "track": "harness"
+    },
+    {
+      "arxiv_id": "2611.13336",
+      "title": "Veritas: A Verifier Generation Harness for Agent Tasks",
+      "authors": [
+        "Daoan Zhang",
+        "Qinbo Bai",
+        "Dehai Min",
+        "Xingyu Mu",
+        "Ziyi Chen",
+        "Jianing Yin"
+      ],
+      "abstract": "The effectiveness of a self-improving system relies heavily on the quality of its verifier, which judges the outcome of each improvement round. However, the verifiers of most tasks are written by hand, which is expensive and does not scale to tasks that come without one. We propose Veritas, a harness that generates verifiers automatically. Unlike general-purpose agent harnesses, Veritas adds three mechanisms for verifier generation: an evidence header stating what the verifier will observe, a library of domain rules that tasks leave unstated, and authoring principles, partly refined by a self-improvement loop. We evaluate on six benchmarks: four scored by execution, whose official verifiers we first certify, and two that compare pairs of responses. With the model fixed, the verifiers Veritas generates agree better with the official verdicts than those of seven other harnesses on all four execution-scored benchmarks. On the two pairwise benchmarks they are at or near the best. They also agree better than those of the vendor's own harness for two of three other model families. Its mechanisms also improve 9 of 12 harness-benchmark pairs scored by execution across three harnesses.",
+      "categories": [
+        "cs.AI",
+        "cs.CR"
+      ],
+      "published": "2026-11-09T23:01:40Z",
+      "paper_url": "http://arxiv.org/abs/2611.13336v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.13336v1.pdf",
+      "score": 55,
+      "score_reasons": [
+        "分类：Harness",
+        "摘要命中：agent harness"
+      ],
+      "category": "harness",
+      "category_label": "Harness",
       "track": "harness"
     },
     {
@@ -1242,6 +1239,33 @@
       "track": "classic-algorithms"
     },
     {
+      "arxiv_id": "2611.13565",
+      "title": "Investigating Composite Modeling in Multi-Objective Bayesian Optimization for Scientific Design",
+      "authors": [
+        "Ricky Ye",
+        "Sahas Goli",
+        "Muhammad Ali",
+        "Poompol Buathong",
+        "Peter I. Frazier"
+      ],
+      "abstract": "Scientific design often requires balancing competing objectives that are expensive to evaluate through experiments or simulations. Multi-objective Bayesian optimization (MOBO) addresses this challenge by using probabilistic models to guide the selection of promising designs. In many applications, tunable inputs map to observable intermediate responses, which are then combined through known functions to compute the final objectives. Prior work on Bayesian optimization of composite functions shows that learning from these intermediate responses, which we call Composite modeling, can substantially improve sampling efficiency in single-objective optimization, compared to methods that condition only on black-box observations of the objective function. The benefits of Composite modeling in MOBO, however, remain understudied. In this work, we study the benefits of Composite modeling in MOBO and investigate the factors driving variation in its gains. We first establish single-objective conditions under which intermediate observations provide no additional predictive information beyond objective values, where composite and black box methods use the same warped Gaussian process prior. Controlled numerical experiments with versions of four MOBO methods across eight synthetic and application-inspired scientific-design benchmarks examine how these conditions relate to optimization gains in the multi-objective setting, where the black box approach models the objective functions with a standard multi-output Gaussian process. Both investigations support the claim that composite modeling tends to help more when the function mapping intermediate responses to final objectives is non-bijective and non-affine.",
+      "categories": [
+        "cs.LG",
+        "stat.ML"
+      ],
+      "published": "2026-11-10T04:32:34Z",
+      "paper_url": "http://arxiv.org/abs/2611.13565v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.13565v1.pdf",
+      "score": 53,
+      "score_reasons": [
+        "分类：经典算法",
+        "标题命中：bayesian optimization"
+      ],
+      "category": "classic-algorithms",
+      "category_label": "经典算法",
+      "track": "classic-algorithms"
+    },
+    {
       "arxiv_id": "2611.12591",
       "title": "TRACE: Adaptive Trust-Region Bayesian Optimization for Open-Ended Molecular Design",
       "authors": [
@@ -1297,48 +1321,26 @@
       "track": "classic-algorithms"
     },
     {
-      "arxiv_id": "2611.12057",
-      "title": "AscendMOEA: An Ascend NPU-Accelerated Platform for Tensorized Multi-Objective Evolutionary Algorithms",
+      "arxiv_id": "2611.13855",
+      "title": "Beyond Passive Imitation: On-Policy Mid-Training Distillation for Language Models",
       "authors": [
-        "Qianlong Dang",
-        "Zhiyang Zhang",
-        "Baosheng Li",
-        "Tianqing Zhu",
-        "Junhu Ruan"
+        "Ruize Zheng",
+        "Xuyang Liu",
+        "Siyu Ren",
+        "Xiaobing Tu",
+        "Yinggui Wang",
+        "Jinkui Ren",
+        "Xiantao Zhang",
+        "Linfeng Zhang"
       ],
-      "abstract": "Multi-objective evolutionary optimization increasingly involves large populations, expensive problem evaluations, and diverse algorithmic structures. These workloads expose the limited parallelism of loop-based implementations, while rewrites for accelerator execution can alter selection order, tie handling, and population updates. AscendMOEA is presented as a scalable platform that executes multi-objective evolutionary algorithms (MOEAs) on Huawei Ascend neural processing units (NPUs) and conventional central processing units (CPUs). The platform represents the decision vectors, objectives, constraints, and auxiliary states as tensors and provides reusable interfaces for algorithms, problems, population operators, quality indicators, monitoring, and repeated experiments. Dense computations are executed in batches, such as dominance, distance, variation, and problem-evaluation calculations. Short recurrences with causal dependencies retain their prescribed order and consume precomputed tensor results, which preserves the behavior of the original algorithms. AscendMOEA contains 18 algorithms, 155 benchmark and application problems, 19 public operator interfaces, and 11 quality indicators. Experiments on eight Ascend NPUs and 192 physical CPU cores evaluate operator throughput, end-to-end runtime, memory consumption, numerical agreement, and implementation ablation. Tensorized operators obtain a median acceleration of 1.58 times on the NPU. At large population scales, complete algorithms achieve a median acceleration of 5.76 times while retaining the recorded quality indicators. Moreover, the results identify the workload scale and ordered computation that determine whether accelerator execution is beneficial. AscendMOEA is open-sourced at https://github.com/dqlme/AscendMOEA.",
-      "categories": [
-        "cs.NE"
-      ],
-      "published": "2026-11-09T08:33:16Z",
-      "paper_url": "http://arxiv.org/abs/2611.12057v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.12057v1.pdf",
-      "score": 48,
-      "score_reasons": [
-        "分类：经典算法",
-        "标题命中：evolutionary algorithm"
-      ],
-      "category": "classic-algorithms",
-      "category_label": "经典算法",
-      "track": "classic-algorithms"
-    },
-    {
-      "arxiv_id": "2611.12628",
-      "title": "Adapting Small Language Models to Romanized Nepali: Tokenizer Fertility, Reference Likelihood, and Generation Metrics",
-      "authors": [
-        "Pujan Pant",
-        "Sagar Newpane",
-        "Hari Sitaula",
-        "Manish Sakhakarmy"
-      ],
-      "abstract": "Romanized Nepali, Nepali written in Latin script, is common in digital communication but has no standard spelling and few resources, and it is unclear how reliably small open language models can be adapted to it. We adapt three 2-3B base models from different families, Llama-3.2-3B, Qwen2.5-3B, and Gemma-2-2B, with QLoRA on 9,000 instruction examples produced by deterministic transliteration of Nepali instruction data. Each model is trained with one shared recipe and three seeds and evaluated on 1,000 held-out examples with reference-overlap metrics, byte-normalized reference likelihood (bits per byte, BPB), and an output audit, against zero-shot baselines under two prompts. Fine-tuning raises chrF++ from 10-14 to 29.0-30.6 and lowers BPB from 2.23-2.41 to 0.78-0.84; most zero-shot outputs (54-92%) are English-like. Likelihood and overlap disagree on how far apart the models are. Llama-3.2-3B has the lowest BPB in every seed, 0.042 below Qwen2.5-3B (95% CI 0.039-0.046), yet the two cannot be separated on chrF++ (30.51 and 30.61) or BLEU, even with paired item-level tests. Gemma-2-2B, whose tokenizer splits Romanized Nepali words least (2.72 tokens per word), scores worst on every measure. Which model gains most over its zero-shot baseline depends on the zero-shot prompt. In a supplementary comparison with an identical tokenizer, Llama-3.1-8B lowers BPB by 0.053 (0.050-0.056) relative to Llama-3.2-3B, while chrF++ and BLEU rise by only 0.68 and 0.58 points. Lower fertility and higher reference likelihood therefore did not identify the model whose outputs were closest to the references.",
+      "abstract": "Continual pre-training (CPT) adapts large language models (LLMs) to specialized domains, yet its standard next-token prediction (NTP) objective treats every corpus token as a fixed target, regardless of its utility to the current model. In a controlled study on the same 1B-token mathematical corpus, we observe sharply different outcomes across base models: NTP improves Llama-3.2-3B's performance on mathematical benchmarks but substantially degrades Qwen3-1.7B-Base's performance, indicating that, under a fixed training recipe, the same training sequences can have model-dependent effects. To address this problem, we introduce On-Policy Mid-Training Distillation (OPMD), which reformulates mid-training from offline text imitation into active, query-driven knowledge acquisition. At selected anchor positions, OPMD samples trajectories from the evolving student policy and applies dense token-level reverse-KL rewards from a frozen teacher, training the model on states it actually visits rather than only on ground-truth prefixes. This on-policy objective reduces the training-generation mismatch of teacher-forced NTP. On MATH-500 and Minerva, OPMD improves the Qwen student over its base performance and outperforms the evaluated NTP baseline, which degrades on both benchmarks. OPMD integrates into CPT pipelines without added inference-time overhead and offers a model-aware alternative to passive domain adaptation.",
       "categories": [
         "cs.CL",
-        "cs.AI"
+        "cs.LG"
       ],
-      "published": "2026-11-09T16:10:12Z",
-      "paper_url": "http://arxiv.org/abs/2611.12628v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.12628v1.pdf",
+      "published": "2026-11-10T10:15:20Z",
+      "paper_url": "http://arxiv.org/abs/2611.13855v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.13855v1.pdf",
       "score": 81,
       "score_reasons": [
         "分类：基座模型",
@@ -1352,24 +1354,18 @@
       "track": "foundation-models"
     },
     {
-      "arxiv_id": "2611.11650",
-      "title": "FlowEval: How Much Adaptation Does an Embodied Foundation Model Need at Deployment?",
+      "arxiv_id": "2611.14117",
+      "title": "Fine-Tuning an Order-Flow Foundation Model for Sub-Second Forecasting",
       "authors": [
-        "Zhang Xi-Jia",
-        "Roman Yakunin",
-        "Shivang Chopra",
-        "Chengyue Huang",
-        "Che Chen",
-        "Siddharth Karamcheti",
-        "Zsolt Kira"
+        "Fedor Shabashev"
       ],
-      "abstract": "Large-scale pretraining is reducing the amount of adaptation required to deploy embodied foundation models, but it is not guaranteed that a pretrained model already provide the level of performance required in every deployment. Practitioners therefore need to understand how well a pretrained model matches a target deployment and how much adaptation data is left to be collected. We study whether a small set of successful target-domain demonstrations can reveal whether and how much target-domain data will be required before any adaptation. We introduce FlowEval, a set of training-free metrics that use the flow-matching objective to probe an embodied foundation model with a set of demonstrations. FlowEval quantifies predictive disagreement on successful target demonstrations to assess how well a pretrained model fits a target deployment. Across four embodied foundation model families: Pi-0.5, MolmoAct2, GR00T, and DreamZero, FlowEval distinguishes seen from unseen deployments across real-world and simulated manipulation. Further, by finetuning Pi-0.5 and GR00T on 17 RoboCasa365 manipulation tasks, we showed that FlowEval correlates with how success rate improves as additional adaptation data is provided. Together, these results suggest that FlowEval can serve as a lightweight, training-free diagnostic of how much model--deployment adaptation may be required.",
+      "abstract": "Generative models have become the standard approach in language and vision. These models are typically pretrained first and then fine-tuned. Recent work demonstrates how to pretrain an autoregressive generative model on Level-3 order-flow data. However, to our knowledge, no one has fine-tuned such a model yet for downstream tasks. Here we first pretrain a 300M-parameter generative model on Level-3 order-flow data collected from two crypto exchanges, Bitstamp and Bitfinex. Then we fine-tune the pretrained model to predict the microprice return and its realized volatility. We show that our fine-tuned model outperforms classical baselines, such as gradient boosting on handcrafted features, in predicting microprice returns over sub-second horizons. Furthermore, the predictive ability of the model transfers zero-shot to assets it was never fine-tuned on. Due to the short-term nature of these forecasts, the predicted microprice moves are smaller than the bid-ask spread plus fees, so the natural applications are in execution and market making. These results indicate that a pretrained generative model can be turned into a competitive short-horizon price forecaster via fine-tuning.",
       "categories": [
-        "cs.RO"
+        "q-fin.TR"
       ],
-      "published": "2026-11-08T22:15:51Z",
-      "paper_url": "http://arxiv.org/abs/2611.11650v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.11650v1.pdf",
+      "published": "2026-11-10T14:07:39Z",
+      "paper_url": "http://arxiv.org/abs/2611.14117v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.14117v1.pdf",
       "score": 72,
       "score_reasons": [
         "分类：基座模型",
@@ -1381,53 +1377,43 @@
       "track": "foundation-models"
     },
     {
-      "arxiv_id": "2611.12864",
-      "title": "Is Persona Generalization Predictable?",
+      "arxiv_id": "2611.14519",
+      "title": "Medical Image Segmentation: Foundation Model Adaptation versus Task-Specific Training",
       "authors": [
-        "Olina Mukherjee",
-        "Arnav Goel",
-        "Aditi Raghunathan",
-        "Jacob Mitchell Springer"
+        "Emre Kutlusan",
+        "Yongmin Li"
       ],
-      "abstract": "Persona generalization occurs when fine-tuning a language model in one domain induces behavioral changes in others -- for example, the broadly unsafe behavior observed in emergent misalignment. We discover a surprising \"on-the-line\" phenomenon in persona generalization: in-domain and out-of-domain persona rates across various fine-tuning hyperparameters follow an approximately probit-linear relationship, and the specific probit-linear relationship is surprisingly shared even across model families and model sizes, including Qwen and Llama. Training choices that leave the set of trainable parameters unchanged, such as learning rate, weight decay, and training duration, largely move models along the same line, reducing transfer mainly by weakening in-domain learning. Changing which layers are fine-tuned, however, can change the slope. For unsafe behavior, fine-tuning only later layers yields shallower slopes, retaining strong in-domain learning while reducing out-of-domain misalignment. This \"on-the-line\" phenomenon unifies unexpected, isolated observations of persona generalization within a quantitative framework for predicting and controlling behavioral transfer.",
+      "abstract": "Foundation models pretrained on large natural-image collections are increasingly adapted for medical image segmentation, in the expectation that they will replace models trained for each task. Most comparisons, however, use data from the training distribution and a single task-specific baseline whose configuration is rarely justified, and therefore provide limited evidence of performance at new clinical sites. It also remains unclear how much of a foundation model must be adapted, and what determines this. We adapted a foundation model, DINOv2, with strategies ranging from tuning only its bias terms to full fine-tuning, and compared it with U-Nets and ResU-Nets trained from scratch. Experiments covered colonoscopy, breast ultrasound and dermoscopy, with testing on held-out data from the training source and on independent datasets from other institutions. The adapted foundation model generalised better on every external dataset. Within the training distribution, the task-specific models remained competitive when training data were abundant, and delineated boundaries more precisely, while the foundation model more often missed small lesions. Only a small fraction of the foundation model required adaptation, and the capacity needed was determined by the imaging domain rather than by the adaptation method. A widely used polyp test set was also found to duplicate images from another benchmark. Foundation-model adaptation is therefore warranted where models must work across sites, with capacity selected on the target domain.",
       "categories": [
-        "cs.CL",
-        "cs.LG"
+        "cs.CV",
+        "cs.AI"
       ],
-      "published": "2026-11-09T18:51:03Z",
-      "paper_url": "http://arxiv.org/abs/2611.12864v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.12864v1.pdf",
+      "published": "2026-11-10T18:59:54Z",
+      "paper_url": "http://arxiv.org/abs/2611.14519v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.14519v1.pdf",
       "score": 65,
       "score_reasons": [
         "分类：基座模型",
-        "摘要命中：qwen",
-        "摘要命中：llama",
-        "cs.CL"
+        "标题命中：foundation model"
       ],
       "category": "foundation-models",
       "category_label": "基座模型",
       "track": "foundation-models"
     },
     {
-      "arxiv_id": "2611.12491",
-      "title": "Out-of-the-Box Tabular Foundation Models for Bayesian Optimization in Materials Discovery",
+      "arxiv_id": "2611.14504",
+      "title": "Emergent Biological Capabilities in a Foundation Model for Molecular Interactions",
       "authors": [
-        "Klemens Flöge",
-        "Simon Bing",
-        "Leo Grinsztajn",
-        "Eliott Kalfon",
-        "Lennart Purucker",
-        "Noah Hollmann",
-        "Frank Hutter"
+        "Adi Mashiach"
       ],
-      "abstract": "Bayesian optimization is widely used in active learning loops for materials science. Gaussian processes serve as the de-facto surrogate model family, but require task-dependent kernel choices and can lack the modeling capacity for complex relationships. Tabular foundation models (TFMs) have recently emerged as the state-of-the-art for predictive tasks on structured data, without requiring bespoke kernels or hyperparameter tuning. We evaluate two TFMs, TabPFN and TabICL, as out-of-the-box surrogate models on two standard materials science benchmarks, comparing against a large field of baselines encompassing Gaussian processes, random forests, and CatBoost. Our findings indicate that TFMs are highly competitive surrogate models across the two benchmarks, without task-specific training for active learning or GP kernel selection. Our results motivate developing TFMs further as surrogates for active learning in materials discovery.",
+      "abstract": "Foundation models trained on large unlabeled corpora develop emergent capabilities, tasks that go beyond the training objective. We extend this paradigm to multimodal biology with Bonbon, a foundation model for molecular interactions trained on approximately 3.2 trillion tokens of paired protein-ligand sequences. From a single representation space, Bonbon exhibits three zero-shot emergent capabilities at hierarchical levels of resolution: functional (mechanism of action), residue (binding site localization, including orthosteric/allosteric discrimination), and bond (covalent versus non-covalent engagement). All three capabilities generalize to out-of-distribution complexes. Bonbon was trained on protein-ligand sequences alone, without any task-specific supervision and without structural coordinates. We conducted controlled scaling experiments across six model scales from 42M to 1.6B parameters; every capability evaluated shows a sharp jump at the largest scale on continuous metrics, even as pretraining loss decreases smoothly. This demonstrates that loss-based scaling laws alone are insufficient to predict when zero-shot emergent capabilities become available. The capabilities reported here emerge after training at a 1:2,000 parameter-to-token ratio to accommodate the sparsity of paired biological interaction data. The same frozen representations achieve state-of-the-art binding and affinity prediction at five orders of magnitude greater speed than co-folding methods. In prospective wet-lab validation across nine disease targets spanning seven protein families, Bonbon achieves a 61.5% dose-response hit rate on de novo compounds, yielding structurally novel molecules not previously reported to inhibit these proteins, including for out-of-distribution targets.",
       "categories": [
         "cs.LG",
-        "stat.ML"
+        "q-bio.BM"
       ],
-      "published": "2026-11-09T14:40:10Z",
-      "paper_url": "http://arxiv.org/abs/2611.12491v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.12491v1.pdf",
+      "published": "2026-11-10T18:53:01Z",
+      "paper_url": "http://arxiv.org/abs/2611.14504v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.14504v1.pdf",
       "score": 65,
       "score_reasons": [
         "分类：基座模型",
@@ -1438,21 +1424,21 @@
       "track": "foundation-models"
     },
     {
-      "arxiv_id": "2611.12466",
-      "title": "Prediction with Foundation Models under Deployment Budgets",
+      "arxiv_id": "2611.14462",
+      "title": "Accurate predictions of properties of energetic materials with tabular foundation models",
       "authors": [
-        "Zhaohui Xu",
-        "Xiaofei Xu",
-        "Doudou Zhou"
+        "Vagn Krister Nes Glomsrud",
+        "Mathias Bynke",
+        "Lars Henry Berge Olsen",
+        "Dennis Christensen"
       ],
-      "abstract": "Foundation models can supply predictions for a downstream task that draw on knowledge from extensive pretraining, but they differ in task-specific accuracy and query cost. We develop a framework that improves prediction for the task under a budget on the average query cost per input, using training data to learn which models to query and how to combine their outputs with features available without querying. The first method queries the same models for every input; the second lets them vary across inputs and uses Q-learning to decide which model to query next and when to stop. For the first method, we show that several individually inaccurate outputs can jointly outperform the best single one. It attains the minimax rate when the regression function depends on the outputs only through models within the budget. Otherwise, any method within the budget can be forced to a slower rate, which the first method attains. For the second method, we show when varying the queried models across inputs strictly improves on querying the same models for every input, and bound its prediction risk and average cost in finite samples. In simulations and a multimodal laptop price application, both methods outperform existing methods.",
+      "abstract": "We use TabPFN, a recently developed tabular foundation model, to predict three properties of energetic materials: impact sensitivity, decomposition temperature and crystal density. Without any hyperparameter tuning, TabPFN outperforms the best published models for all three properties. It also substantially outperforms a wide range of established machine-learning models, including tuned gradient boosting (XGBoost), random forests and Gaussian processes. This holds both when the models are given hand-crafted molecular descriptors and when they are given learned representations from Chemprop's message-passing neural network. In particular, for all three properties, TabPFN applied to Chemprop's own embedding is more accurate than Chemprop's predictions. TabPFN is also among the fastest models we consider, more than an order of magnitude faster than XGBoost. As TabPFN predicts the entire distribution of the target rather than just a single value, it offers built-in uncertainty quantification, which we compare with the empirical distributions of compounds with repeated measurements. Finally, we interpret the predictions using Shapley values, which rank the features by their importance.",
       "categories": [
-        "stat.ML",
         "cs.LG"
       ],
-      "published": "2026-11-09T14:15:18Z",
-      "paper_url": "http://arxiv.org/abs/2611.12466v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.12466v1.pdf",
+      "published": "2026-11-10T18:29:37Z",
+      "paper_url": "http://arxiv.org/abs/2611.14462v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.14462v1.pdf",
       "score": 65,
       "score_reasons": [
         "分类：基座模型",
@@ -1463,18 +1449,24 @@
       "track": "foundation-models"
     },
     {
-      "arxiv_id": "2611.12141",
-      "title": "Do Time-Series Foundation Models Forecast Index-Futures Returns? A Preregistered Evaluation of Models, Metrics, and Input Representations",
+      "arxiv_id": "2611.14425",
+      "title": "Quantifying the Sampling Frequency Invariance of Time-Series Foundation Models for Sensor Data Applications",
       "authors": [
-        "Rishabh Upadhyay"
+        "Sourish Gunesh Dhekane",
+        "Abinaya Kumar",
+        "Torsten Woertwein",
+        "Yan-Bo Lin",
+        "Thomas Ploetz",
+        "Shabnam Ghaffarzadegan"
       ],
-      "abstract": "We ask whether the apparent forecasting skill of frozen time-series foundation models (TSFMs) on intraday index-futures returns is incremental skill. In a pre-registered evaluation on E-mini Nasdaq-100 (NQ) and E-mini S&P 500 (ES) futures, a common panel of five zero-shot models (Chronos-Bolt, Chronos-2, TimesFM 2.5, Moirai 2.0 and TiRex), plus separate experiments with Kronos, is compared with a no-change forecast at 5-120 minutes, using native prices, log returns, volatility-standardised returns and a volume clock as inputs. On a blind set opened once, 0 of 160 model-representation-horizon-market cells beat no-change, and a Hansen SPA test gives p = 1.000 on both markets; a later retrospective hold-out, scored as a descriptive check, gives 0 of 120. Input representations change forecast magnitude but not accuracy, and a transformation-aware ridge regression does as well. Several standard measures nevertheless suggest skill. Price-level correlation exceeds 0.9996, but no-change scores higher. Within-day RankIC across forecast origins rewards a trivial revert-to-mean rule (+0.35 at 30 minutes); we derive the expected within-day covariance under a random walk in closed form, and a sign-randomised null reproduces about 95% of the observed value. One model beats HAR for 5-minute volatility, but not the EWMA its input already contains. On strongly planted synthetic signals the models recover part of the signal at 5 minutes, and recovery deteriorates at 30 minutes. Benchmark-level success of TSFMs should therefore not be assumed to carry over to low-signal domains such as intraday returns.",
+      "abstract": "Time-Series Foundation Models (TSFMs) are increasingly used in sensor applications, where sampling frequency (SF) varies across sensors, devices, and operating modes (e.g., power saving). Ideally, TSFMs must remain effective during such SF changes, provided the SF retains task-critical bandwidth. In this paper, we stress-test 4 prominent TSFMs: MOMENT, Chronos-2, Moirai-MoE, and TimesFM, to quantify their SF-invariance and investigate whether their behavior tracks the resulting loss of information bandwidth rather than the SF value itself. Our stress-test probes 3 dimensions: (i) the shift in embeddings, (ii) the degradation in forecasting performance, and (iii) the degradation in downstream performance, quantified by three novel metrics: FSI, FDI, and CDI, respectively. To our knowledge, this is the first study to place SF-invariance at the core of TSFM evaluations. Our results characterize: (i) how SF-invariance depends on the margin between signal's native-SF and the bandwidth its task requires, (ii) how much of that invariance the choice of TSFM explains, and (iii) how much of TSFM's performance degradation under a lower SF reflects information loss rather than a limitation of their abilities. These findings reframe SF-invariance as a measurable, signal-aware property of the (signal X TSFM) pair, and guide practitioners on when TSFMs display SF-invariance.",
       "categories": [
-        "cs.LG"
+        "cs.LG",
+        "cs.AI"
       ],
-      "published": "2026-11-09T09:53:19Z",
-      "paper_url": "http://arxiv.org/abs/2611.12141v1",
-      "pdf_url": "http://arxiv.org/pdf/2611.12141v1.pdf",
+      "published": "2026-11-10T18:01:23Z",
+      "paper_url": "http://arxiv.org/abs/2611.14425v1",
+      "pdf_url": "http://arxiv.org/pdf/2611.14425v1.pdf",
       "score": 65,
       "score_reasons": [
         "分类：基座模型",
